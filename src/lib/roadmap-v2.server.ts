@@ -149,6 +149,300 @@ function extractTechSources(trends: TechTrendsReport | null): RoadmapResource[] 
     }));
 }
 
+function buildDeterministicRoadmapFallback(
+  targetRole: string,
+  roleProfile: ReturnType<typeof resolveRoleProfile>,
+): Record<string, unknown>[] {
+  const roleName = roleProfile.displayName || targetRole;
+  const mustHave = roleProfile.mustHaveSkills.slice(0, 4).map((s) => s.skill);
+  const tooling = roleProfile.commonTools.slice(0, 4).map((s) => s.skill);
+  const coreSkills = mustHave.length ? mustHave : ["problem solving", "clean code", "version control", "system design"];
+
+  const fallbackPaths = [
+    {
+      title: `${roleName} Foundations`,
+      description: `Build the core technical and engineering habits that employers screen for before they trust you with ${roleName} work.`,
+      level: "beginner",
+      category: "core_skill",
+      market_justification: `Employers hiring for ${roleName} still check fundamentals, debugging discipline, and clean code before they advance you to real production work.`,
+      outdated_warning: null,
+      must_know: coreSkills.slice(0, 5),
+      curated_resources: [
+        {
+          label: "Roadmap.sh Frontend/Backend path",
+          url: "https://roadmap.sh/",
+          type: "docs",
+          why: "A practical checklist of the core skills employers expect.",
+        },
+        {
+          label: "MDN JavaScript / Web Docs",
+          url: "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
+          type: "docs",
+          why: "Official documentation for the language and web API fundamentals behind most technical roles.",
+        },
+      ],
+      days: [
+        {
+          day_number: 1,
+          title: "Core coding fundamentals",
+          what_is_this: "Build clean problem-solving habits and language fluency in the tools your target role depends on.",
+          explanation: "This is the baseline employers expect before they trust you with production-critical code or architecture choices.",
+          why_companies_care: "Strong fundamentals reduce debugging time and show that you can reason clearly under pressure.",
+          how_to_learn: [
+            "Review the core syntax, data structures, and control flow used by your target role.",
+            "Practice with short algorithmic problems and document the reasoning behind each solution.",
+            "Refactor one messy solution into a cleaner version with better naming and structure.",
+          ],
+          hands_on_task: "Write and explain one small project feature using a clean, testable structure and a readable implementation path.",
+          problem_solving_exercise: "Solve three small coding challenges and explain trade-offs between a simple solution and a more scalable one.",
+          curated_links: [
+            {
+              label: "MDN JavaScript",
+              url: "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
+              type: "docs",
+              why: "Official language reference for the core syntax and browser APIs you need to reason about confidently.",
+            },
+          ],
+          estimated_minutes: 65,
+        },
+        {
+          day_number: 2,
+          title: "Version control and debugging workflow",
+          what_is_this: "Learn the everyday workflow that keeps team projects reliable, reviewable, and recoverable.",
+          explanation: "Companies expect more than coding — they expect disciplined Git, debugging habits, and the ability to explain changes clearly.",
+          why_companies_care: "A clean workflow lowers deployment risk and helps you work without creating avoidable mistakes.",
+          how_to_learn: [
+            "Practice branching, committing, and resolving merge conflicts in a small repo.",
+            "Read a few real debugging scenarios and document the root cause before fixing the issue.",
+            "Review a teammate's diff and identify risk areas before code reaches production.",
+          ],
+          hands_on_task: "Create a mini project repo, make a few feature branches, and document the commit history as if it were a real team workflow.",
+          problem_solving_exercise: "Repair a broken feature in a small repo and explain the root cause, the fix, and the risk you prevented.",
+          curated_links: [
+            {
+              label: "GitHub Skills",
+              url: "https://skills.github.com/",
+              type: "interactive",
+              why: "Hands-on Git workflows for branching, commits, and collaboration.",
+            },
+          ],
+          estimated_minutes: 60,
+        },
+        {
+          day_number: 3,
+          title: "Build one credible proof project",
+          what_is_this: "Turn fundamentals into visible evidence with a project that matches the role you are targeting.",
+          explanation: "Companies rarely trust claims alone; they want proof that you can reason, build, and explain your work under realistic constraints.",
+          why_companies_care: "A project proves you can deliver while giving interviewers something concrete to ask about.",
+          how_to_learn: [
+            "Pick one system or user problem related to the job description.",
+            "Design a small but real user flow from start to finish.",
+            "Document decisions, trade-offs, and what you would improve next.",
+          ],
+          hands_on_task: "Ship one small project with a clear problem statement, implementation notes, and a polished README that explains the architecture.",
+          problem_solving_exercise: "List the top three technical risks in your project and explain how you would mitigate them in production.",
+          curated_links: [
+            {
+              label: "Project planning guide",
+              url: "https://roadmap.sh/projects",
+              type: "docs",
+              why: "A straightforward way to frame a portfolio project around real user value.",
+            },
+          ],
+          estimated_minutes: 75,
+        },
+      ],
+      mcq_bank: [
+        {
+          question: "A feature works locally but fails in production. What is the most likely first step?",
+          options: { a: "Ship a hotfix without logging", b: "Trace the root cause and compare runtime assumptions with local configuration", c: "Rewrite the whole app", d: "Ignore it until the next release" },
+          correct: "b",
+          explanation: "The first move is to isolate the mismatch between local assumptions and production conditions before making any large change.",
+          difficulty: "basic",
+          company_relevance: "Expected in real-world debugging conversations for ${roleName} roles.",
+          tags: ["debugging", "production", "root cause"],
+        },
+        {
+          question: "Which habit most improves code maintainability for a team project?",
+          options: { a: "Avoid comments", b: "Use clear naming, small functions, and consistent structure", c: "Copy-paste repeated logic", d: "Only optimize for speed" },
+          correct: "b",
+          explanation: "Readable structure and maintainable design matter more than cleverness when teams need to extend features quickly and safely.",
+          difficulty: "basic",
+          company_relevance: "Core expectation in software engineering interviews and code review.",
+          tags: ["clean code", "teamwork"],
+        },
+      ],
+    },
+    {
+      title: `${roleName} Problem Solving`,
+      description: `Practice the kinds of reasoning and trade-offs companies use to test whether you can make good decisions under ambiguity.`,
+      level: "intermediate",
+      category: "problem_solving",
+      market_justification: `Hiring screens for ${roleName} still test whether you can break down a problem, choose a sensible approach, and explain trade-offs.`,
+      outdated_warning: null,
+      must_know: ["data structures", "time complexity", "debugging", "trade-off analysis"],
+      curated_resources: [
+        {
+          label: "LeetCode patterns",
+          url: "https://leetcode.com/problem-list/top-interview-questions/",
+          type: "interactive",
+          why: "Good pattern practice for common problem-solving scenarios used in technical screening.",
+        },
+      ],
+      days: [
+        {
+          day_number: 1,
+          title: "Break down the problem",
+          what_is_this: "Learn to interpret a vague requirement before you start coding.",
+          explanation: "Good coding interviews begin with structured understanding, not with fast typing.",
+          why_companies_care: "Companies look for clear reasoning and the ability to reduce ambiguity before implementing a solution.",
+          how_to_learn: [
+            "Restate the problem in your own words.",
+            "Identify edge cases and hidden constraints.",
+            "Write out a simple example before choosing a data structure.",
+          ],
+          hands_on_task: "Solve two small interview-style problems and explain the assumptions, inputs, and edge cases before writing code.",
+          problem_solving_exercise: "Compare a brute-force approach with a more efficient one and explain why the latter is better under realistic constraints.",
+          curated_links: [
+            { label: "Interview patterns", url: "https://www.hackerrank.com/domains/algorithms", type: "interactive", why: "Structured practice around common coding interview patterns." },
+          ],
+          estimated_minutes: 70,
+        },
+        {
+          day_number: 2,
+          title: "Reason about trade-offs",
+          what_is_this: "Learn to choose a solution that is correct, explainable, and practical for business use.",
+          explanation: "A good solution balances speed, maintainability, and constraints rather than chasing optimization too early.",
+          why_companies_care: "Hiring teams reward engineers who can justify design decisions and not just memorize patterns.",
+          how_to_learn: [
+            "Review common trade-offs in time complexity, memory usage, and API design.",
+            "Compare two implementations and explain which one is safer under real constraints.",
+            "Practice turning a vague requirement into a clear algorithmic plan.",
+          ],
+          hands_on_task: "Choose one technical challenge and compare two possible approaches before implementing the final version.",
+          problem_solving_exercise: "Explain which approach you would choose under production constraints like limited memory, response time, or team maintainability.",
+          curated_links: [
+            { label: "Big-O cheatsheet", url: "https://www.bigocheatsheet.com/", type: "docs", why: "Quick reference for comparing algorithmic trade-offs." },
+          ],
+          estimated_minutes: 75,
+        },
+      ],
+      mcq_bank: [
+        {
+          question: "When a user report says 'the app is slow', what is the best first step?",
+          options: { a: "Guess and rewrite the UI", b: "Measure, isolate bottlenecks, and verify the actual constraint", c: "Ignore it until more reports come in", d: "Only optimize the database without checking the frontend" },
+          correct: "b",
+          explanation: "Good engineering requires data and diagnosis before large changes are made.",
+          difficulty: "intermediate",
+          company_relevance: "A real engineering triage skill in production support and debugging.",
+          tags: ["debugging", "triage"],
+        },
+      ],
+    },
+    {
+      title: `${roleName} Tooling and Delivery`,
+      description: `Use the tools and workflows that companies expect to see in team-based software delivery and deployment work.`,
+      level: "intermediate",
+      category: "tooling",
+      market_justification: `Most employers expect entry-level candidates to be comfortable using the standard toolchain, CI patterns, and deployment workflow for ${roleName}.`,
+      outdated_warning: null,
+      must_know: tooling.length ? tooling : ["GitHub workflows", "APIs", "deployment basics", "terminal tools"],
+      curated_resources: [
+        {
+          label: "GitHub Docs",
+          url: "https://docs.github.com/en",
+          type: "docs",
+          why: "Official references for workflows and collaboration patterns used in modern software teams.",
+        },
+      ],
+      days: [
+        {
+          day_number: 1,
+          title: "Developer toolchain",
+          what_is_this: "Understand the tooling that makes backend and platform work reliable in teams.",
+          explanation: "A good engineer is not only a coder — they are also comfortable with the terminal, automation, and collaboration workflow the team depends on.",
+          why_companies_care: "Tooling confidence reduces errors and makes you effective in a real product environment.",
+          how_to_learn: [
+            "Set up a local project workflow with package manager, linting, and build scripts.",
+            "Learn the common commands for running tests and checking project health.",
+            "Document one common workflow so you can explain it clearly in a team environment.",
+          ],
+          hands_on_task: "Set up a small project workflow and document the essential commands, risks, and recovery steps.",
+          problem_solving_exercise: "Compare the workflow of a local dev setup versus a deployment environment and explain the main differences.",
+          curated_links: [
+            { label: "GitHub Docs", url: "https://docs.github.com/en", type: "docs", why: "Official guidance for GitHub workflows and collaboration." },
+          ],
+          estimated_minutes: 75,
+        },
+      ],
+      mcq_bank: [
+        {
+          question: "Your app builds locally but fails in CI. What is the most practical next step?",
+          options: { a: "Push anyway and fix later", b: "Inspect the exact failing step and compare environment parity", c: "Delete the pipeline", d: "Modify the code without checking logs" },
+          correct: "b",
+          explanation: "CI failures typically come from mismatched environment assumptions or missing dependencies, so diagnosis should be data-driven.",
+          difficulty: "intermediate",
+          company_relevance: "A common real team workflow and quality gate issue.",
+          tags: ["ci", "deployment", "debugging"],
+        },
+      ],
+    },
+    {
+      title: `${roleName} Interview Readiness`,
+      description: `Prepare for the communication layer of hiring: explaining trade-offs, architecture, and evidence clearly.`,
+      level: "beginner",
+      category: "core_skill",
+      market_justification: `Companies do not only hire for code; they hire for communication, evidence, and the ability to explain decisions clearly.`,
+      outdated_warning: null,
+      must_know: ["clarity", "storytelling", "proof", "communication"],
+      curated_resources: [
+        {
+          label: "Amazon leadership principles style interview prep",
+          url: "https://www.amazon.jobs/en/landing_pages/leadership-principles",
+          type: "docs",
+          why: "Useful examples of structured explanations and decision framing in professional interviews.",
+        },
+      ],
+      days: [
+        {
+          day_number: 1,
+          title: "Explain your work clearly",
+          what_is_this: "Turn technical work into a concise, real-world story that recruiters and interviewers can understand.",
+          explanation: "Most candidates fail in interviews not because they lack the skill, but because they cannot explain what they built and why it mattered.",
+          why_companies_care: "Communication is a core hiring signal because teams need engineers who can explain trade-offs and decision-making.",
+          how_to_learn: [
+            "Prepare a 60-second story about each project in your portfolio.",
+            "Explain the problem, your approach, and what you learned.",
+            "Practice answering follow-up questions without getting defensive or vague.",
+          ],
+          hands_on_task: "Record yourself explaining one project in under 90 seconds and make it more concrete and concise.",
+          problem_solving_exercise: "Turn a technical detail into a short business explanation that a non-technical manager could follow.",
+          curated_links: [
+            { label: "Interview story framework", url: "https://www.indeed.com/career-advice/interviewing/how-to-answer-tell-me-about-yourself", type: "docs", why: "A practical framework for turning experience into a coherent story." },
+          ],
+          estimated_minutes: 60,
+        },
+      ],
+      mcq_bank: [
+        {
+          question: "Which answer best demonstrates strong engineering communication in an interview?",
+          options: { a: "Give a long, vague explanation without structure", b: "State the problem, your approach, trade-offs, and what you learned", c: "Only talk about the tools used", d: "Avoid discussing failures" },
+          correct: "b",
+          explanation: "Strong communication is structured and grounded in trade-offs, decisions, and lessons from real work.",
+          difficulty: "basic",
+          company_relevance: "This is a core hiring signal across technical and product-facing roles.",
+          tags: ["communication", "storytelling"],
+        },
+      ],
+    },
+  ];
+
+  return fallbackPaths.map((path) => ({
+    ...path,
+    curated_resources: path.curated_resources.slice(0, 3),
+  }));
+}
+
 async function loadRoadmapIntelligence(userId: string): Promise<{
   marketRealitySummary: string;
   diagnosisSummary: string;
@@ -197,7 +491,7 @@ RULES:
 - Skip skills the student already has at 70%+
 - NO tutorial projects (todo apps, calculators). Tasks must produce shareable, original output
 - Flag outdated/declining technologies
-- MCQs must be role-specific and scenario-based, like a real company technical screen. Tie every question to the target role, a named company hiring expectation, or a real production decision. Never generate trivia or generic definitions.
+- MCQs must be role-specific and scenario-based, like a real company technical screen. Tie every question to the target role, a named company hiring expectation, or a real production decision. Ne[...]
 - Use live trend sources when a path is an emerging technology. Put the source URL in curated_links so the student can research further.
 
 OUTPUT: Return ONLY a JSON object (no markdown fences, no prose) with this structure:
@@ -367,25 +661,23 @@ export async function generateRoadmapV2(
       }
     }
 
-    if (!raw) {
-      const detail = lastAiError instanceof Error ? lastAiError.message : "Unknown AI error";
-      return {
-        success: false,
-        pathCount: 0,
-        error: `The AI service couldn't generate your roadmap after ${MAX_AI_ATTEMPTS} attempts. ${detail}`,
-      };
+    let pathsRaw: Record<string, unknown>[] = [];
+
+    if (raw) {
+      try {
+        const parsed = parseJsonObject<{ paths?: Record<string, unknown>[] }>(raw);
+        pathsRaw = Array.isArray(parsed.paths) ? parsed.paths : [];
+      } catch (err) {
+        console.warn("[RoadmapV2] AI response was not valid JSON, using fallback roadmap.", err);
+      }
     }
 
-    // 9. Parse response
-    const parsed = parseJsonObject<{ paths?: Record<string, unknown>[] }>(raw);
-    const pathsRaw = Array.isArray(parsed.paths) ? parsed.paths : [];
-
     if (!pathsRaw.length) {
-      return {
-        success: false,
-        pathCount: 0,
-        error: "The roadmap couldn't be generated. Please try again.",
-      };
+      console.warn(
+        "[RoadmapV2] Using created fallback roadmap because the AI response was unavailable or malformed.",
+        lastAiError instanceof Error ? lastAiError.message : "No AI response",
+      );
+      pathsRaw = buildDeterministicRoadmapFallback(goal.target_role, roleProfile);
     }
 
     // 10. Clear existing roadmap v2 data for this user.
