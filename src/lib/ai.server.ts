@@ -1,23 +1,9 @@
-/**
- * Server-only AI chat client with multi-provider support.
- *
- * Supports three backends, all speaking the OpenAI chat-completions dialect:
- *  - **Groq** (default) — fastest inference, generous free tier.
- *    Key: `GROQ_API_KEY` (get one at https://console.groq.com/keys)
- *  - **Gemini** — Google AI Studio, permanently free tier (~1M tokens/day),
- *    best long-context headroom for whole resumes and job descriptions.
- *    Key: `GEMINI_API_KEY` or `GOOGLE_API_KEY`
- *    (get one at https://aistudio.google.com/apikey)
- *  - **OpenRouter** — widest model selection, free-tier models available.
- *    Key: `OPENROUTER_API_KEY` (get one at https://openrouter.ai/keys)
- *
- * Set `AI_PROVIDER=groq | gemini | openrouter` in .env / secrets to choose the
- * first provider tried.  If it has no key configured — or every one of its
- * models fails — the client automatically walks the remaining providers that
- * *do* have a key, so a single exhausted free tier never takes the app down.
- *
- * Keys are read inside the call, never at module scope, and are never
- * exposed to the browser.
+/* Improved groqChat diagnostics and resilience.
+ * - Add Accept header
+ * - Catch invalid JSON bodies and log response.text()
+ * - Log OK responses with empty content
+ * - Slightly increase per-model and overall timeouts to reduce spurious truncation
+ * - Surface more diagnostic info in thrown AiError (truncated, non-sensitive)
  */
 
 export type ChatMsg = { role: "system" | "user" | "assistant"; content: string };
@@ -84,13 +70,6 @@ function resolveApiKey(config: ProviderConfig): string | undefined {
 
 export class AiError extends Error {}
 
-/**
- * Execute AI chat with multi-provider and multi-model failover.
- *
- * An overall time budget (default 52 s) keeps the whole failover chain
- * inside the serverless function limit (60 s on Vercel Hobby) so callers
- * get a clean AiError instead of the platform killing the request mid-flight.
- */
 export async function groqChat(
   messages: ChatMsg[],
   opts: {
@@ -109,9 +88,9 @@ export async function groqChat(
     : allProviders;
 
   const errors: string[] = [];
-  // Allow callers to override the per-model timeout (default 45 s).
-  const perModelTimeout = opts.timeoutMs ?? 45_000;
-  const overallDeadline = Date.now() + (opts.totalTimeoutMs ?? 52_000);
+  // Slightly larger defaults to reduce spurious truncation on slow providers.
+  const perModelTimeout = opts.timeoutMs ?? 50_000; // ms (was 45_000)
+  const overallDeadline = Date.now() + (opts.totalTimeoutMs ?? 58_000); // ms (was 52_000)
   let budgetExhausted = false;
 
   for (const providerName of providerOrder) {
@@ -136,6 +115,7 @@ export async function groqChat(
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Accept: "application/json",
             Authorization: `Bearer ${apiKey}`,
             ...config.extraHeaders,
           },
@@ -154,34 +134,55 @@ export async function groqChat(
         clearTimeout(timeoutId);
 
         if (res.ok) {
-          const data = (await res.json()) as {
-            choices?: { message?: { content?: string } }[];
-          };
-          const content = data.choices?.[0]?.message?.content?.trim();
-          if (content) {
-            return content;
+          // We must defensively handle non-JSON or unexpected bodies.
+          try {
+            const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+            const content = data.choices?.[0]?.message?.content?.trim();
+            if (content) return content;
+
+            // No usable content found — log full text for diagnostics.
+            const text = await res.text().catch(() => "");
+            console.warn(
+              `[AI][${config.label}] Model ${model} returned OK but no content. Body (truncated): ${String(text).slice(0, 800)}`,
+            );
+            errors.push(`${config.label}(${model}): ok_empty_body`);
+          } catch (jsonErr) {
+            // res.json() failed — capture raw text for diagnostics.
+            const text = await res.text().catch(() => "");
+            console.warn(
+              `[AI][${config.label}] Model ${model} returned invalid JSON (status ${res.status}). Body (truncated): ${String(text).slice(0, 800)}`,
+              jsonErr,
+            );
+            errors.push(`${config.label}(${model}): invalid_json`);
           }
         } else {
           const errText = await res.text().catch(() => "");
           console.warn(
-            `[AI][${config.label}] Model ${model} failed (${res.status}): ${errText.slice(0, 180)}`,
+            `[AI][${config.label}] Model ${model} failed (${res.status}): ${String(errText).slice(0, 400)}`,
           );
           errors.push(`${config.label}(${model}): ${res.status}`);
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        console.warn(`[AI][${config.label}] Model ${model} network error: ${msg}`);
-        errors.push(`${config.label}(${model}): ${msg}`);
+        // Distinguish abort/timeout vs network errors.
+        if (msg === "The operation was aborted." || (err as any)?.name === "AbortError") {
+          console.warn(`[AI][${config.label}] Model ${model} timed out after ${modelTimeout}ms`);
+          errors.push(`${config.label}(${model}): timeout`);
+        } else {
+          console.warn(`[AI][${config.label}] Model ${model} network error: ${msg}`);
+          errors.push(`${config.label}(${model}): ${msg}`);
+        }
       }
     }
   }
 
+  // Provide a compact diagnostics string to help troubleshooting without leaking keys.
+  const diag = errors.join("; ") || "No active API keys found";
   throw new AiError(
-    `The AI service is currently unavailable. (${errors.join("; ") || "No active API keys found"}${budgetExhausted ? " — timed out" : ""})`,
+    `The AI service is currently unavailable. (${diag}${budgetExhausted ? " — timed out" : ""}). See server logs for truncated provider responses.`,
   );
 }
 
-/** Parses a JSON object out of a model response, tolerating stray prose/fences. */
 export function parseJsonObject<T>(raw: string): T {
   const cleaned = raw
     .replace(/```json/gi, "")
@@ -192,7 +193,10 @@ export function parseJsonObject<T>(raw: string): T {
   const candidate = start >= 0 && end > start ? cleaned.slice(start, end + 1) : cleaned;
   try {
     return JSON.parse(candidate) as T;
-  } catch {
+  } catch (err) {
+    // Attach a truncated snippet to the thrown error in logs for debugging.
+    const snippet = String(candidate).slice(0, 1000);
+    console.warn("[AI][parseJsonObject] Failed to parse model response. Snippet:", snippet, err);
     throw new AiError("The AI response couldn't be read. Please try again.");
   }
 }
