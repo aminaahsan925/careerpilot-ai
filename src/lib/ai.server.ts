@@ -1,5 +1,7 @@
 /** Server-only AI chat client with multi-provider failover. */
 
+import { BRUTAL_HONESTY_POLICY } from "./intelligence.server";
+
 export type ChatMsg = { role: "system" | "user" | "assistant"; content: string };
 export type AiProvider = "openrouter" | "groq" | "gemini";
 
@@ -85,6 +87,11 @@ export async function groqChat(
         Math.min(opts.timeoutMs ?? 45_000, remaining),
       );
       try {
+        const groundedMessages = messages.map((message) =>
+          message.role === "system"
+            ? { ...message, content: `${BRUTAL_HONESTY_POLICY}\n${message.content}` }
+            : message,
+        );
         const response = await fetch(config.url, {
           method: "POST",
           headers: {
@@ -94,7 +101,7 @@ export async function groqChat(
           },
           body: JSON.stringify({
             model,
-            messages,
+            messages: groundedMessages,
             temperature: opts.temperature ?? 0.4,
             max_tokens: opts.maxTokens ?? 2400,
           }),

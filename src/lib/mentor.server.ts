@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/integrations/supabase/types";
 import { groqChat, type ChatMsg } from "./ai.server";
+import { formatEvidenceContext, retrieveCareerEvidence } from "./intelligence.server";
 
 type Client = SupabaseClient<Database>;
 
@@ -151,9 +152,14 @@ export async function runMentorTurn(
   }
 
   const history = (historyRes.data ?? []).slice().reverse();
+  const targetRole = context.match(/Target role: ([^\n]+)/)?.[1] ?? null;
+  const retrievedEvidence = formatEvidenceContext(retrieveCareerEvidence(trimmed, targetRole));
 
   const messages: ChatMsg[] = [
-    { role: "system", content: `${SYSTEM_PROMPT}\n\n<user_profile>\n${context}\n</user_profile>` },
+    {
+      role: "system",
+      content: `${SYSTEM_PROMPT}\n\n<user_profile>\n${context}\n</user_profile>\n\n<grounded_evidence>\n${retrievedEvidence}\n</grounded_evidence>\n\nUse the evidence labels when making factual claims. If the profile conflicts with role evidence, state the conflict plainly.`,
+    },
     ...history.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
     { role: "user", content: `<user_message>\n${trimmed}\n</user_message>` },
   ];
