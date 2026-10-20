@@ -633,6 +633,12 @@ export async function analyzeStoredResume(
     resume.file_name,
   );
   if (!resumeText) throw new Error("No readable text was found in this resume.");
+  console.info("[CareerPilot][analyzeResume] extracted text", {
+    userId,
+    resumeId,
+    fileName: resume.file_name,
+    textLength: resumeText.length,
+  });
 
   const { checks, formatScore } = auditResumeFormat(resumeText, resume.file_name);
   const goal = await supabase
@@ -663,7 +669,10 @@ export async function analyzeStoredResume(
       // If we got at least some useful data, stop retrying
       if (parsed["strengths"] || parsed["detected_skills"]) break;
     } catch (error) {
-      console.warn(`[Resume] AI analysis attempt ${attempt + 1} failed.`, error);
+      console.warn(`[Resume] AI analysis attempt ${attempt + 1} failed.`, {
+        error: error instanceof Error ? error.message : String(error),
+        attempt: attempt + 1,
+      });
       if (attempt === 1) aiFailed = true;
     }
   }
@@ -698,13 +707,12 @@ export async function analyzeStoredResume(
   /* ---------- Deterministic fallback recommendations ---------- */
   let recommendations = Array.isArray(parsed["recommendations"])
     ? (parsed["recommendations"] as Record<string, unknown>[])
-        .filter(
-          (item): item is Record<string, unknown> =>
-            Boolean(
-              item &&
-              typeof item === "object" &&
-              typeof (item as Record<string, unknown>)["title"] === "string",
-            ),
+        .filter((item): item is Record<string, unknown> =>
+          Boolean(
+            item &&
+            typeof item === "object" &&
+            typeof (item as Record<string, unknown>)["title"] === "string",
+          ),
         )
         .map((item) => ({
           title: String(item["title"] ?? ""),
@@ -743,7 +751,10 @@ export async function analyzeStoredResume(
           } else {
             match = 0;
           }
-          return { role: (item as Record<string, unknown>)["role"] as string, match: Math.max(0, Math.min(100, Math.round(match))) };
+          return {
+            role: (item as Record<string, unknown>)["role"] as string,
+            match: Math.max(0, Math.min(100, Math.round(match))),
+          };
         })
         .slice(0, 6)
     : [];
@@ -797,6 +808,12 @@ export async function analyzeStoredResume(
     })
     .select("id")
     .single();
+  if (insertError || !analysis)
+    console.error("[CareerPilot][analyzeResume] analysis insert failed", {
+      userId,
+      resumeId,
+      error: insertError?.message ?? "No analysis row returned",
+    });
   if (insertError || !analysis)
     throw insertError ?? new Error("Could not save the resume analysis.");
 

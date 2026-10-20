@@ -123,10 +123,10 @@ export function useUploadAndAnalyze() {
         throw new Error("Your session has expired. Please sign in again.");
 
       const path = `${auth.user.id}/${Date.now()}-${file.name.replace(/[^\w.-]+/g, "_")}`;
-      const upload = await supabase.storage.from("resumes").upload(path, file, {
-        upsert: false,
-        contentType: file.type || undefined,
-      });
+      const uploadOptions = file.type
+        ? { upsert: false, contentType: file.type }
+        : { upsert: false };
+      const upload = await supabase.storage.from("resumes").upload(path, file, uploadOptions);
       if (upload.error) {
         const msg = extractMessage(upload.error, "File upload failed");
         console.error("[Resume] storage upload error:", upload.error);
@@ -172,8 +172,7 @@ export function useUploadAndAnalyze() {
 export function useReanalyze() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (resumeId: string) =>
-      analyzeResume({ data: { resumeId } }),
+    mutationFn: async (resumeId: string) => analyzeResume({ data: { resumeId } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["latest-analysis"] });
       queryClient.invalidateQueries({ queryKey: ["current-user"] });

@@ -115,7 +115,7 @@ function ResumePage() {
           error instanceof Error
             ? error.message
             : typeof error === "object" && error !== null && "message" in error
-              ? String((error as Record<string, unknown>).message)
+              ? String((error as Record<string, unknown>)["message"])
               : "Could not process resume file.";
         console.error("[Resume] upload/analyze failed:", error);
         toast.error(msg);
@@ -157,7 +157,7 @@ function ResumePage() {
             "card-surface relative overflow-hidden p-7 transition-all duration-300 border-2 border-dashed",
             isDragging
               ? "border-terracotta bg-terracotta/5 shadow-2xl scale-[1.005]"
-              : "border-border/80 hover:border-terracotta/40"
+              : "border-border/80 hover:border-terracotta/40",
           )}
         >
           <input
@@ -176,7 +176,7 @@ function ResumePage() {
               <div
                 className={cn(
                   "flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl transition-colors",
-                  isDragging ? "bg-terracotta text-white" : "bg-terracotta/10 text-terracotta"
+                  isDragging ? "bg-terracotta text-white" : "bg-terracotta/10 text-terracotta",
                 )}
               >
                 {upload.isPending ? (
@@ -195,7 +195,8 @@ function ResumePage() {
                       : "Upload or Drag & Drop Resume"}
                 </h3>
                 <p className="mt-1 text-[13px] text-muted-foreground">
-                  Supported formats: <strong className="text-foreground">PDF, DOCX, TXT</strong> (Up to 5MB)
+                  Supported formats: <strong className="text-foreground">PDF, DOCX, TXT</strong> (Up
+                  to 5MB)
                 </p>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <span className="rounded-md bg-secondary/80 px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
@@ -233,7 +234,10 @@ function ResumePage() {
             <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4 text-[12.5px]">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <FileText className="h-4 w-4 text-terracotta" />
-                <span>Active File: <strong className="text-foreground font-semibold">{resume.file_name}</strong></span>
+                <span>
+                  Active File:{" "}
+                  <strong className="text-foreground font-semibold">{resume.file_name}</strong>
+                </span>
               </div>
               <span className="text-[11.5px] text-muted-foreground">
                 Uploaded {new Date(resume.created_at).toLocaleDateString()}
@@ -251,8 +255,12 @@ function ResumePage() {
               <div className="card-surface p-6">
                 <div className="flex items-center justify-between border-b border-border pb-4 mb-6">
                   <div>
-                    <h3 className="text-[16px] font-bold text-foreground">Executive Score Breakdown</h3>
-                    <p className="text-[12px] text-muted-foreground">Calculated across structural ATS rules and target role alignment.</p>
+                    <h3 className="text-[16px] font-bold text-foreground">
+                      Executive Score Breakdown
+                    </h3>
+                    <p className="text-[12px] text-muted-foreground">
+                      Calculated across structural ATS rules and target role alignment.
+                    </p>
                   </div>
                   <span className="rounded-lg bg-emerald-500/10 px-3 py-1 text-[12px] font-semibold text-emerald-600 dark:text-emerald-400">
                     Analysis Active
@@ -260,9 +268,21 @@ function ResumePage() {
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-3">
-                  <ScoreRing value={analysis.ats_score} label="ATS Score" sublabel="Keyword & format fit" />
-                  <ScoreRing value={analysis.resume_score} label="Impact Score" sublabel="Action verbs & metrics" />
-                  <ScoreRing value={analysis.career_match} label="Role Match" sublabel="Target alignment" />
+                  <ScoreRing
+                    value={analysis.ats_score}
+                    label="ATS Score"
+                    sublabel="Keyword & format fit"
+                  />
+                  <ScoreRing
+                    value={analysis.resume_score}
+                    label="Impact Score"
+                    sublabel="Action verbs & metrics"
+                  />
+                  <ScoreRing
+                    value={analysis.career_match}
+                    label="Role Match"
+                    sublabel="Target alignment"
+                  />
                 </div>
               </div>
 
@@ -289,14 +309,20 @@ function ResumePage() {
                   {analysis.strengths.length ? (
                     <ul className="space-y-3">
                       {analysis.strengths.map((item, idx) => (
-                        <li key={idx} className="flex items-start gap-2.5 text-[13px] text-muted-foreground leading-relaxed">
+                        <li
+                          key={idx}
+                          className="flex items-start gap-2.5 text-[13px] text-muted-foreground leading-relaxed"
+                        >
                           <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
                           <span>{item}</span>
                         </li>
                       ))}
                     </ul>
                   ) : (
-                    <EmptyStateMessage title="No strengths detected" description="Upload a detailed resume to extract strengths." />
+                    <EmptyStateMessage
+                      title="No strengths detected"
+                      description="Upload a detailed resume to extract strengths."
+                    />
                   )}
                 </div>
 
@@ -309,14 +335,20 @@ function ResumePage() {
                   {analysis.weaknesses.length ? (
                     <ul className="space-y-3">
                       {analysis.weaknesses.map((item, idx) => (
-                        <li key={idx} className="flex items-start gap-2.5 text-[13px] text-muted-foreground leading-relaxed">
+                        <li
+                          key={idx}
+                          className="flex items-start gap-2.5 text-[13px] text-muted-foreground leading-relaxed"
+                        >
                           <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-terracotta" />
                           <span>{item}</span>
                         </li>
                       ))}
                     </ul>
                   ) : (
-                    <EmptyStateMessage title="No red flags detected" description="Your resume formatting looks strong!" />
+                    <EmptyStateMessage
+                      title="No red flags detected"
+                      description="Your resume formatting looks strong!"
+                    />
                   )}
                 </div>
               </div>
@@ -326,9 +358,13 @@ function ResumePage() {
                 <div className="flex items-center justify-between border-b border-border pb-3">
                   <div className="flex items-center gap-2">
                     <Zap className="h-5 w-5 text-terracotta" />
-                    <h4 className="text-[15px] font-bold text-foreground">High-Impact Positioning Rewrites</h4>
+                    <h4 className="text-[15px] font-bold text-foreground">
+                      High-Impact Positioning Rewrites
+                    </h4>
                   </div>
-                  <span className="text-[11.5px] font-semibold text-muted-foreground">Action Plan</span>
+                  <span className="text-[11.5px] font-semibold text-muted-foreground">
+                    Action Plan
+                  </span>
                 </div>
 
                 {analysis.recommendations.length ? (
@@ -351,7 +387,10 @@ function ResumePage() {
                     ))}
                   </div>
                 ) : (
-                  <EmptyStateMessage title="No recommendations available" description="Your resume passed core ATS checks." />
+                  <EmptyStateMessage
+                    title="No recommendations available"
+                    description="Your resume passed core ATS checks."
+                  />
                 )}
               </div>
             </div>
@@ -361,7 +400,9 @@ function ResumePage() {
               {/* SKILLS DETECTED */}
               <div className="card-surface p-6 space-y-4">
                 <div className="flex items-center justify-between border-b border-border pb-3">
-                  <h4 className="text-[15px] font-bold text-foreground">Extracted Technical Skills</h4>
+                  <h4 className="text-[15px] font-bold text-foreground">
+                    Extracted Technical Skills
+                  </h4>
                   <span className="text-[11.5px] font-bold text-terracotta">
                     {analysis.detected_skills.length} Detected
                   </span>
@@ -379,15 +420,22 @@ function ResumePage() {
                     ))}
                   </div>
                 ) : (
-                  <EmptyStateMessage title="No skills extracted" description="Upload a text-based resume to extract skills." />
+                  <EmptyStateMessage
+                    title="No skills extracted"
+                    description="Upload a text-based resume to extract skills."
+                  />
                 )}
               </div>
 
               {/* ROLE MATCHES */}
               <div className="card-surface p-6 space-y-4">
                 <div className="border-b border-border pb-3">
-                  <h4 className="text-[15px] font-bold text-foreground">Market Target Compatibility</h4>
-                  <p className="text-[11.5px] text-muted-foreground mt-0.5">Matched against researched industry roles.</p>
+                  <h4 className="text-[15px] font-bold text-foreground">
+                    Market Target Compatibility
+                  </h4>
+                  <p className="text-[11.5px] text-muted-foreground mt-0.5">
+                    Matched against researched industry roles.
+                  </p>
                 </div>
 
                 {analysis.role_matches.length ? (
@@ -395,7 +443,9 @@ function ResumePage() {
                     {analysis.role_matches.map((match) => (
                       <div key={match.role} className="space-y-1.5">
                         <div className="flex items-center justify-between text-[12.5px]">
-                          <span className="font-semibold text-foreground truncate">{match.role}</span>
+                          <span className="font-semibold text-foreground truncate">
+                            {match.role}
+                          </span>
                           <span className="font-bold text-terracotta">{match.match}%</span>
                         </div>
                         <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
@@ -410,7 +460,10 @@ function ResumePage() {
                     ))}
                   </div>
                 ) : (
-                  <EmptyStateMessage title="No role matches available" description="Set your target role on the onboarding page." />
+                  <EmptyStateMessage
+                    title="No role matches available"
+                    description="Set your target role on the onboarding page."
+                  />
                 )}
               </div>
 
@@ -418,10 +471,14 @@ function ResumePage() {
               <div className="rounded-2xl border border-border bg-ink p-6 text-white space-y-3 shadow-lift">
                 <div className="flex items-center gap-2 text-terracotta">
                   <ShieldCheck className="h-5 w-5" />
-                  <span className="text-[13px] font-bold uppercase tracking-wider">Proof Verification Policy</span>
+                  <span className="text-[13px] font-bold uppercase tracking-wider">
+                    Proof Verification Policy
+                  </span>
                 </div>
                 <p className="text-[12.5px] leading-relaxed text-white/75">
-                  Skills extracted from your resume improve your overall evidence picture, but CareerPilot treats them as unverified mentions until backed by GitHub repositories, project code, or verifiable portfolio links.
+                  Skills extracted from your resume improve your overall evidence picture, but
+                  CareerPilot treats them as unverified mentions until backed by GitHub
+                  repositories, project code, or verifiable portfolio links.
                 </p>
               </div>
             </div>
@@ -433,7 +490,8 @@ function ResumePage() {
             </div>
             <h3 className="text-lg font-bold text-foreground">No Resume Analyzed Yet</h3>
             <p className="text-[13.5px] text-muted-foreground max-w-md mx-auto leading-relaxed">
-              Upload your PDF, DOCX, or TXT resume using the dropzone above to generate your ATS Compatibility Score, skill extraction breakdown, and recruiter position rewrites.
+              Upload your PDF, DOCX, or TXT resume using the dropzone above to generate your ATS
+              Compatibility Score, skill extraction breakdown, and recruiter position rewrites.
             </p>
           </div>
         )}
