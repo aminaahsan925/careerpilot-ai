@@ -3,6 +3,10 @@ import {
   TOP_REJECTION_REASONS,
   type RoleTruthProfile,
 } from "@/data/market-truth";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+import type { Database } from "@/integrations/supabase/types";
+import { indexRagEvidence, retrieveRagEvidence } from "./rag.server";
 
 /** Shared behavior contract applied to every CareerPilot AI feature. */
 export const BRUTAL_HONESTY_POLICY = `
@@ -19,11 +23,16 @@ CAREERPILOT INTELLIGENCE POLICY:
 
 export type EvidenceItem = {
   id: string;
-  source: "role_truth" | "rejection_pattern";
+  source: "role_truth" | "rejection_pattern" | "rag";
   statement: string;
   provenance: string;
   priority: number;
+  sourceUrl?: string;
+  similarity?: number;
+  trustScore?: number;
 };
+
+type IntelligenceClient = SupabaseClient<Database>;
 
 const STOP_WORDS = new Set([
   "a",
@@ -119,6 +128,38 @@ export function retrieveCareerEvidence(query: string, targetRole: string | null,
 export function formatEvidenceContext(items: EvidenceItem[]): string {
   if (!items.length) return "No grounded role evidence matched this question.";
   return items
-    .map((item, index) => `[E${index + 1}] ${item.statement} (source: ${item.provenance})`)
+    .map(
+      (item, index) =>
+        `[E${index + 1}] ${item.statement} (source: ${item.provenance}${item.sourceUrl ? `, url: ${item.sourceUrl}` : ""})`,
+    )
     .join("\n");
+}
+
+/**
+ * Hybrid retrieval entry point. The existing deterministic market corpus is
+ * always queried first; persistent vector retrieval is additive and optional.
+ */
+export async function retrieveGroundedEvidence(
+  client: IntelligenceClient,
+  userId: string,
+  query: string,
+  targetRole: string | null,
+  limit = 8,
+): Promise<EvidenceItem[]> {
+  const lexical = retrieveCareerEvidence(query, targetRole, limit);
+  let rag = await retrieveRagEvidence(client, userId, `${targetRole ?? ""}\n${query}`, limit);
+  if (!rag.length && process.env["RAG_AUTO_INDEX"] === "true" && lexical.length) {
+    await indexRagEvidence(client, userId, lexical, targetRole || "CareerPilot market truth");
+    rag = await retrieveRagEvidence(client, userId, `${targetRole ?? ""}\n${query}`, limit);
+  }
+  const seen = new Set<string>();
+  return [...rag, ...lexical]
+    .filter((item) => {
+      const key = item.statement.toLowerCase().replace(/\s+/g, " ").trim();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0))
+    .slice(0, limit);
 }

@@ -192,6 +192,7 @@ export async function fetchCurrentUser(): Promise<CareerUser | null> {
     targetIndustry: goal?.target_industry ?? null,
     goalProgress: roadmapProgress,
     education: educationLine(profile),
+    city: profile?.city ?? "",
     skills,
     scores: readiness
       ? [

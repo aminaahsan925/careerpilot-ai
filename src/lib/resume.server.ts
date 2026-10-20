@@ -5,6 +5,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { clampScore, groqChat, parseJsonObject, stringList } from "./ai.server";
 import { syncResumeEvidence } from "./career.server";
 import { buildCareerState, careerStateToPrompt } from "./career-state.server";
+import { formatEvidenceContext, retrieveGroundedEvidence } from "./intelligence.server";
 import { buildCareerContext } from "./mentor.server";
 import { saveReadiness } from "./readiness.server";
 
@@ -647,13 +648,23 @@ export async function analyzeStoredResume(
     .eq("user_id", userId)
     .maybeSingle();
   const targetRole = goal.data?.target_role ?? null;
+  const groundedEvidence = formatEvidenceContext(
+    await retrieveGroundedEvidence(
+      supabase,
+      userId,
+      "resume ATS requirements, role fit, proof gaps, and recruiter rejection reasons",
+      targetRole,
+    ),
+  );
 
   /* ---------- Short optional AI enhancement ----------
    * The deterministic ATS scan is the source of truth and is always saved.
    * AI must not hold the upload hostage for multiple provider retries.
    */
   const system =
-    "You are an ATS resume reviewer. Return ONLY a single JSON object (no markdown, no code fences) with these exact keys: summary (string), strengths (array of strings), weaknesses (array of strings), detected_skills (array of strings), recommendations (array of {title, impact}), role_matches (array of {role, match} where match is a number 0-100). Be specific and concise.";
+    "You are an ATS resume reviewer. Return ONLY a single JSON object (no markdown, no code fences) with these exact keys: summary (string), strengths (array of strings), weaknesses (array of strings), detected_skills (array of strings), recommendations (array of {title, impact}), role_matches (array of {role, match} where match is a number 0-100). Be specific and concise. Use the grounded evidence below for role claims. Never call an unverified resume mention proven.\n\n<grounded_evidence>\n" +
+    groundedEvidence +
+    "\n</grounded_evidence>";
   let parsed: Record<string, unknown> = {};
   let aiFailed = false;
   for (let attempt = 0; attempt < 1; attempt++) {

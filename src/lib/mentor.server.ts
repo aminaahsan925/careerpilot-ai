@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/integrations/supabase/types";
 import { groqChat, type ChatMsg } from "./ai.server";
-import { formatEvidenceContext, retrieveCareerEvidence } from "./intelligence.server";
+import { formatEvidenceContext, retrieveGroundedEvidence } from "./intelligence.server";
 
 type Client = SupabaseClient<Database>;
 
@@ -153,7 +153,9 @@ export async function runMentorTurn(
 
   const history = (historyRes.data ?? []).slice().reverse();
   const targetRole = context.match(/Target role: ([^\n]+)/)?.[1] ?? null;
-  const retrievedEvidence = formatEvidenceContext(retrieveCareerEvidence(trimmed, targetRole));
+  const retrievedEvidence = formatEvidenceContext(
+    await retrieveGroundedEvidence(supabase, userId, trimmed, targetRole),
+  );
 
   const messages: ChatMsg[] = [
     {

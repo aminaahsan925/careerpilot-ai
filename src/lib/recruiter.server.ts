@@ -4,6 +4,7 @@ import { matchCompanyTruth, type CompanyHiringTruth } from "@/data/company-truth
 import type { Database } from "@/integrations/supabase/types";
 import { clampScore, groqChat, parseJsonObject, stringList } from "./ai.server";
 import { buildCareerState, careerStateToPrompt, type CareerState } from "./career-state.server";
+import { formatEvidenceContext, retrieveGroundedEvidence } from "./intelligence.server";
 
 type Client = SupabaseClient<Database>;
 
@@ -110,14 +111,18 @@ function computeBaselineScore(
       category: "CV Quality",
       severity: "critical",
       assessment: `Your resume scores ${ats}/100 on ATS and ${resumeScore}/100 overall. This will be filtered out before any human sees it.`,
-      whatToFix: "Rewrite your resume with quantified achievements, remove graphics/skill bars, use single-column ATS format.",
+      whatToFix:
+        "Rewrite your resume with quantified achievements, remove graphics/skill bars, use single-column ATS format.",
     });
   } else {
     verdicts.push({
       category: "CV Quality",
       severity: resumeAvg >= 70 ? "strong" : "critical",
       assessment: `ATS score: ${ats}/100, Overall: ${resumeScore}/100. ${resumeAvg >= 70 ? "Passes basic screening." : "Borderline — needs improvement."}`,
-      whatToFix: resumeAvg >= 70 ? "Minor polish — add more quantified metrics." : "Optimize keywords for the target role and add measurable outcomes.",
+      whatToFix:
+        resumeAvg >= 70
+          ? "Minor polish — add more quantified metrics."
+          : "Optimize keywords for the target role and add measurable outcomes.",
     });
   }
 
@@ -132,21 +137,26 @@ function computeBaselineScore(
       category: "Project Portfolio",
       severity: "fatal",
       assessment: "Zero projects on record. Every company requires proof of what you can build.",
-      whatToFix: "Build at least 2 production-grade projects with live deployed URLs and clean GitHub repos.",
+      whatToFix:
+        "Build at least 2 production-grade projects with live deployed URLs and clean GitHub repos.",
     });
   } else if (deployedProjects.length === 0) {
     verdicts.push({
       category: "Project Portfolio",
       severity: "critical",
       assessment: `You have ${projects.length} project(s) but none are live-deployed. Localhost projects are dismissed instantly.`,
-      whatToFix: "Deploy your best project to Vercel/Render with a public URL and document the architecture in your README.",
+      whatToFix:
+        "Deploy your best project to Vercel/Render with a public URL and document the architecture in your README.",
     });
   } else {
     verdicts.push({
       category: "Project Portfolio",
       severity: deployedProjects.length >= 2 ? "strong" : "critical",
       assessment: `${deployedProjects.length} deployed project(s) out of ${projects.length} total. ${deployedProjects.length >= 2 ? "Shows initiative." : "Need more deployed work."}`,
-      whatToFix: deployedProjects.length >= 2 ? "Add test coverage and CI/CD pipeline documentation." : "Deploy at least one more project with proper documentation.",
+      whatToFix:
+        deployedProjects.length >= 2
+          ? "Add test coverage and CI/CD pipeline documentation."
+          : "Deploy at least one more project with proper documentation.",
     });
   }
 
@@ -157,7 +167,10 @@ function computeBaselineScore(
   const missingNonNeg: string[] = [];
 
   for (const nn of nonNegs) {
-    const words = nn.skill.toLowerCase().split(/[\s&,/]+/).filter((w) => w.length > 2);
+    const words = nn.skill
+      .toLowerCase()
+      .split(/[\s&,/]+/)
+      .filter((w) => w.length > 2);
     const hasSkill = words.some((w) =>
       [...studentSkillNames].some((s) => s.includes(w) || w.includes(s)),
     );
@@ -187,9 +200,7 @@ function computeBaselineScore(
   });
 
   // --- Evidence strength (0–15 points) ---
-  const evidencedSkills = state.skills.filter(
-    (s) => s.evidenceStrength > 0,
-  );
+  const evidencedSkills = state.skills.filter((s) => s.evidenceStrength > 0);
   const evidencePct = state.skills.length > 0 ? evidencedSkills.length / state.skills.length : 0;
   score += Math.round(evidencePct * 15);
 
@@ -213,7 +224,9 @@ function computeBaselineScore(
     category: "Market Positioning",
     severity: hasGoal && hasProfile ? "strong" : "critical",
     assessment: `${!hasGoal ? "No target role defined — you're applying without direction. " : ""}${!hasProfile ? "Incomplete profile." : "Profile is set up."}`,
-    whatToFix: !hasGoal ? "Define a specific target role and company." : "Keep your profile updated and aligned with your target.",
+    whatToFix: !hasGoal
+      ? "Define a specific target role and company."
+      : "Keep your profile updated and aligned with your target.",
   });
 
   return { score: clampScore(score), verdicts, expectVsHave };
@@ -249,6 +262,14 @@ export async function runRecruiterAudit(
   // AI-enhanced analysis
   let aiResult: Partial<RecruiterAudit> = {};
   try {
+    const groundedEvidence = formatEvidenceContext(
+      await retrieveGroundedEvidence(
+        supabase,
+        userId,
+        `${targetCompany} ${targetRole} hiring requirements, rejection reasons, and trusted proof`,
+        targetRole,
+      ),
+    );
     const prompt = `=== CANDIDATE PROFILE ===
 ${careerStateToPrompt(state)}
 
@@ -260,6 +281,9 @@ Rejection Reasons: ${companyTruth.rejectionTruths.map((t) => t.title).join("; ")
 
 === BASELINE SCORE ===
 Deterministic Score: ${baseline.score}/100
+
+=== GROUNDED EVIDENCE ===
+${groundedEvidence}
 
 Evaluate this candidate as ${companyTruth.name}'s Head of Talent. Return JSON:
 {
@@ -293,7 +317,10 @@ Evaluate this candidate as ${companyTruth.name}'s Head of Talent. Return JSON:
       overallScore: finalScore,
       hireChance: clampScore(parsed["hire_chance"], Math.max(0, finalScore - 15)),
       rejectChance: clampScore(parsed["reject_chance"], Math.min(100, 100 - finalScore + 15)),
-      headline: String(parsed["headline"] ?? "").trim().slice(0, 200) || `Score: ${finalScore}/100`,
+      headline:
+        String(parsed["headline"] ?? "")
+          .trim()
+          .slice(0, 200) || `Score: ${finalScore}/100`,
       brutalVerdicts: Array.isArray(parsed["brutal_verdicts"])
         ? (parsed["brutal_verdicts"] as Record<string, unknown>[]).map((v) => ({
             category: String(v["category"] ?? "").trim(),
@@ -321,7 +348,8 @@ Evaluate this candidate as ${companyTruth.name}'s Head of Talent. Return JSON:
           techStack: companyTruth.primaryStack.slice(0, 4),
         };
       })(),
-      interviewPrediction: String(parsed["interview_prediction"] ?? "").trim() ||
+      interviewPrediction:
+        String(parsed["interview_prediction"] ?? "").trim() ||
         "Unable to assess — insufficient data for interview prediction.",
       recruiterQuestions: stringList(parsed["recruiter_questions"], 5),
     };
