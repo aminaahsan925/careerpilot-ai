@@ -16,6 +16,8 @@ import {
   TrendingUp,
   FileUp,
   RefreshCw,
+  ArrowUpRight,
+  Target,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -141,13 +143,28 @@ function ResumePage() {
   };
 
   const busy = upload.isPending || isLoading;
+  const priorityActions = analysis?.recommendations.slice(0, 4) ?? [];
+  const scoreRows = analysis
+    ? [
+        { label: "ATS compatibility", value: analysis.ats_score },
+        { label: "Resume impact", value: analysis.resume_score },
+        { label: "Role alignment", value: analysis.career_match },
+      ]
+    : [];
+  const lowestScore = scoreRows.length ? Math.min(...scoreRows.map((item) => item.value)) : 0;
+  const readinessLabel =
+    lowestScore >= 75
+      ? "Ready for targeted applications"
+      : lowestScore >= 55
+        ? "Promising, but evidence is thin"
+        : "Not competitive yet";
 
   return (
     <AppLayout
       title="Resume & ATS Intelligence"
       subtitle="Recruiter-grade resume parsing, ATS scoring, and position rewrites"
     >
-      <div className="space-y-6 pb-12">
+      <div className="w-full space-y-6 pb-12">
         {/* INTERACTIVE UPLOAD DROPZONE */}
         <div
           onDragOver={handleDragOver}
@@ -248,7 +265,7 @@ function ResumePage() {
 
         {/* ANALYSIS RESULTS DASHBOARD */}
         {analysis ? (
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(300px,0.8fr)]">
+          <div className="grid w-full gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(360px,1fr)]">
             {/* LEFT COLUMN: SCORES, SUMMARY, STRENGTHS, WEAKNESSES & RECOMMENDATIONS */}
             <div className="space-y-6">
               {/* RADIAL METRIC GAUGES */}
@@ -398,7 +415,105 @@ function ResumePage() {
             </div>
 
             {/* RIGHT COLUMN: SKILL INVENTORY & ROLE MATCHES */}
-            <div className="space-y-6">
+            <div className="space-y-6 xl:sticky xl:top-6 xl:self-start xl:min-h-[calc(100vh-12rem)]">
+              {/* DECISION RAIL */}
+              <div className="relative overflow-hidden rounded-2xl border border-ink/10 bg-ink p-6 text-white shadow-lift">
+                <div className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-terracotta/20 blur-2xl" />
+                <div className="relative space-y-5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-2 text-terracotta">
+                        <Target className="h-4 w-4" />
+                        <span className="text-[11px] font-bold uppercase tracking-[0.16em]">
+                          Decision rail
+                        </span>
+                      </div>
+                      <h3 className="mt-2 text-[17px] font-bold">What changes your odds next</h3>
+                      <p className="mt-1 text-[12px] leading-relaxed text-white/65">
+                        The lowest score is the constraint. Fix that before adding more tools or
+                        courses.
+                      </p>
+                    </div>
+                    <span className="shrink-0 rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[10px] font-bold text-white/80">
+                      {readinessLabel}
+                    </span>
+                  </div>
+
+                  <div className="space-y-3">
+                    {scoreRows.map((item) => (
+                      <div key={item.label}>
+                        <div className="mb-1.5 flex items-center justify-between text-[11.5px]">
+                          <span className="text-white/70">{item.label}</span>
+                          <span className="font-bold text-white">{item.value}/100</span>
+                        </div>
+                        <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${item.value}%` }}
+                            transition={{ duration: 0.8, ease: "easeOut" }}
+                            className={cn(
+                              "h-full rounded-full",
+                              item.value >= 75
+                                ? "bg-emerald-400"
+                                : item.value >= 55
+                                  ? "bg-amber-400"
+                                  : "bg-terracotta",
+                            )}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="card-surface overflow-hidden p-6">
+                <div className="flex items-start justify-between gap-3 border-b border-border pb-4">
+                  <div>
+                    <div className="flex items-center gap-2 text-terracotta">
+                      <ArrowUpRight className="h-4 w-4" />
+                      <span className="text-[11px] font-bold uppercase tracking-[0.14em]">
+                        Immediate moves
+                      </span>
+                    </div>
+                    <h4 className="mt-1.5 text-[15px] font-bold text-foreground">
+                      Close the biggest proof gaps
+                    </h4>
+                  </div>
+                  <span className="rounded-lg bg-secondary px-2 py-1 text-[10px] font-bold text-muted-foreground">
+                    {priorityActions.length} priorities
+                  </span>
+                </div>
+
+                {priorityActions.length ? (
+                  <div className="divide-y divide-border/70">
+                    {priorityActions.map((item, index) => (
+                      <div
+                        key={`${item.title}-${index}`}
+                        className="flex gap-3 py-4 first:pt-4 last:pb-0"
+                      >
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-terracotta/10 text-[11px] font-extrabold text-terracotta">
+                          {index + 1}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="break-words text-[12.5px] font-semibold leading-relaxed text-foreground">
+                            {item.title}
+                          </p>
+                          <p className="mt-1 break-words text-[11px] leading-relaxed text-muted-foreground">
+                            {item.impact}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="pt-4 text-[12.5px] leading-relaxed text-muted-foreground">
+                    No action items were returned. Upload a fuller resume or re-run the audit to get
+                    specific next steps.
+                  </p>
+                )}
+              </div>
+
               {/* SKILLS DETECTED */}
               <div className="card-surface p-6 space-y-4">
                 <div className="flex items-center justify-between border-b border-border pb-3">
@@ -481,6 +596,43 @@ function ResumePage() {
                   Skills extracted from your resume improve your overall evidence picture, but
                   CareerPilot treats them as unverified mentions until backed by GitHub
                   repositories, project code, or verifiable portfolio links.
+                </p>
+              </div>
+
+              <div className="card-surface flex min-h-[220px] flex-col justify-between p-6">
+                <div>
+                  <div className="flex items-center justify-between border-b border-border pb-3">
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-terracotta">
+                        Evidence health
+                      </p>
+                      <h4 className="mt-1 text-[15px] font-bold text-foreground">
+                        What a recruiter can verify
+                      </h4>
+                    </div>
+                    <ShieldCheck className="h-5 w-5 text-terracotta" />
+                  </div>
+
+                  <div className="mt-5 grid grid-cols-3 gap-2">
+                    {[
+                      { label: "Skills", value: analysis.detected_skills.length },
+                      { label: "Strengths", value: analysis.strengths.length },
+                      { label: "Gaps", value: analysis.weaknesses.length },
+                    ].map((item) => (
+                      <div key={item.label} className="rounded-xl bg-secondary/70 p-3 text-center">
+                        <p className="text-xl font-extrabold tracking-tight text-foreground">
+                          {item.value}
+                        </p>
+                        <p className="mt-0.5 text-[10.5px] font-semibold text-muted-foreground">
+                          {item.label}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <p className="mt-6 text-[12px] leading-relaxed text-muted-foreground">
+                  A resume mention is not proof by itself. Back the most important skills with a
+                  public project, repository, deployed demo, or measurable outcome.
                 </p>
               </div>
             </div>
