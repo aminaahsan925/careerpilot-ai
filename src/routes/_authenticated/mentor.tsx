@@ -148,15 +148,26 @@ function MentorPage() {
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-ink text-white">
                   <Sparkles className="h-4 w-4" />
                 </span>
-                <div className="flex items-center gap-1.5 rounded-xl rounded-tl-sm bg-secondary px-4 py-4">
-                  {[0, 1, 2].map((d) => (
-                    <motion.span
-                      key={d}
-                      animate={{ opacity: [0.25, 1, 0.25] }}
-                      transition={{ duration: 1.1, repeat: Infinity, delay: d * 0.18 }}
-                      className="h-1.5 w-1.5 rounded-full bg-muted-foreground"
-                    />
-                  ))}
+                <div className="rounded-xl rounded-tl-sm bg-secondary px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-3.5 w-3.5 text-terracotta" />
+                    <span className="text-[12px] font-semibold text-foreground">
+                      Magic is happening...
+                    </span>
+                    <span className="flex items-center gap-1 pl-0.5">
+                      {[0, 1, 2].map((d) => (
+                        <motion.span
+                          key={d}
+                          animate={{ opacity: [0.25, 1, 0.25] }}
+                          transition={{ duration: 1.1, repeat: Infinity, delay: d * 0.18 }}
+                          className="h-1.5 w-1.5 rounded-full bg-terracotta"
+                        />
+                      ))}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-[10.5px] text-muted-foreground">
+                    CareerPilot is checking your evidence...
+                  </p>
                 </div>
               </div>
             ) : null}
