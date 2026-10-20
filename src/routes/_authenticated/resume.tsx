@@ -372,15 +372,17 @@ function ResumePage() {
                     {analysis.recommendations.map((item, idx) => (
                       <div
                         key={idx}
-                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-border/80 bg-background/50 p-4"
+                        className="flex min-w-0 flex-col gap-3 rounded-xl border border-border/80 bg-background/50 p-4 sm:flex-row sm:items-start sm:justify-between"
                       >
-                        <div className="flex items-start gap-3">
+                        <div className="flex min-w-0 flex-1 items-start gap-3">
                           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-terracotta/10 text-[11px] font-extrabold text-terracotta">
                             {idx + 1}
                           </span>
-                          <p className="text-[13.5px] font-medium text-foreground">{item.title}</p>
+                          <p className="min-w-0 break-words text-[13.5px] font-medium text-foreground">
+                            {item.title}
+                          </p>
                         </div>
-                        <span className="inline-flex shrink-0 self-start sm:self-auto rounded-md bg-terracotta/10 px-2.5 py-1 text-[11px] font-bold text-terracotta">
+                        <span className="inline-flex max-w-full whitespace-normal break-words rounded-md bg-terracotta/10 px-2.5 py-1 text-left text-[11px] font-bold text-terracotta sm:max-w-[58%]">
                           {item.impact}
                         </span>
                       </div>
