@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { groqChat, parseJsonObject } from "./ai.server";
 import { buildCareerState, careerStateToPrompt, type CareerState } from "./career-state.server";
+import { formatEvidenceContext, retrieveGroundedEvidence } from "./intelligence.server";
 import { tavilySearch, type TavilyResult } from "./tavily.server";
 
 type Client = SupabaseClient<Database>;
@@ -282,29 +283,43 @@ export async function assessFlightPlan(
   }
 
   const marketQuery = `${input.company ? `${input.company} ` : ""}${input.role} hiring requirements skills engineering job description 2026`;
-  let market: FlightPlanAssessment["market"];
-  try {
-    const research = await tavilySearch(marketQuery, { maxResults: 5, searchDepth: "basic" });
-    market = {
-      status: "live",
-      note: "Fresh web signals were included for this assessment.",
-      sources: toMarketSources(research.results),
-    };
-  } catch (error) {
-    console.error("[CareerPilot][flightplan] live market search failed", {
-      userId,
-      role: input.role,
-      company: input.company,
-      error: error instanceof Error ? error.message : String(error),
-    });
-    market = {
-      status: "unavailable",
-      note: "Live market search was unavailable, so the assessment will rely on the JD and your internal profile evidence.",
-      sources: [],
-    };
-  }
+  const marketPromise = (async (): Promise<FlightPlanAssessment["market"]> => {
+    try {
+      const research = await tavilySearch(marketQuery, { maxResults: 5, searchDepth: "basic" });
+      return {
+        status: "live",
+        note: "Fresh web signals were included for this assessment.",
+        sources: toMarketSources(research.results),
+      };
+    } catch (error) {
+      console.error("[CareerPilot][flightplan] live market search failed", {
+        userId,
+        role: input.role,
+        company: input.company,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return {
+        status: "unavailable",
+        note: "Live market search was unavailable, so the assessment will rely on the JD and your internal profile evidence.",
+        sources: [],
+      };
+    }
+  })();
 
-  const gitlab = await inspectGitLab(input.gitlabUrl, state);
+  // These checks are independent. Running them together removes an avoidable
+  // 8-second wait before the assessment can even reach the AI provider.
+  const [market, gitlab] = await Promise.all([
+    marketPromise,
+    inspectGitLab(input.gitlabUrl, state),
+  ]);
+  const groundedEvidence = formatEvidenceContext(
+    await retrieveGroundedEvidence(
+      supabase,
+      userId,
+      `${input.company ?? ""} ${input.role} exact job requirements and proof expectations\n${input.jobDescription}`,
+      input.role,
+    ),
+  );
   const candidate = [
     careerStateToPrompt(state),
     `CV status: ${state.resume.hasResume ? "A saved CV analysis is available." : "No CV is available."}`,
@@ -312,6 +327,7 @@ export async function assessFlightPlan(
       ? `Self-description supplied for this assessment:\n${input.selfDescription}`
       : "No self-description supplied.",
     `GitLab review: ${gitlab.note}${gitlab.signals.length ? ` Signals: ${gitlab.signals.join("; ")}` : ""}`,
+    `Grounded role evidence:\n${groundedEvidence}`,
   ].join("\n\n");
   const marketContext = market.sources
     .map((source) => `- ${source.title}: ${source.summary}`)
@@ -326,7 +342,7 @@ export async function assessFlightPlan(
           content: `TARGET ROLE: ${input.role}\nCOMPANY: ${input.company || "Not specified"}\n\nJOB DESCRIPTION:\n${input.jobDescription}\n\nCANDIDATE EVIDENCE:\n${candidate}\n\nCURRENT MARKET SIGNALS:\n${marketContext || "Live market signals were unavailable; do not invent them."}`,
         },
       ],
-      { maxTokens: 1800, temperature: 0.2, timeoutMs: 45_000 },
+      { maxTokens: 1800, temperature: 0.2, timeoutMs: 15_000, totalTimeoutMs: 25_000 },
     );
     const output = parseJsonObject<Record<string, unknown>>(raw);
     const readiness = ["ready", "almost_ready", "not_ready"].includes(String(output["readiness"]))
