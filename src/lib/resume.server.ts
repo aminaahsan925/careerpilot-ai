@@ -648,12 +648,15 @@ export async function analyzeStoredResume(
     .maybeSingle();
   const targetRole = goal.data?.target_role ?? null;
 
-  /* ---------- AI analysis with retry ---------- */
+  /* ---------- Short optional AI enhancement ----------
+   * The deterministic ATS scan is the source of truth and is always saved.
+   * AI must not hold the upload hostage for multiple provider retries.
+   */
   const system =
     "You are an ATS resume reviewer. Return ONLY a single JSON object (no markdown, no code fences) with these exact keys: summary (string), strengths (array of strings), weaknesses (array of strings), detected_skills (array of strings), recommendations (array of {title, impact}), role_matches (array of {role, match} where match is a number 0-100). Be specific and concise.";
   let parsed: Record<string, unknown> = {};
   let aiFailed = false;
-  for (let attempt = 0; attempt < 2; attempt++) {
+  for (let attempt = 0; attempt < 1; attempt++) {
     try {
       const raw = await groqChat(
         [
@@ -663,11 +666,17 @@ export async function analyzeStoredResume(
             content: `Target role: ${targetRole ?? "not specified"}\nResume:\n${resumeText.slice(0, 12000)}`,
           },
         ],
-        { json: true, maxTokens: 1500, temperature: 0.2 },
+        {
+          json: true,
+          maxTokens: 900,
+          temperature: 0.2,
+          timeoutMs: 8_000,
+          totalTimeoutMs: 12_000,
+        },
       );
       parsed = parseJsonObject<Record<string, unknown>>(raw);
-      // If we got at least some useful data, stop retrying
-      if (parsed["strengths"] || parsed["detected_skills"]) break;
+      // If the provider returns an empty/partial object, use deterministic data.
+      if (!parsed["strengths"] && !parsed["detected_skills"]) aiFailed = true;
     } catch (error) {
       console.warn(`[Resume] AI analysis attempt ${attempt + 1} failed.`, {
         error: error instanceof Error ? error.message : String(error),

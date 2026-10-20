@@ -159,7 +159,11 @@ export function useUploadAndAnalyze() {
         throw new Error(msg);
       }
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      // Show the newly-created analysis immediately. The refetch below is
+      // still useful for reconciling server state, but should not leave the
+      // user looking at the previous score while it runs.
+      queryClient.setQueryData(["latest-analysis"], result);
       queryClient.invalidateQueries({ queryKey: ["latest-resume"] });
       queryClient.invalidateQueries({ queryKey: ["latest-analysis"] });
       queryClient.invalidateQueries({ queryKey: ["current-user"] });
@@ -173,7 +177,8 @@ export function useReanalyze() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (resumeId: string) => analyzeResume({ data: { resumeId } }),
-    onSuccess: () => {
+    onSuccess: (result) => {
+      queryClient.setQueryData(["latest-analysis"], result);
       queryClient.invalidateQueries({ queryKey: ["latest-analysis"] });
       queryClient.invalidateQueries({ queryKey: ["current-user"] });
       queryClient.invalidateQueries({ queryKey: ["career-overview"] });
