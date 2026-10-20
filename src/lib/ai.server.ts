@@ -19,43 +19,75 @@ export function parseJsonObject<T>(raw: string | null | undefined): T {
     if (trimmed) candidates.push(trimmed);
   };
 
-  // Common case: the model returns a plain JSON object/array with no prose.
-  if (/^[\[{]/.test(cleaned)) {
-    pushCandidate(cleaned);
-  }
-
-  // Extract the first parseable object/array from mixed model output.
-  for (const token of ["{", "["]) {
-    let index = cleaned.indexOf(token);
-    while (index >= 0) {
-      const end = findMatchingJsonEnd(cleaned, index, token);
-      if (end > index) {
-        pushCandidate(cleaned.slice(index, end + 1));
+  // The model commonly returns a JSON payload embedded in prose or markdown fences.
+  for (const open of ["{", "["] as const) {
+    const startIndex = cleaned.indexOf(open);
+    if (startIndex >= 0) {
+      const endIndex = findBalancedJsonEnd(cleaned, startIndex, open);
+      if (endIndex > startIndex) {
+        pushCandidate(cleaned.slice(startIndex, endIndex + 1));
       }
-      index = cleaned.indexOf(token, index + 1);
+    }
+
+    // Some model outputs contain more than one JSON payload. Keep all parseable matches.
+    let searchIndex = cleaned.indexOf(open, startIndex + 1);
+    while (searchIndex >= 0) {
+      const endIndex = findBalancedJsonEnd(cleaned, searchIndex, open);
+      if (endIndex > searchIndex) {
+        pushCandidate(cleaned.slice(searchIndex, endIndex + 1));
+      }
+      searchIndex = cleaned.indexOf(open, searchIndex + 1);
     }
   }
 
+  if (candidates.length === 0) {
+    // Last resort: if the whole response is JSON-ish, try the whole body.
+    pushCandidate(cleaned);
+  }
+
   for (const candidate of candidates) {
-    const normalized = candidate.replace(/,\s*([}\]])/g, "$1");
+    const normalized = candidate
+      .replace(/,\s*([}\]])/g, "$1")
+      .replace(/\u0000/g, "");
+
     try {
       return JSON.parse(normalized) as T;
     } catch {
-      // Try the next candidate. The model often wraps JSON with commentary.
+      // Try the next candidate; some models include commentary before or after valid JSON.
     }
   }
 
   throw new AiError("The AI response couldn't be read. Please try again.");
 }
 
-function findMatchingJsonEnd(text: string, startIndex: number, opener: "{" | "[") {
+function findBalancedJsonEnd(text: string, startIndex: number, opener: "{" | "[") {
   const closer = opener === "{" ? "}" : "]";
   let depth = 0;
+  let inString = false;
+  let escaped = false;
 
   for (let index = startIndex; index < text.length; index += 1) {
-    const char = text[index];
-    if (char === opener) depth += 1;
-    else if (char === closer) {
+    const current = text[index];
+
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+
+    if (current === "\\") {
+      escaped = true;
+      continue;
+    }
+
+    if (current === '"') {
+      inString = !inString;
+      continue;
+    }
+
+    if (inString) continue;
+
+    if (current === opener) depth += 1;
+    else if (current === closer) {
       depth -= 1;
       if (depth === 0) return index;
     }
