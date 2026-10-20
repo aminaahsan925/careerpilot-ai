@@ -133,8 +133,10 @@ export function parseJsonObject<T>(raw: string | null | undefined): T {
   const text = String(raw ?? "").trim();
   if (!text) throw new AiError("The AI response was empty. Please try again.");
   const cleaned = text
+    .replace(/^\uFEFF/, "")
     .replace(/```json/gi, "")
     .replace(/```/g, "")
+    .replace(/<think>[\s\S]*?<\/think>/gi, "")
     .replace(/^\s*json\s*\n?/i, "")
     .replace(/\u2028/g, " ")
     .trim();
@@ -142,6 +144,11 @@ export function parseJsonObject<T>(raw: string | null | undefined): T {
   const push = (value: string) => {
     if (value.trim()) candidates.push(value.trim());
   };
+  try {
+    return JSON.parse(cleaned) as T;
+  } catch {
+    // The provider may surround the JSON with a short explanation.
+  }
   for (const opener of ["{", "["] as const) {
     const start = cleaned.indexOf(opener);
     if (start < 0) continue;

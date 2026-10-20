@@ -224,7 +224,8 @@ OUTPUT: Return ONLY a JSON object (no markdown fences, no prose) with this struc
   }]
 }
 
-SCOPE: 4-6 paths (2 beginner, 1-2 intermediate, 1 expert). Each path: 3-5 days, 4-6 MCQs.
+SCOPE: Exactly 4 paths (2 beginner, 1 intermediate, 1 expert). Each path: exactly 3 days and exactly 4 MCQs.
+Keep every string concise: titles under 10 words, explanations under 25 words, and tasks under 40 words so the complete JSON fits in the response budget.
 Order from most urgent gap to least. Include ≥1 deployment and ≥1 problem-solving path.`;
 
 /* ------------------------------------------------------------------ *
@@ -355,7 +356,7 @@ export async function generateRoadmapV2(
             { role: "system", content: ROADMAP_V2_SYSTEM_PROMPT },
             { role: "user", content: userMessage },
           ],
-          { json: true, maxTokens: 5000, temperature: 0.4, timeoutMs: 60_000 },
+          { json: true, maxTokens: 8_000, temperature: 0.3, timeoutMs: 45_000 },
         );
         break; // success — exit retry loop
       } catch (err) {
@@ -368,7 +369,21 @@ export async function generateRoadmapV2(
     }
 
     // 9. Parse response
-    const parsed = parseJsonObject<{ paths?: Record<string, unknown>[] }>(raw);
+    let parsed: { paths?: Record<string, unknown>[] };
+    try {
+      parsed = parseJsonObject<{ paths?: Record<string, unknown>[] }>(raw);
+    } catch (parseError) {
+      console.error("[RoadmapV2] AI JSON parse failed", {
+        rawLength: raw?.length ?? 0,
+        rawTail: raw?.slice(-240) ?? "",
+        error: parseError instanceof Error ? parseError.message : String(parseError),
+      });
+      return {
+        success: false,
+        pathCount: 0,
+        error: "The roadmap response was incomplete. Please try generating it again.",
+      };
+    }
     const pathsRaw = Array.isArray(parsed.paths) ? parsed.paths : [];
 
     if (!pathsRaw.length) {
