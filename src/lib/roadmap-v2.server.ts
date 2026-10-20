@@ -588,6 +588,24 @@ export async function generateRoadmapV2(
  * 3. Helper — getRoadmapProgress
  * ------------------------------------------------------------------ */
 
+/** Return the user's generated learning paths in roadmap order. */
+export async function getLearningPaths(userId: string) {
+  const { data, error } = await db
+    .from("roadmap_learning_paths")
+    .select(
+      "id, user_id, title, description, level, category, market_justification, outdated_warning, must_know, curated_resources, position, completed, created_at",
+    )
+    .eq("user_id", userId)
+    .order("position", { ascending: true });
+
+  if (error) {
+    console.error("[RoadmapV2] learning paths read failed:", error.message);
+    throw new Error("Unable to load your roadmap. Please try again.");
+  }
+
+  return data ?? [];
+}
+
 export async function getRoadmapProgress(userId: string) {
   // These reads are independent. Fetch them together so the roadmap sidebar
   // does not wait for three sequential database round trips.
