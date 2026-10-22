@@ -480,7 +480,7 @@ function WizardSetup({
                 </span>
                 <div>
                   <h2 className="font-display text-2xl font-black tracking-tight sm:text-3xl">
-                    Diagnose Rejection Risk for {role}
+                    Check Role Evidence Gaps for {role}
                   </h2>
                   <p className="mt-1 text-xs text-white/70">
                     Target Employer:{" "}
@@ -600,12 +600,12 @@ function DiagnosticResultsView({
               </span>
               <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/20 px-3 py-1 text-xs font-bold text-rose-300 border border-rose-500/30">
                 {d.targetRole ? <ShieldAlert className="h-3 w-3" /> : <Compass className="h-3 w-3" />}
-                {d.targetRole ? "Employer Risk Estimate" : "Career Starting-Point Assessment"}
+                {d.targetRole ? "Role Evidence Gap" : "Career Starting-Point Assessment"}
               </span>
             </div>
 
               <h1 className="font-display text-2xl font-black leading-tight sm:text-3xl lg:text-4xl">
-                {d.targetRole ? "Rejection Diagnosis:" : "Starting-Point Diagnosis:"} <br />
+                {d.targetRole ? "Role Evidence Check:" : "Starting-Point Diagnosis:"} <br />
                 <span className="text-terracotta underline decoration-terracotta/40 underline-offset-4">
                   {d.targetRole ? companyDiag.riskTier : "No target selected"}
                 </span>
@@ -613,8 +613,8 @@ function DiagnosticResultsView({
 
               <p className="text-xs leading-relaxed text-white/75 sm:text-sm">
                 {d.targetRole ? (
-                  <>Audited for <strong className="text-white">{d.targetRole}</strong> @{" "}
-                    <strong className="text-terracotta">{companyDiag.companyName}</strong>. Findings are based on the profile evidence currently recorded.</>
+                  <>For <strong className="text-white">{d.targetRole}</strong> at{" "}
+                    <strong className="text-terracotta">{companyDiag.companyName}</strong>: this measures role must-haves without project or repository proof. It is not a prediction of hiring decisions.</>
                 ) : (
                   <>No employer rejection risk is estimated. This assessment uses your recorded profile and intake to identify a realistic next learning step.</>
                 )}
@@ -625,14 +625,14 @@ function DiagnosticResultsView({
               <div className="flex items-center gap-3">
                 <div className="relative flex h-16 w-16 items-center justify-center rounded-full border-2 border-terracotta/60 bg-terracotta/20 shadow-lg">
                   <span className="text-xl font-black text-terracotta">
-                    {d.targetRole ? `${companyDiag.rejectionRisk}%` : "N/A"}
+                    {d.targetRole && companyDiag.rejectionRisk !== null ? `${companyDiag.rejectionRisk}%` : "N/A"}
                   </span>
                 </div>
                 <div className="text-left">
                   <p className="text-xs font-black uppercase tracking-wider text-white">
-                    {d.targetRole ? "Rejection Risk" : "Employer Risk"}
+                    {d.targetRole ? "Unproven Must-Haves" : "Employer Risk"}
                   </p>
-                  <p className="text-[11px] text-white/60">{d.targetRole ? "Estimate" : "Not assessed"}</p>
+                  <p className="text-[11px] text-white/60">{d.targetRole ? "Without project/repo proof" : "Not assessed"}</p>
                 </div>
               </div>
 

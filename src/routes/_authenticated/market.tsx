@@ -314,6 +314,11 @@ function MarketRealityPage() {
         : "Beginner / building proof";
   const profileSkills = user?.skills?.map((skill) => skill.name).slice(0, 5) ?? [];
   const firstOutdatedItem = outdatedData?.outdatedItems[0];
+  const localDemandSummary = market.pakistanMarket?.demand?.trim() ?? "";
+  const globalDemandSummary = market.globalMarket?.demand?.trim() ?? "";
+  const localDemandIsLong = localDemandSummary.length > 52;
+  const globalDemandIsLong = globalDemandSummary.length > 52;
+  const localHiringCities = market.pakistanMarket?.hiringCities?.filter(Boolean) ?? [];
 
   return (
     <AppLayout
@@ -614,7 +619,7 @@ function MarketRealityPage() {
 
         {/* Step-by-Step Progressive Navigation Rail */}
         <div className="card-surface p-3 sm:p-4">
-          <div className="flex items-center justify-between overflow-x-auto gap-2">
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-3 2xl:grid-cols-6">
             {STEPS.map((s) => {
               const isCurrent = activeStep === s.id;
               const isPassed = activeStep > s.id;
@@ -624,7 +629,7 @@ function MarketRealityPage() {
                   type="button"
                   onClick={() => goToStep(s.id)}
                   className={cn(
-                    "flex min-w-[140px] flex-1 items-center gap-2.5 rounded-2xl px-3.5 py-2.5 text-left transition-all border",
+                    "flex min-w-0 items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left transition-all border sm:px-3.5",
                     isCurrent
                       ? "border-terracotta/40 bg-ink text-white shadow-md scale-102"
                       : isPassed
@@ -645,8 +650,8 @@ function MarketRealityPage() {
                     {isPassed ? <Check className="h-3.5 w-3.5" /> : s.id}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-bold leading-tight">{s.title}</p>
-                    <p className="truncate text-[10px] text-muted-foreground opacity-80">
+                    <p className="text-xs font-bold leading-tight">{s.title}</p>
+                    <p className="text-[10px] leading-tight text-muted-foreground opacity-80">
                       {s.subtitle}
                     </p>
                   </div>
@@ -782,33 +787,40 @@ function MarketRealityPage() {
                 transition={{ duration: 0.25 }}
                 className="space-y-6"
               >
-                <div className="grid gap-6 md:grid-cols-2">
+                <div className={cn("grid gap-6", marketScope === "both" ? "2xl:grid-cols-2" : "grid-cols-1")}>
                   {/* Pakistan Local Market Truth */}
                   {(marketScope === "both" || marketScope === "pakistan") && (
                     <div className="card-surface p-6 sm:p-8 space-y-5 border-emerald-500/25">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Building2 className="h-5 w-5 text-emerald-600" />
-                          <h2 className="font-display text-lg font-bold text-foreground">
+                      <div className="space-y-3">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="flex min-w-0 items-start gap-2">
+                            <Building2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+                            <h2 className="min-w-0 break-words font-display text-lg font-bold leading-tight text-foreground">
                             Pakistan Local Market Reality
-                          </h2>
+                            </h2>
+                          </div>
+                          {!localDemandIsLong && (
+                            <span className="max-w-full rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-bold leading-tight text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
+                              {localDemandSummary || "Local market context"}
+                            </span>
+                          )}
                         </div>
-                        <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/40 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800 dark:text-emerald-300 uppercase">
-                          {market.pakistanMarket?.demand || "High Volume"}
-                        </span>
+                        {localDemandIsLong && (
+                          <p className="rounded-xl border border-emerald-500/15 bg-emerald-50/70 p-3 text-xs leading-relaxed text-emerald-950 dark:bg-emerald-950/25 dark:text-emerald-100">
+                            {localDemandSummary}
+                          </p>
+                        )}
                       </div>
 
                       <div className="rounded-xl bg-secondary/60 p-4 text-xs space-y-2 border border-border/60">
                         <p className="font-bold text-foreground">Top Hiring Hubs in Pakistan:</p>
                         <div className="flex flex-wrap gap-1.5">
-                          {(
-                            market.pakistanMarket?.hiringCities || [
+                          {(localHiringCities.length ? localHiringCities : [
                               "Lahore",
                               "Karachi",
                               "Islamabad / Rawalpindi",
                               "Remote",
-                            ]
-                          ).map((c) => (
+                            ]).map((c) => (
                             <span
                               key={c}
                               className="rounded-md bg-card border border-border px-2.5 py-1 font-semibold text-foreground text-xs shadow-xs"
@@ -860,16 +872,25 @@ function MarketRealityPage() {
                   {/* Global Remote Market Truth */}
                   {(marketScope === "both" || marketScope === "global") && (
                     <div className="card-surface p-6 sm:p-8 space-y-5 border-blue-500/25">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Globe className="h-5 w-5 text-blue-600" />
-                          <h2 className="font-display text-lg font-bold text-foreground">
-                            Global Remote Market Reality
-                          </h2>
+                      <div className="space-y-3">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="flex min-w-0 items-start gap-2">
+                            <Globe className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
+                            <h2 className="min-w-0 break-words font-display text-lg font-bold leading-tight text-foreground">
+                              Global Remote Market Reality
+                            </h2>
+                          </div>
+                          {!globalDemandIsLong && (
+                            <span className="max-w-full rounded-full bg-blue-100 px-2.5 py-1 text-[10px] font-bold leading-tight text-blue-800 dark:bg-blue-950/40 dark:text-blue-300">
+                              {globalDemandSummary || "Global market context"}
+                            </span>
+                          )}
                         </div>
-                        <span className="rounded-full bg-blue-100 dark:bg-blue-950/40 px-2.5 py-0.5 text-[10px] font-bold text-blue-800 dark:text-blue-300 uppercase">
-                          {market.globalMarket?.demand || "High Bar"}
-                        </span>
+                        {globalDemandIsLong && (
+                          <p className="rounded-xl border border-blue-500/15 bg-blue-50/70 p-3 text-xs leading-relaxed text-blue-950 dark:bg-blue-950/25 dark:text-blue-100">
+                            {globalDemandSummary}
+                          </p>
+                        )}
                       </div>
 
                       <div className="rounded-xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/40 p-4 text-xs text-blue-900 dark:text-blue-200 space-y-1">
