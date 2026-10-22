@@ -25,7 +25,13 @@ export type RagSeedItem = {
   statement: string;
   provenance: string;
   sourceType?: "market_truth" | "job_description" | "company_truth" | "system";
+  sourceUrl?: string;
+  trustScore?: number;
+  publishedAt?: string;
+  expiresAt?: string;
 };
+
+export type RagIndexOptions = { force?: boolean };
 
 type MatchRow = {
   id: string;
@@ -196,8 +202,9 @@ export async function indexRagEvidence(
   userId: string,
   items: RagSeedItem[],
   titlePrefix: string,
+  options: RagIndexOptions = {},
 ): Promise<void> {
-  if (process.env["RAG_AUTO_INDEX"] !== "true") return;
+  if (!options.force && process.env["RAG_AUTO_INDEX"] !== "true") return;
 
   // The generated Supabase types intentionally do not know about the new
   // migration until the project regenerates them. Keep this boundary typed
@@ -217,9 +224,12 @@ export async function indexRagEvidence(
             source_type: item.sourceType ?? "market_truth",
             source_key: item.id,
             title: `${titlePrefix} — ${item.provenance}`.slice(0, 240),
+            source_url: item.sourceUrl ?? null,
             content_hash: hash,
-            trust_score: 0.8,
-            metadata: { indexed_by: "careerpilot", evidence_id: item.id },
+            trust_score: Math.max(0, Math.min(1, item.trustScore ?? 0.8)),
+            published_at: item.publishedAt ?? null,
+            expires_at: item.expiresAt ?? null,
+            metadata: { indexed_by: "careerpilot", evidence_id: item.id, provenance: item.provenance },
           },
           { onConflict: "user_id,source_type,source_key,content_hash" },
         )
@@ -234,7 +244,7 @@ export async function indexRagEvidence(
           content: item.statement,
           embedding: `[${embedding.join(",")}]`,
           token_count: item.statement.split(/\s+/).length,
-          metadata: { provenance: item.provenance },
+          metadata: { provenance: item.provenance, source_url: item.sourceUrl ?? null },
         },
         { onConflict: "document_id,chunk_index" },
       );

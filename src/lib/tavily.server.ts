@@ -60,7 +60,12 @@ function ensureDnsFix(): Promise<void> {
  */
 export async function tavilySearch(
   query: string,
-  opts: { maxResults?: number; searchDepth?: "basic" | "advanced" } = {},
+  opts: {
+    maxResults?: number;
+    searchDepth?: "basic" | "advanced";
+    includeDomains?: string[];
+    timeoutMs?: number;
+  } = {},
 ): Promise<TavilySearchResponse> {
   await ensureDnsFix();
 
@@ -78,7 +83,8 @@ export async function tavilySearch(
 
   // Use AbortController for timeout since fetch doesn't have a native timeout option
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), TAVILY_TIMEOUT_MS);
+  const timeoutMs = Math.min(Math.max(opts.timeoutMs ?? TAVILY_TIMEOUT_MS, 1_000), TAVILY_TIMEOUT_MS);
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   let res: Response;
   try {
@@ -92,6 +98,7 @@ export async function tavilySearch(
         query,
         max_results: maxResults,
         search_depth: searchDepth,
+        ...(opts.includeDomains?.length ? { include_domains: opts.includeDomains.slice(0, 10) } : {}),
         include_answer: false,
         include_raw_content: false,
         include_images: false,
@@ -107,7 +114,7 @@ export async function tavilySearch(
     });
     if (isAbort) {
       throw new TavilyError(
-        `Web research service timed out after ${TAVILY_TIMEOUT_MS / 1000}s. The service may be slow or unreachable.`,
+        `Web research service timed out after ${Math.round(timeoutMs / 1000)}s. The service may be slow or unreachable.`,
       );
     }
     throw new TavilyError(
