@@ -317,7 +317,6 @@ function readBenchmark(value: unknown): MarketBenchmark | null {
   return candidate.roleId ? (candidate as MarketBenchmark) : null;
 }
 
-const DEFAULT_DIAGNOSIS_ROLE = "associate software engineer";
 const NO_TARGET_PHRASES = [
   "i do not know my target",
   "i don't know my target",
@@ -349,7 +348,20 @@ function hasRecordedSkill(state: CareerState, terms: string[]): boolean {
   });
 }
 
-function buildFoundationPlan(state: CareerState): {
+type DiagnosisIntake = {
+  university_year: string | null;
+  what_built: string | null;
+  languages_frameworks: string;
+  practical_experience: string | null;
+  deployment_experience: string | null;
+  primary_career_goal: string;
+  biggest_blocker: string;
+  weekly_hours: number | null;
+  learn_next_skill: string | null;
+  why_not_learned: string | null;
+};
+
+function buildFoundationPlan(state: CareerState, intake: DiagnosisIntake | null): {
   stage: string;
   priorities: DiagnosisPriority[];
   nextBestAction: NextBestAction;
@@ -359,7 +371,8 @@ function buildFoundationPlan(state: CareerState): {
   const hasProof = state.skills.some((skill) =>
     skill.sources.some((source) => source === "project" || source === "github"),
   ) || hasProject;
-  const novice = state.skills.length === 0 && !state.resume.hasResume && !hasProject;
+  const reportedExperience = Boolean(intake?.what_built || intake?.practical_experience);
+  const novice = state.skills.length === 0 && !state.resume.hasResume && !hasProject && !reportedExperience;
 
   const foundations = [
     { title: "Programming fundamentals", terms: ["programming", "javascript", "python", "java", "c++", "typescript"] },
@@ -374,19 +387,29 @@ function buildFoundationPlan(state: CareerState): {
     const foundationAction = nextFoundation
       ? `Learn ${nextFoundation.title} through short lessons and small exercises; do not start advanced frameworks yet.`
       : "Practice the fundamentals you have recorded with a small, runnable exercise.";
+    const baselineAction = reportedExperience
+      ? `Turn your reported experience${intake?.what_built ? ` (${intake.what_built.slice(0, 100)})` : ""} into checkable evidence: write what you built, what you did yourself, and what still needs practice.`
+      : "Record your education, interests, available study time, and any technical experience you already have.";
+    const blockerContext = intake?.biggest_blocker
+      ? ` Your intake identifies this blocker: ${intake.biggest_blocker.slice(0, 140)}.`
+      : "";
     const priorities: DiagnosisPriority[] = [
       {
-        title: "Establish your starting point",
+        title: reportedExperience ? "Verify your reported experience" : "Establish your starting point",
         impact: "high",
-        reason: "No target role or demonstrated technical evidence is recorded yet, so an advanced role-specific plan would be guesswork.",
-        action: "Record your education, interests, available study time, and any technical experience you already have.",
-        evidence_to_produce: "A short baseline: topics you have tried, what you can build independently, and what still feels unfamiliar.",
+        reason: `No target role is selected, so an advanced role-specific plan would be guesswork.${blockerContext}`,
+        action: baselineAction,
+        evidence_to_produce: reportedExperience
+          ? "A short walkthrough or code sample that separates your own work from team/class contributions."
+          : "A short baseline: topics you have tried, what you can build independently, and what still feels unfamiliar.",
       },
       {
-        title: nextFoundation?.title ?? "Build core technical fundamentals",
+        title: nextFoundation?.title ?? (intake?.learn_next_skill || "Build core technical fundamentals"),
         impact: "high",
         reason: "A broad foundation is useful while you are still choosing a direction.",
-        action: foundationAction,
+        action: intake?.learn_next_skill && nextFoundation && hasRecordedSkill(state, nextFoundation.terms)
+          ? `Practice ${intake.learn_next_skill.slice(0, 100)} with a beginner exercise, and verify its prerequisites before moving to advanced tools.`
+          : foundationAction,
         evidence_to_produce: "A small working exercise with a README explaining what you learned and where you got stuck.",
       },
       {
@@ -401,15 +424,21 @@ function buildFoundationPlan(state: CareerState): {
       stage: "Foundations and career exploration",
       priorities,
       nextBestAction: {
-        action: foundationAction,
-        why: "The profile has no recorded baseline or proof, so the next useful step is a beginner-level foundation rather than advanced role preparation.",
+        action: priorities[1]!.action,
+        why: reportedExperience
+          ? "Your intake includes experience, but it is not yet backed by verified artifacts. Validate that evidence before choosing an advanced track."
+          : "The profile has no recorded baseline or proof, so the next useful step is a beginner-level foundation rather than advanced role preparation.",
         evidence_to_produce: "One small exercise that runs, plus a brief explanation of the concepts used.",
-        estimated_effort: "3-5 focused hours this week",
+        estimated_effort: intake?.weekly_hours
+          ? `${Math.min(intake.weekly_hours, 40)} hours available this week`
+          : "3-5 focused hours this week",
       },
       sequence: [
-        { when: "now", action: "Record your current knowledge and choose one beginner programming foundation." },
-        { when: "next", action: foundationAction },
-        { when: "after", action: "Complete small tasks across a few technology areas, then choose a target based on evidence and interest." },
+        { when: "now", action: priorities[0]!.action },
+        { when: "next", action: priorities[1]!.action },
+        { when: "after", action: intake?.why_not_learned
+            ? `Address the blocker you reported (${intake.why_not_learned.slice(0, 100)}) while trying small tasks in different technology areas.`
+            : "Complete small tasks across a few technology areas, then choose a target based on evidence and interest." },
       ],
     };
   }
@@ -438,11 +467,13 @@ function buildFoundationPlan(state: CareerState): {
       evidence_to_produce: "A short self-check backed by a small exercise, not only a self-rating.",
     },
     {
-      title: "Choose a target after a small trial",
+      title: intake?.learn_next_skill ? `Validate your next-skill choice: ${intake.learn_next_skill.slice(0, 80)}` : "Choose a target after a small trial",
       impact: "medium",
       reason: "A specific role is needed before CareerPilot can make a precise job-requirement gap analysis.",
-      action: "Try a short task in two role families that match your current skills, then choose one target to assess.",
-      evidence_to_produce: "One completed trial task and a selected role direction.",
+      action: intake?.learn_next_skill
+        ? `Try a small beginner task in ${intake.learn_next_skill.slice(0, 100)} and compare it with one adjacent area before specializing.`
+        : "Try a short task in two role families that match your current skills, then choose one target to assess.",
+      evidence_to_produce: "A completed trial task and a selected role direction.",
     },
   ];
   const first = priorities[0]!;
@@ -576,20 +607,39 @@ export async function runCareerDiagnosis(
   options: { company?: string; role?: string } = {},
 ): Promise<CareerDiagnosis> {
   console.info("[CareerPilot][diagnosis-engine] start", { userId, options });
-  const loadedState = await buildCareerState(supabase, userId);
+  const [loadedState, intakeResult] = await Promise.all([
+    buildCareerState(supabase, userId),
+    supabase.from("diagnostic_intakes").select("*").eq("user_id", userId).maybeSingle(),
+  ]);
+  if (intakeResult.error) {
+    console.warn("[CareerPilot][diagnosis-engine] intake unavailable", {
+      userId,
+      message: intakeResult.error.message,
+    });
+  }
+  const intake = intakeResult.data as DiagnosisIntake | null;
   const requestedRole = options.role?.trim() || null;
   const storedRole = loadedState.targetRole?.trim() || null;
-  const defaultRoleWasOnlyPlaceholder =
-    !storedRole && normalizeText(requestedRole) === DEFAULT_DIAGNOSIS_ROLE;
-  const targetRole = hasClearTarget(storedRole)
-    ? storedRole
-    : defaultRoleWasOnlyPlaceholder || !hasClearTarget(requestedRole)
-      ? null
-      : requestedRole;
+  // An explicit wizard choice (including "I don't know yet") wins over stale
+  // profile/previous-diagnosis state. Only fall back to the saved goal when
+  // this request did not include a role.
+  const targetRole = requestedRole
+    ? hasClearTarget(requestedRole) ? requestedRole : null
+    : hasClearTarget(storedRole) ? storedRole : null;
   const targetKnown = Boolean(targetRole);
   // Old skill gaps belong to a selected job. Do not carry them into a
   // direction-discovery diagnosis where they would create false precision.
-  const state: CareerState = targetKnown ? loadedState : { ...loadedState, gaps: [] };
+  const activeJobMatchesSelection = Boolean(
+    targetKnown &&
+      loadedState.targetJob &&
+      normalizeText(loadedState.targetJob.title) === normalizeText(targetRole) &&
+      (!options.company?.trim() || normalizeText(loadedState.targetJob.company) === normalizeText(options.company)),
+  );
+  const state: CareerState = !targetKnown
+    ? { ...loadedState, targetRole: null, targetJob: null, gaps: [] }
+    : requestedRole && !activeJobMatchesSelection
+      ? { ...loadedState, targetJob: null, gaps: [] }
+      : loadedState;
   const targetCompany = targetKnown
     ? options.company?.trim() || state.targetJob?.company || null
     : null;
@@ -668,7 +718,7 @@ export async function runCareerDiagnosis(
       return true;
     })
     .slice(0, 10);
-  const foundationPlan = targetKnown ? null : buildFoundationPlan(state);
+  const foundationPlan = targetKnown ? null : buildFoundationPlan(state, intake);
 
   // Generate the deterministic company rejection diagnosis baseline
   const deterministicCompanyDiag = targetKnown
@@ -682,6 +732,19 @@ ${targetKnown ? `Target selected: ${targetRole}. Produce a role-specific evidenc
 
 === CANDIDATE CAREER STATE ===
 ${careerStateToPrompt(state)}
+${intake ? `
+=== STUDENT-REPORTED DIAGNOSTIC INTAKE (unverified) ===
+Education stage: ${intake.university_year ?? "not provided"}
+What they have built: ${intake.what_built ?? "not provided"}
+Languages/frameworks: ${intake.languages_frameworks}
+Practical experience: ${intake.practical_experience ?? "not provided"}
+Deployment experience: ${intake.deployment_experience ?? "not provided"}
+Stated goal: ${targetKnown ? intake.primary_career_goal : "No target selected; explicit diagnosis choice overrides any older saved goal."}
+Biggest blocker: ${intake.biggest_blocker}
+Weekly learning time: ${intake.weekly_hours ?? "not provided"}
+Wants to learn next: ${intake.learn_next_skill ?? "not provided"}
+Why not learned yet: ${intake.why_not_learned ?? "not provided"}
+Treat these answers as self-reported, not verified proof.` : ""}
 
 === TARGET ROLE & TARGET COMPANY ===
 Target Role: ${targetRole ?? "Not selected; career direction discovery"}

@@ -75,13 +75,23 @@ const SCAN_STEPS = [
 
 function ScanningOverlay({ companyName, roleName }: { companyName: string; roleName: string }) {
   const [currentStep, setCurrentStep] = useState(0);
+  const discoveryMode = !roleName.trim() || roleName.toLowerCase().includes("don't know");
+  const steps = discoveryMode
+    ? [
+        "Reading your saved skills, education, and experience...",
+        "Separating self-reported claims from demonstrated evidence...",
+        "Checking beginner prerequisites before advanced topics...",
+        "Comparing your intake with official career-pathway sources...",
+        "Building a starting-point plan without guessing an employer...",
+      ]
+    : SCAN_STEPS;
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentStep((prev) => (prev < SCAN_STEPS.length - 1 ? prev + 1 : prev));
+      setCurrentStep((prev) => (prev < steps.length - 1 ? prev + 1 : prev));
     }, 1100);
     return () => clearInterval(interval);
-  }, []);
+  }, [steps.length]);
 
   return (
     <motion.div
@@ -117,20 +127,24 @@ function ScanningOverlay({ companyName, roleName }: { companyName: string; roleN
       </div>
 
       <h2 className="mt-3 font-display text-2xl font-black tracking-tight text-foreground sm:text-3xl">
-        Diagnosing Rejection Risk for <span className="text-terracotta">{roleName}</span> @{" "}
-        <span className="text-foreground underline decoration-terracotta/40 decoration-wavy underline-offset-4">
-          {companyName}
-        </span>
+        {discoveryMode ? (
+          <>Building your <span className="text-terracotta">career starting point</span></>
+        ) : (
+          <>Diagnosing <span className="text-terracotta">{roleName}</span> @{" "}
+            <span className="text-foreground underline decoration-terracotta/40 decoration-wavy underline-offset-4">{companyName}</span>
+          </>
+        )}
       </h2>
 
       <p className="mt-2 text-xs text-muted-foreground max-w-lg mx-auto">
-        Evaluating your profile against real recruiter hiring bars, production requirements, and
-        entry-level filters.
+        {discoveryMode
+          ? "Using your profile and intake to identify the next appropriate learning step—without assuming a target role."
+          : "Evaluating your profile against role-specific requirements and evidence."}
       </p>
 
       {/* Step by step terminal audit feed */}
       <div className="mx-auto mt-8 max-w-lg space-y-2.5 text-left">
-        {SCAN_STEPS.map((stepText, idx) => {
+        {steps.map((stepText, idx) => {
           const isDone = idx < currentStep;
           const isCurrent = idx === currentStep;
           return (
@@ -186,14 +200,18 @@ function WizardSetup({
   const [selectedCompany, setSelectedCompany] = useState(targetCompany || "Systems Limited");
   const [customCompany, setCustomCompany] = useState("");
   const [isCustom, setIsCustom] = useState(false);
-  const [role, setRole] = useState(targetRole || "Associate Software Engineer");
+  const [role, setRole] = useState(targetRole || "I don't know my target yet");
+
+  useEffect(() => {
+    setRole(targetRole || "I don't know my target yet");
+  }, [targetRole]);
 
   const effectiveCompany =
     isCustom && customCompany.trim() ? customCompany.trim() : selectedCompany;
   const matchedTruth = matchCompanyTruth(effectiveCompany);
 
   const handleStart = () => {
-    onRunDiagnosis(effectiveCompany, role.trim() || "Associate Software Engineer");
+    onRunDiagnosis(effectiveCompany, role.trim() || "I don't know my target yet");
   };
 
   return (
@@ -380,6 +398,18 @@ function WizardSetup({
                 placeholder="e.g. Associate Software Engineer, Full Stack MERN, Flutter Developer..."
                 className="h-12 rounded-xl text-sm border-border focus:border-terracotta shadow-xs"
               />
+              <button
+                type="button"
+                onClick={() => setRole("I don't know my target yet")}
+                className={cn(
+                  "rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all border",
+                  role.toLowerCase().includes("don't know")
+                    ? "border-terracotta bg-terracotta text-white shadow-xs"
+                    : "border-border bg-card text-muted-foreground hover:border-terracotta/40 hover:text-foreground",
+                )}
+              >
+                I don't know my target yet
+              </button>
             </div>
 
             <div>
@@ -569,22 +599,25 @@ function DiagnosticResultsView({
                 <Building2 className="h-3.5 w-3.5" /> Technical Audit Verdict
               </span>
               <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/20 px-3 py-1 text-xs font-bold text-rose-300 border border-rose-500/30">
-                <ShieldAlert className="h-3 w-3" /> Critical Screen-Out Risk
+                {d.targetRole ? <ShieldAlert className="h-3 w-3" /> : <Compass className="h-3 w-3" />}
+                {d.targetRole ? "Employer Risk Estimate" : "Career Starting-Point Assessment"}
               </span>
             </div>
 
               <h1 className="font-display text-2xl font-black leading-tight sm:text-3xl lg:text-4xl">
-                Rejection Diagnosis: <br />
+                {d.targetRole ? "Rejection Diagnosis:" : "Starting-Point Diagnosis:"} <br />
                 <span className="text-terracotta underline decoration-terracotta/40 underline-offset-4">
-                  {companyDiag.riskTier}
+                  {d.targetRole ? companyDiag.riskTier : "No target selected"}
                 </span>
               </h1>
 
               <p className="text-xs leading-relaxed text-white/75 sm:text-sm">
-                Audited for <strong className="text-white">{d.targetRole}</strong> @{" "}
-                <strong className="text-terracotta">{companyDiag.companyName}</strong>. Automated
-                screening systems and engineering leads will flag your profile due to missing
-                production proof artifacts and unverified technical depth.
+                {d.targetRole ? (
+                  <>Audited for <strong className="text-white">{d.targetRole}</strong> @{" "}
+                    <strong className="text-terracotta">{companyDiag.companyName}</strong>. Findings are based on the profile evidence currently recorded.</>
+                ) : (
+                  <>No employer rejection risk is estimated. This assessment uses your recorded profile and intake to identify a realistic next learning step.</>
+                )}
               </p>
             </div>
 
@@ -592,14 +625,14 @@ function DiagnosticResultsView({
               <div className="flex items-center gap-3">
                 <div className="relative flex h-16 w-16 items-center justify-center rounded-full border-2 border-terracotta/60 bg-terracotta/20 shadow-lg">
                   <span className="text-xl font-black text-terracotta">
-                    {companyDiag.rejectionRisk}%
+                    {d.targetRole ? `${companyDiag.rejectionRisk}%` : "N/A"}
                   </span>
                 </div>
                 <div className="text-left">
                   <p className="text-xs font-black uppercase tracking-wider text-white">
-                    Rejection Risk
+                    {d.targetRole ? "Rejection Risk" : "Employer Risk"}
                   </p>
-                  <p className="text-[11px] text-white/60">Screening Failure Rate</p>
+                  <p className="text-[11px] text-white/60">{d.targetRole ? "Estimate" : "Not assessed"}</p>
                 </div>
               </div>
 
@@ -609,7 +642,7 @@ function DiagnosticResultsView({
                 className="h-10 rounded-xl border-white/20 bg-white/10 text-xs font-bold text-white shadow-xs hover:bg-white/20"
                 disabled={isRerunning}
                 onClick={() =>
-                  onRerun(companyDiag.companyName, d.targetRole || "Associate Software Engineer")
+                  onRerun(companyDiag.companyName, d.targetRole || "I don't know my target yet")
                 }
               >
                 {isRerunning ? (
@@ -1025,9 +1058,13 @@ function DiagnosisPage() {
     runDiagnosis.mutate(
       { company, role },
       {
-        onSuccess: () => {
-          toast.success(`Diagnostic audit complete for ${role} @ ${company}!`);
-          void overview.refetch();
+        onSuccess: async (diagnosis) => {
+          toast.success(
+            diagnosis.targetRole
+              ? `Diagnostic audit refreshed for ${diagnosis.targetRole}${diagnosis.targetCompany ? ` @ ${diagnosis.targetCompany}` : ""}.`
+              : "Career starting-point diagnosis refreshed.",
+          );
+          await overview.refetch();
         },
         onError: (err) => toast.error(err instanceof Error ? err.message : "Diagnosis failed"),
       },
@@ -1103,10 +1140,10 @@ function DiagnosisPage() {
         {runDiagnosis.isPending ? (
           <ScanningOverlay
             companyName={
-              data?.diagnosis?.targetCompany || data?.targetJob?.company || "Systems Limited"
+              runDiagnosis.variables?.company || data?.diagnosis?.targetCompany || data?.targetJob?.company || "Systems Limited"
             }
             roleName={
-              data?.diagnosis?.targetRole || data?.targetRole || "Associate Software Engineer"
+              runDiagnosis.variables?.role || data?.targetRole || "I don't know my target yet"
             }
           />
         ) : hasDiagnosis ? (
@@ -1129,7 +1166,7 @@ function DiagnosisPage() {
               </div>
               <WizardSetup
                 targetCompany={data?.diagnosis?.targetCompany || "Systems Limited"}
-                targetRole={data?.diagnosis?.targetRole || "Associate Software Engineer"}
+                targetRole={data?.targetRole || "I don't know my target yet"}
                 onRunDiagnosis={handleRunDiagnosis}
                 isPending={runDiagnosis.isPending}
               />
@@ -1138,7 +1175,7 @@ function DiagnosisPage() {
         ) : (
           <WizardSetup
             targetCompany={data?.targetJob?.company || "Systems Limited"}
-            targetRole={data?.targetRole || "Associate Software Engineer"}
+            targetRole={data?.targetRole || "I don't know my target yet"}
             onRunDiagnosis={handleRunDiagnosis}
             isPending={runDiagnosis.isPending}
           />

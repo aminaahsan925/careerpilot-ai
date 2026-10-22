@@ -45,6 +45,7 @@ function useInvalidate() {
 
 export function useRunDiagnosis() {
   const invalidate = useInvalidate();
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (input?: { company?: string; role?: string }) => {
       console.info("[CareerPilot][client][runDiagnosis] request", input);
@@ -57,7 +58,14 @@ export function useRunDiagnosis() {
         throw error;
       }
     },
-    onSuccess: invalidate,
+    onSuccess: (diagnosis) => {
+      // Show the exact diagnosis returned by the POST immediately; don't keep
+      // rendering the previous row while the overview query is refreshing.
+      queryClient.setQueryData<CareerOverview>(["career-overview"], (current) =>
+        current ? { ...current, diagnosis, targetRole: diagnosis.targetRole } : current,
+      );
+      invalidate();
+    },
   });
 }
 
