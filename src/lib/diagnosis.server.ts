@@ -136,7 +136,13 @@ function buildDeterministicCompanyDiagnosis(
 ): CompanyRejectionDiagnosis {
   const hasResume = state.resume.hasResume;
   const projectCount = state.projects.length;
-  const verifiedSkills = state.skills.filter((s) => s.evidenceStrength >= 1).map((s) => s.name.toLowerCase());
+  const verifiedSkills = state.skills
+    .filter(
+      (skill) =>
+        skill.evidenceStrength >= 3 &&
+        skill.sources.some((source) => source === "project" || source === "github"),
+    )
+    .map((skill) => skill.name.toLowerCase());
 
   // This is deliberately a measurable evidence gap, not a predicted rejection chance.
   const riskScore = evidenceGapPercentage(benchmark);
@@ -269,6 +275,7 @@ function buildDeterministicCompanyDiagnosis(
 }
 
 function evidenceGapPercentage(benchmark: MarketBenchmark | null | undefined): number | null {
+  if (benchmark?.isFallback) return null;
   const total = benchmark?.mustHave?.total;
   const covered = benchmark?.mustHave?.covered;
   if (typeof total !== "number" || total <= 0 || typeof covered !== "number") return null;
@@ -653,7 +660,14 @@ export async function runCareerDiagnosis(
     : null;
   const companyTruth = matchCompanyTruth(targetCompany || "general technology company");
   const roleMatch = matchRoleProfile(targetRole || "");
-  const benchmark = benchmarkRole(targetRole || "", state.skills);
+  const benchmark = benchmarkRole(
+    targetRole || "",
+    state.skills.map((skill) => ({
+      name: skill.name,
+      sources: skill.sources,
+      strength: skill.evidenceStrength,
+    })),
+  );
   const readiness = await saveReadiness(supabase, userId, state);
   const previous = await loadLatestDiagnosis(supabase, userId);
 

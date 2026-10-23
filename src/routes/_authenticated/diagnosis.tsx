@@ -69,7 +69,7 @@ const SCAN_STEPS = [
   "Querying real-world hiring parameters & company screening filters...",
   "Auditing candidate skills footprint, projects & verified repository evidence...",
   "Evaluating non-negotiable tech stack & relational database indexing benchmarks...",
-  "Calculating algorithmic screening test and ATS rejection probability...",
+  "Measuring role must-haves that still lack verifiable project evidence...",
   "Synthesizing root-cause rejection report & 4-week recovery prescription...",
 ];
 
@@ -613,8 +613,12 @@ function DiagnosticResultsView({
 
               <p className="text-xs leading-relaxed text-white/75 sm:text-sm">
                 {d.targetRole ? (
-                  <>For <strong className="text-white">{d.targetRole}</strong> at{" "}
-                    <strong className="text-terracotta">{companyDiag.companyName}</strong>: this measures role must-haves without project or repository proof. It is not a prediction of hiring decisions.</>
+                  companyDiag.rejectionRisk !== null ? (
+                    <>For <strong className="text-white">{d.targetRole}</strong> at{" "}
+                      <strong className="text-terracotta">{companyDiag.companyName}</strong>: this measures researched role must-haves without verifiable project/repository evidence. It is not a prediction of hiring decisions.</>
+                  ) : (
+                    <>A reliable role-specific benchmark for <strong className="text-white">{d.targetRole}</strong> is unavailable, so no percentage is shown rather than substituting a generic role.</>
+                  )
                 ) : (
                   <>No employer rejection risk is estimated. This assessment uses your recorded profile and intake to identify a realistic next learning step.</>
                 )}

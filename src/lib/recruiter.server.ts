@@ -20,6 +20,7 @@ export type BrutalVerdict = {
 };
 
 export type RecruiterAudit = {
+  scoreVersion?: "deterministic-evidence-v1";
   overallScore: number;
   hireChance: number;
   rejectChance: number;
@@ -288,8 +289,6 @@ ${groundedEvidence}
 Evaluate this candidate as ${companyTruth.name}'s Head of Talent. Return JSON:
 {
   "overall_score": number (0-100, be brutally honest, most fresh graduates score 15-40),
-  "hire_chance": number (0-100),
-  "reject_chance": number (0-100),
   "headline": string (one brutal sentence summary, max 120 chars),
   "brutal_verdicts": [
     { "category": string, "severity": "fatal"|"critical"|"strong", "assessment": string, "what_to_fix": string }
@@ -310,13 +309,14 @@ Evaluate this candidate as ${companyTruth.name}'s Head of Talent. Return JSON:
 
     const parsed = parseJsonObject<Record<string, unknown>>(raw);
 
-    const aiScore = clampScore(parsed["overall_score"], baseline.score);
-    const finalScore = Math.round((aiScore + baseline.score) / 2);
+    // Numerical outcome uses only the deterministic evidence rubric. The
+    // model supplies narrative feedback, not an uncalibrated hiring forecast.
+    const finalScore = baseline.score;
 
     aiResult = {
       overallScore: finalScore,
-      hireChance: clampScore(parsed["hire_chance"], Math.max(0, finalScore - 15)),
-      rejectChance: clampScore(parsed["reject_chance"], Math.min(100, 100 - finalScore + 15)),
+      hireChance: finalScore,
+      rejectChance: 100 - finalScore,
       headline:
         String(parsed["headline"] ?? "")
           .trim()
@@ -359,10 +359,11 @@ Evaluate this candidate as ${companyTruth.name}'s Head of Talent. Return JSON:
 
   // Merge AI with baseline (baseline as fallback)
   const audit: RecruiterAudit = {
-    overallScore: aiResult.overallScore ?? baseline.score,
-    hireChance: aiResult.hireChance ?? Math.max(0, baseline.score - 15),
-    rejectChance: aiResult.rejectChance ?? Math.min(100, 100 - baseline.score + 15),
-    verdictTier: scoreToTier(aiResult.overallScore ?? baseline.score),
+    scoreVersion: "deterministic-evidence-v1",
+    overallScore: baseline.score,
+    hireChance: baseline.score,
+    rejectChance: 100 - baseline.score,
+    verdictTier: scoreToTier(baseline.score),
     headline: aiResult.headline ?? `Baseline Score: ${baseline.score}/100`,
     brutalVerdicts:
       aiResult.brutalVerdicts && aiResult.brutalVerdicts.length >= 4
@@ -533,8 +534,10 @@ export async function loadRecruiterSession(
     companyName: data.company_name,
     targetRole: data.target_role,
     overallScore: data.overall_score,
-    hireChance: data.hire_chance,
-    rejectChance: data.reject_chance,
+    // Legacy schema fields are retained, but are now treated as evidence
+    // coverage complements, never probabilities of hiring/rejection.
+    hireChance: data.overall_score,
+    rejectChance: 100 - data.overall_score,
     verdictTier: data.verdict_tier,
     auditResult: data.audit_result as unknown as RecruiterAudit,
     chatMessages: (data.chat_messages ?? []) as unknown as RecruiterSession["chatMessages"],

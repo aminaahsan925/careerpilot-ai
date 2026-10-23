@@ -9,12 +9,13 @@ interface RecruiterDashboardWidgetsProps {
 
 export function RecruiterDashboardWidgets({ audit, companyName }: RecruiterDashboardWidgetsProps) {
   const nonNegs = audit.expectVsHave || [];
+  const hasCurrentScore = audit.scoreVersion === "deterministic-evidence-v1";
 
   return (
     <div className="grid gap-6 md:grid-cols-3">
       {/* 1. Match Score Card (Matching User Screenshot Top Right Widget) */}
       <div className="card-surface flex flex-col items-center justify-center p-6 text-center shadow-md">
-        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Match Score</p>
+        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Evidence Coverage (Heuristic)</p>
         <div className="relative flex h-28 w-28 items-center justify-center">
           <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
             <circle cx="50" cy="50" r="40" fill="none" stroke="var(--secondary)" strokeWidth="10" />
@@ -28,15 +29,28 @@ export function RecruiterDashboardWidgets({ audit, companyName }: RecruiterDashb
               strokeLinecap="round"
               strokeDasharray="251.2"
               initial={{ strokeDashoffset: 251.2 }}
-              animate={{ strokeDashoffset: 251.2 - (251.2 * audit.overallScore) / 100 }}
+              animate={{
+                strokeDashoffset: hasCurrentScore
+                  ? 251.2 - (251.2 * audit.overallScore) / 100
+                  : 251.2,
+              }}
               transition={{ duration: 1.4, ease: "easeOut" }}
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="font-display text-3xl font-black text-foreground">{audit.overallScore}%</span>
+            <span className="font-display text-3xl font-black text-foreground">
+              {hasCurrentScore ? audit.overallScore : "N/A"}
+            </span>
           </div>
         </div>
-        <p className="mt-3 text-xs font-bold text-terracotta">{audit.verdictTier}</p>
+        <p className="mt-3 text-xs font-bold text-terracotta">
+          {hasCurrentScore ? audit.verdictTier : "Previous audit score unavailable"}
+        </p>
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          {hasCurrentScore
+            ? "Evidence rubric only; not a hiring probability."
+            : "Run a new audit to get the deterministic evidence score."}
+        </p>
         <p className="mt-1 text-[11px] text-muted-foreground">{audit.headline}</p>
       </div>
 
@@ -60,7 +74,7 @@ export function RecruiterDashboardWidgets({ audit, companyName }: RecruiterDashb
               {/* 5-Dot Rating Indicators matching screenshot */}
               <div className="flex items-center gap-1.5 shrink-0">
                 {[1, 2, 3, 4, 5].map((dot) => {
-                  const filled = item.youHave ? dot <= 5 : dot <= 2;
+                  const filled = item.youHave;
                   return (
                     <span
                       key={dot}
@@ -71,7 +85,7 @@ export function RecruiterDashboardWidgets({ audit, companyName }: RecruiterDashb
                   );
                 })}
                 <span className="ml-2 text-[10px] font-extrabold text-muted-foreground w-12 text-right">
-                  {item.youHave ? "100%" : "30%"}
+                  {item.youHave ? "Present" : "Missing"}
                 </span>
               </div>
             </div>

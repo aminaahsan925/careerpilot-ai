@@ -352,7 +352,11 @@ function assemble(
   requested: string,
   state: CareerState,
 ): JobMirrorReport {
-  const studentSkills = state.skills;
+  const studentSkills = state.skills.map((skill) => ({
+    name: skill.name,
+    sources: skill.sources,
+    strength: skill.evidenceStrength,
+  }));
 
   /* Skill matching lives in ./market-fit so the Diagnostic scores the same
      student against the same expectations and never contradicts this screen. */

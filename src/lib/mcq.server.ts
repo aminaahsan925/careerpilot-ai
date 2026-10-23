@@ -30,7 +30,7 @@ export async function getMcqsForDay(userId: string, dayId: string) {
       throw new Error("Daily work item not found.");
     }
 
-    // Fetch 5-7 random MCQs for this learning path (without correct_option)
+    // Return a stable subset so the server can require every displayed question.
     const { data: questions, error: qError } = await db
       .from("roadmap_mcq_tests")
       .select(
@@ -48,11 +48,7 @@ export async function getMcqsForDay(userId: string, dayId: string) {
       return [];
     }
 
-    // Shuffle and pick 5-7 questions
-    const targetCount = Math.min(Math.max(5, Math.floor(Math.random() * 3) + 5), questions.length);
-
-    const shuffled = [...questions].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, targetCount);
+    return [...questions].slice(0, 5);
   } catch (error) {
     console.error("[MCQ] getMcqsForDay failed:", error);
     throw error;
@@ -100,8 +96,29 @@ export async function submitMcqAttempt(
       throw new Error("Daily work item not found.");
     }
 
-    // 2. Fetch correct answers for the submitted questions
-    const questionIds = answers.map((a) => a.questionId);
+    // 2. Recompute the exact assessment set. Partial submissions must never
+    // pass by submitting only the easiest question(s).
+    const { data: allQuestions, error: allQuestionsError } = await db
+      .from("roadmap_mcq_tests")
+      .select("id")
+      .eq("learning_path_id", day.learning_path_id)
+      .order("position", { ascending: true });
+    if (allQuestionsError) throw allQuestionsError;
+    const expectedIds = (allQuestions ?? [])
+      .slice(0, 5)
+      .map((question: { id: string }) => question.id)
+      .sort();
+    const submittedIds = answers.map((answer) => answer.questionId).sort();
+    if (
+      expectedIds.length === 0 ||
+      submittedIds.length !== expectedIds.length ||
+      submittedIds.some((id: string, index: number) => id !== expectedIds[index])
+    ) {
+      throw new Error("Please answer every question in this assessment before submitting.");
+    }
+
+    // Fetch correct answers only after validating the complete set.
+    const questionIds = expectedIds;
     const { data: testQuestions, error: tError } = await db
       .from("roadmap_mcq_tests")
       .select("id, correct_option, explanation, question")

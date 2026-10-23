@@ -235,6 +235,7 @@ Order from most urgent gap to least. Include ≥1 deployment and ≥1 problem-so
 export async function generateRoadmapV2(
   userId: string,
 ): Promise<{ success: boolean; pathCount: number; error?: string }> {
+  const stagedPathIds: string[] = [];
   try {
     // 1. Fetch user profile + career goal
     const [goalRes, profileRes] = await Promise.all([
@@ -386,19 +387,21 @@ export async function generateRoadmapV2(
     }
     const pathsRaw = Array.isArray(parsed.paths) ? parsed.paths : [];
 
-    if (!pathsRaw.length) {
+    if (pathsRaw.length !== 4) {
       return {
         success: false,
         pathCount: 0,
-        error: "The roadmap couldn't be generated. Please try again.",
+        error: "The roadmap response was incomplete. Your existing roadmap was kept; please try again.",
       };
     }
 
-    // 10. Clear existing roadmap v2 data for this user.
-    //     CASCADE rules handle downstream deletes:
-    //     learning_paths → daily_work → mcq_attempts + notifications
-    //     learning_paths → mcq_tests
-    await db.from("roadmap_learning_paths").delete().eq("user_id", userId);
+    // Preserve the existing roadmap until all replacement paths, days and
+    // questions have been saved successfully.
+    const { data: previousPaths, error: previousPathsError } = await db
+      .from("roadmap_learning_paths")
+      .select("id")
+      .eq("user_id", userId);
+    if (previousPathsError) throw previousPathsError;
 
     // 11. Insert new data
     const validDifficulties = ["basic", "intermediate", "advanced"];
@@ -415,7 +418,7 @@ export async function generateRoadmapV2(
 
       const title = str(pathData["title"], 200);
       const description = str(pathData["description"], 600);
-      if (!title || !description) continue;
+      if (!title || !description) throw new Error("A roadmap path was missing its title or description.");
 
       // Insert learning path
       const mustKnowRaw = pathData["must_know"];
@@ -450,11 +453,11 @@ export async function generateRoadmapV2(
 
       if (pathError || !insertedPath) {
         console.error("[RoadmapV2] path insert failed:", pathError?.message);
-        continue;
+        throw pathError ?? new Error("Could not save a roadmap path.");
       }
 
       const pathId = insertedPath.id as string;
-      pathCount++;
+      stagedPathIds.push(pathId);
 
       // Insert daily work (batch)
       const daysRaw = Array.isArray(pathData["days"]) ? pathData["days"] : [];
@@ -519,11 +522,15 @@ export async function generateRoadmapV2(
         })
         .filter(Boolean);
 
-      if (dayInserts.length) {
-        const { data: insertedDays } = await db
+      if (dayInserts.length !== 3) throw new Error(`Roadmap path “${title}” must contain three usable daily lessons.`);
+      {
+        const { data: insertedDays, error: daysError } = await db
           .from("roadmap_daily_work")
           .insert(dayInserts)
           .select("id");
+        if (daysError || !insertedDays || insertedDays.length !== dayInserts.length) {
+          throw daysError ?? new Error(`Could not save every lesson for “${title}”.`);
+        }
 
         if (firstDayId === null && insertedDays?.length) {
           firstDayId = insertedDays[0].id as string;
@@ -566,22 +573,29 @@ export async function generateRoadmapV2(
         })
         .filter(Boolean);
 
-      if (mcqInserts.length) {
-        await db.from("roadmap_mcq_tests").insert(mcqInserts);
-      }
+      if (mcqInserts.length < 4) throw new Error(`Roadmap path “${title}” needs at least four valid quiz questions.`);
+      const { error: mcqError } = await db.from("roadmap_mcq_tests").insert(mcqInserts);
+      if (mcqError) throw mcqError;
+      pathCount++;
     }
 
     if (pathCount === 0) {
-      return {
-        success: false,
-        pathCount: 0,
-        error: "The roadmap response was not usable. Please try generating it again.",
-      };
+      throw new Error("The roadmap response was not usable. Please try generating it again.");
+    }
+
+    const previousIds = (previousPaths ?? []).map((path: { id: string }) => path.id);
+    if (previousIds.length) {
+      const { error: cleanupError } = await db
+        .from("roadmap_learning_paths")
+        .delete()
+        .eq("user_id", userId)
+        .in("id", previousIds);
+      if (cleanupError) throw cleanupError;
     }
 
     // 12. Create initial notification for Day 1
     if (firstDayId) {
-      await db.from("roadmap_notifications").insert({
+      const { error: notificationError } = await db.from("roadmap_notifications").insert({
         user_id: userId,
         daily_work_id: firstDayId,
         type: "daily_work",
@@ -589,10 +603,19 @@ export async function generateRoadmapV2(
         message: `Your personalised roadmap has ${pathCount} learning paths. Start with Day 1 of your first path.`,
         read: false,
       });
+      if (notificationError) console.warn("[RoadmapV2] notification insert failed:", notificationError.message);
     }
 
     return { success: true, pathCount };
   } catch (error) {
+    if (stagedPathIds.length) {
+      const { error: cleanupError } = await db
+        .from("roadmap_learning_paths")
+        .delete()
+        .eq("user_id", userId)
+        .in("id", stagedPathIds);
+      if (cleanupError) console.error("[RoadmapV2] failed to remove incomplete staged paths:", cleanupError.message);
+    }
     console.error("[RoadmapV2] generateRoadmapV2 failed:", error);
     const message = error instanceof Error ? error.message : "An unexpected error occurred.";
     return { success: false, pathCount: 0, error: message };

@@ -231,7 +231,8 @@ export async function analyzeTargetJob(
       // always derived from the user's recorded evidence, never model judgement.
       const status = !actualSkill
         ? "missing"
-        : actualSkill.sources.some((source) => source === "project" || source === "github")
+        : actualSkill.evidenceStrength >= 3 &&
+            actualSkill.sources.some((source) => source === "project" || source === "github")
           ? "matched"
           : actualSkill.evidenceStrength > 0
             ? "partial"
@@ -287,13 +288,12 @@ export async function syncResumeEvidence(
         .map((s) => [s.toLowerCase(), s]),
     ).values(),
   ).slice(0, 20);
-  if (!names.length) return { added: 0 };
-
-  const { data: existing } = await supabase
+  const { data: existing, error: readError } = await supabase
     .from("skill_evidence")
-    .select("id, skill_name, source")
+    .select("id, skill_name")
     .eq("user_id", userId)
     .eq("source", "resume");
+  if (readError) throw readError;
 
   const have = new Set((existing ?? []).map((e) => (e.skill_name ?? "").toLowerCase()));
   const rows = names
@@ -306,9 +306,23 @@ export async function syncResumeEvidence(
       strength: 1,
     }));
 
-  if (!rows.length) return { added: 0 };
-  const { error } = await supabase.from("skill_evidence").insert(rows as never);
-  if (error) throw error;
+  if (rows.length) {
+    const { error } = await supabase.from("skill_evidence").insert(rows as never);
+    if (error) throw error;
+  }
+
+  const keep = new Set(names.map((name) => name.toLowerCase()));
+  const obsoleteIds = (existing ?? [])
+    .filter((entry) => !keep.has((entry.skill_name ?? "").toLowerCase()))
+    .map((entry) => entry.id);
+  if (obsoleteIds.length) {
+    const { error } = await supabase
+      .from("skill_evidence")
+      .delete()
+      .eq("user_id", userId)
+      .in("id", obsoleteIds);
+    if (error) throw error;
+  }
   return { added: rows.length };
 }
 
@@ -352,8 +366,8 @@ export async function recordSkillEvidence(
       skill_name: skill,
       source: input.source,
       detail,
-      // A submitted, linkable artefact is supporting project evidence, not a
-      // claim or an unverifiable AI inference.
+      // A user-submitted link is supporting evidence, not independently
+      // verified proof that the repository demonstrates the named skill.
       strength: 2,
     }));
   if (rows.length) {

@@ -391,7 +391,11 @@ function RecruiterPage() {
         <RecruiterHeroCard
           targetCompany={effectiveCompany}
           targetRole={selectedRole}
-          score={currentSession?.overallScore ?? 85}
+          score={
+            currentSession?.auditResult.scoreVersion === "deterministic-evidence-v1"
+              ? currentSession.overallScore
+              : null
+          }
         />
 
         {/* Process Stepper Pipeline (Inspired directly by bottom stepper in RECRUITIQ screenshot) */}

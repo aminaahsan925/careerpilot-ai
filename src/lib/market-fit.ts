@@ -49,7 +49,7 @@ export type TierCoverage = { covered: number; total: number; pct: number };
  * Minimal shape this module needs from a recorded skill. `CareerState`'s
  * `StateSkill` satisfies it structurally.
  */
-export type EvidenceRecord = { name: string; sources: readonly string[] };
+export type EvidenceRecord = { name: string; sources: readonly string[]; strength?: number };
 
 /** The deterministic market comparison persisted with a diagnosis. */
 export type MarketBenchmark = {
@@ -134,7 +134,9 @@ export function satisfies(recordedSkill: string, alias: string): boolean {
 
 /** Only a project or repo counts as proof; everything else is a claim. */
 export function statusFor(record: EvidenceRecord): Exclude<SkillStatus, "missing"> {
-  const proven = record.sources.some((source) => source === "project" || source === "github");
+  const proven =
+    (record.strength ?? 0) >= 3 &&
+    record.sources.some((source) => source === "project" || source === "github");
   return proven ? "demonstrated" : "claimed";
 }
 

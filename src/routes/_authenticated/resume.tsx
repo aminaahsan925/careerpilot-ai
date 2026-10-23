@@ -43,7 +43,7 @@ export const Route = createFileRoute("/_authenticated/resume")({
 /* Radial Score Ring Component                                         */
 /* ------------------------------------------------------------------ */
 
-function ScoreRing({ value, label, sublabel }: { value: number; label: string; sublabel: string }) {
+function ScoreRing({ value, label, sublabel }: { value: number | null; label: string; sublabel: string }) {
   const r = 44;
   const c = 2 * Math.PI * r;
   const getColor = (v: number) => {
@@ -62,20 +62,20 @@ function ScoreRing({ value, label, sublabel }: { value: number; label: string; s
             cy="60"
             r={r}
             fill="none"
-            className={cn("transition-all duration-1000", getColor(value))}
+            className={cn("transition-all duration-1000", value === null ? "stroke-muted" : getColor(value))}
             strokeWidth="8"
             strokeLinecap="round"
             strokeDasharray={c}
             initial={{ strokeDashoffset: c }}
-            animate={{ strokeDashoffset: c - (value / 100) * c }}
+            animate={{ strokeDashoffset: c - ((value ?? 0) / 100) * c }}
             transition={{ duration: 1, ease: "easeOut" }}
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-[26px] font-extrabold leading-none tracking-tight text-foreground">
-            {value}
+            {value ?? "N/A"}
           </span>
-          <span className="text-[10px] font-semibold text-muted-foreground uppercase">/ 100</span>
+          {value !== null && <span className="text-[10px] font-semibold text-muted-foreground uppercase">/ 100</span>}
         </div>
       </div>
       <p className="mt-3 text-[13.5px] font-bold text-foreground">{label}</p>
@@ -102,7 +102,7 @@ function ResumePage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const { data: resume, error: resumeError } = useLatestResume();
-  const { data: analysis, isLoading, error: analysisError } = useLatestAnalysis();
+  const { data: analysis, isLoading, error: analysisError } = useLatestAnalysis(resume?.id);
   const upload = useUploadAndAnalyze();
 
   function processFile(file: File | undefined) {
@@ -148,9 +148,9 @@ function ResumePage() {
     ? [
         { label: "ATS compatibility", value: analysis.ats_score },
         { label: "Resume impact", value: analysis.resume_score },
-        { label: "Role alignment", value: analysis.career_match },
       ]
     : [];
+  const roleScoreAvailable = Boolean(analysis?.role_matches.length);
   const lowestScore = scoreRows.length ? Math.min(...scoreRows.map((item) => item.value)) : 0;
   const readinessLabel =
     lowestScore >= 75
@@ -276,7 +276,7 @@ function ResumePage() {
                       Executive Score Breakdown
                     </h3>
                     <p className="text-[12px] text-muted-foreground">
-                      Calculated across structural ATS rules and target role alignment.
+                      Heuristic text/format checks; not a score from an employer’s ATS.
                     </p>
                   </div>
                   <span className="rounded-lg bg-emerald-500/10 px-3 py-1 text-[12px] font-semibold text-emerald-600 dark:text-emerald-400">
@@ -287,18 +287,18 @@ function ResumePage() {
                 <div className="grid gap-4 sm:grid-cols-3">
                   <ScoreRing
                     value={analysis.ats_score}
-                    label="ATS Score"
-                    sublabel="Keyword & format fit"
+                    label="ATS Readability Estimate"
+                    sublabel="Deterministic format checks"
                   />
                   <ScoreRing
                     value={analysis.resume_score}
-                    label="Impact Score"
-                    sublabel="Action verbs & metrics"
+                    label="Content Quality Estimate"
+                    sublabel="Length, metrics & bullet checks"
                   />
                   <ScoreRing
-                    value={analysis.career_match}
-                    label="Role Match"
-                    sublabel="Target alignment"
+                    value={roleScoreAvailable ? analysis.career_match : null}
+                    label="AI Role-Fit Estimate"
+                    sublabel={roleScoreAvailable ? "Model estimate; not calibrated" : "No role-specific estimate available"}
                   />
                 </div>
               </div>

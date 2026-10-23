@@ -5,10 +5,10 @@ import diagnosisGirlLaptop from "@/assets/diagnosis-girl-laptop.png";
 interface RecruiterHeroCardProps {
   targetCompany: string;
   targetRole: string;
-  score?: number;
+  score?: number | null;
 }
 
-export function RecruiterHeroCard({ targetCompany, targetRole, score = 85 }: RecruiterHeroCardProps) {
+export function RecruiterHeroCard({ targetCompany, targetRole, score = null }: RecruiterHeroCardProps) {
   return (
     <div className="relative overflow-hidden rounded-3xl border border-terracotta/20 bg-gradient-to-br from-[#FAF7F2] via-card to-[#FAF7F2] p-6 sm:p-8 shadow-xl">
       {/* Background Decorative Circles */}
@@ -89,7 +89,7 @@ export function RecruiterHeroCard({ targetCompany, targetRole, score = 85 }: Rec
               </div>
               <div>
                 <p className="text-[11px] font-bold text-foreground">Candidate Fit</p>
-                <p className="text-[10px] font-extrabold text-terracotta">{score}% Match</p>
+                <p className="text-[10px] font-extrabold text-terracotta">{score === null ? "Run audit first" : `${score}/100 evidence`}</p>
               </div>
               <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white">
                 <Check className="h-3 w-3 stroke-[3]" />

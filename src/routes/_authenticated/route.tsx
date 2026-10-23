@@ -1,4 +1,6 @@
 import { createFileRoute, isRedirect, Outlet, redirect } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
 
@@ -133,9 +135,35 @@ export const Route = createFileRoute("/_authenticated")({
       throw redirect({ to: "/auth", search: { redirect: location.pathname, reset: undefined } });
     }
   },
-  component: () => <Outlet />,
+  component: AuthenticatedLayout,
   pendingComponent: AuthPending,
 });
+
+function AuthenticatedLayout() {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    let currentUserId: string | null = null;
+    let initialized = false;
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      const nextUserId = session?.user.id ?? null;
+      const changedAccount = initialized && currentUserId !== nextUserId;
+      initialized = true;
+      currentUserId = nextUserId;
+
+      if (event === "SIGNED_OUT" || changedAccount) {
+        authGateCache = null;
+        void queryClient
+          .cancelQueries()
+          .catch(() => undefined)
+          .finally(() => queryClient.clear());
+      }
+    });
+    return () => data.subscription.unsubscribe();
+  }, [queryClient]);
+
+  return <Outlet />;
+}
 
 function AuthPending() {
   return (

@@ -51,20 +51,22 @@ export async function loadProjects(supabase: Client, userId: string): Promise<Us
   }));
 }
 
-/**
- * Replaces all projects for the user with the supplied list.
- * Each project's technologies are synced to skill_evidence as project-backed
- * evidence (strength 2), matching the pattern used by syncResumeEvidence.
- */
+/** Replace project details while keeping the previous set until the new set is saved. */
 export async function saveProjects(
   supabase: Client,
   userId: string,
   projects: ProjectInput[],
 ): Promise<{ count: number }> {
-  // Delete existing projects
-  await supabase.from("user_projects").delete().eq("user_id", userId);
+  const { data: previousProjects, error: previousError } = await supabase
+    .from("user_projects")
+    .select("id")
+    .eq("user_id", userId);
+  if (previousError) throw previousError;
 
   if (!projects.length) {
+    const { error: deleteError } = await supabase.from("user_projects").delete().eq("user_id", userId);
+    if (deleteError) throw deleteError;
+    await syncProjectEvidence(supabase, userId, []);
     // Refresh readiness since evidence may have changed
     await saveReadiness(supabase, userId, await buildCareerState(supabase, userId));
     return { count: 0 };
@@ -94,6 +96,16 @@ export async function saveProjects(
   const { error } = await supabase.from("user_projects").insert(rows as never);
   if (error) throw error;
 
+  const previousIds = (previousProjects ?? []).map((project) => project.id);
+  if (previousIds.length) {
+    const { error: deleteError } = await supabase
+      .from("user_projects")
+      .delete()
+      .eq("user_id", userId)
+      .in("id", previousIds);
+    if (deleteError) throw deleteError;
+  }
+
   // Sync all project technologies to skill_evidence
   const allTechs = projects.flatMap((p) => p.technologies ?? []);
   await syncProjectEvidence(supabase, userId, allTechs);
@@ -105,9 +117,8 @@ export async function saveProjects(
 }
 
 /**
- * Records project technologies as evidence (strength 2 = project-backed).
- * This mirrors syncResumeEvidence but uses source='project' and strength=2,
- * which signals that the skill is demonstrated by a real artefact.
+ * Records only a user-entered technology claim. A project technology field
+ * alone does not verify that the artifact demonstrates the skill.
  */
 async function syncProjectEvidence(supabase: Client, userId: string, technologies: string[]) {
   const names = Array.from(
@@ -118,14 +129,23 @@ async function syncProjectEvidence(supabase: Client, userId: string, technologie
         .map((t) => [t.toLowerCase(), t]),
     ).values(),
   ).slice(0, 40);
-  if (!names.length) return;
-
-  const { data: existing } = await supabase
+  const { data: existing, error: readError } = await supabase
     .from("skill_evidence")
     .select("id, skill_name, source")
     .eq("user_id", userId)
-    .eq("source", "project");
+    .eq("source", "project")
+    .eq("detail", "Listed in a user project");
+  if (readError) throw readError;
 
+  const wanted = new Set(names.map((name) => name.toLowerCase()));
+  const obsoleteIds = (existing ?? [])
+    .filter((e) => !wanted.has((e.skill_name ?? "").toLowerCase()))
+    .map((e) => e.id);
+  if (obsoleteIds.length) {
+    const { error } = await supabase.from("skill_evidence").delete().eq("user_id", userId).in("id", obsoleteIds);
+    if (error) throw error;
+  }
+  if (!names.length) return;
   const have = new Set((existing ?? []).map((e) => (e.skill_name ?? "").toLowerCase()));
 
   const rows = names
@@ -135,7 +155,7 @@ async function syncProjectEvidence(supabase: Client, userId: string, technologie
       skill_name: n,
       source: "project",
       detail: "Listed in a user project",
-      strength: 2,
+      strength: 1,
     }));
 
   if (!rows.length) return;

@@ -70,13 +70,16 @@ export function useLatestResume() {
   });
 }
 
-export function useLatestAnalysis() {
+export function useLatestAnalysis(resumeId?: string | null) {
   return useQuery({
-    queryKey: ["latest-analysis"],
+    queryKey: ["latest-analysis", resumeId ?? null],
+    enabled: resumeId !== undefined,
     queryFn: async (): Promise<ResumeAnalysis | null> => {
+      if (!resumeId) return null;
       const { data, error } = await supabase
         .from("resume_analyses")
         .select("*")
+        .eq("resume_id", resumeId)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();

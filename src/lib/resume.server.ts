@@ -171,7 +171,7 @@ function check(label: string, status: FormatCheck["status"], detail: string): Fo
 export function auditResumeFormat(
   text: string,
   fileName: string,
-): { checks: FormatCheck[]; formatScore: number } {
+): { checks: FormatCheck[]; formatScore: number; contentScore: number } {
   const lower = text.toLowerCase();
   const lines = text
     .split(/\r?\n/)
@@ -353,7 +353,14 @@ export function auditResumeFormat(
     (checks.reduce((sum, c) => sum + weights[c.status], 0) / checks.length) * 100,
   );
 
-  return { checks, formatScore };
+  const contentChecks = checks.filter((item) =>
+    ["Length", "Quantified impact", "Action verbs", "Filler phrases", "Bullet structure"].includes(item.label),
+  );
+  const contentScore = Math.round(
+    (contentChecks.reduce((sum, item) => sum + weights[item.status], 0) / Math.max(contentChecks.length, 1)) * 100,
+  );
+
+  return { checks, formatScore, contentScore };
 }
 
 /* ------------------------------------------------------------------ *
@@ -641,7 +648,7 @@ export async function analyzeStoredResume(
     textLength: resumeText.length,
   });
 
-  const { checks, formatScore } = auditResumeFormat(resumeText, resume.file_name);
+  const { checks, formatScore, contentScore } = auditResumeFormat(resumeText, resume.file_name);
   const goal = await supabase
     .from("career_goals")
     .select("target_role")
@@ -693,7 +700,7 @@ export async function analyzeStoredResume(
         error: error instanceof Error ? error.message : String(error),
         attempt: attempt + 1,
       });
-      if (attempt === 1) aiFailed = true;
+      aiFailed = true;
     }
   }
 
@@ -749,7 +756,7 @@ export async function analyzeStoredResume(
     }));
   }
   const rawRoleMatches = parsed["role_matches"];
-  const roleMatches = Array.isArray(rawRoleMatches)
+  const roleMatches = targetRole && Array.isArray(rawRoleMatches)
     ? rawRoleMatches
         .filter((item): item is { role: string; match: number } => {
           if (!item || typeof item !== "object") return false;
@@ -784,8 +791,8 @@ export async function analyzeStoredResume(
     target_role: targetRole,
     job_description: null,
     ats_score: formatScore,
-    resume_score: formatScore,
-    career_match: Math.max(0, Math.min(100, roleMatches[0]?.match ?? formatScore)),
+    resume_score: contentScore,
+    career_match: Math.max(0, Math.min(100, roleMatches[0]?.match ?? 0)),
     verdict:
       typeof parsed["verdict"] === "string"
         ? parsed["verdict"]
@@ -842,5 +849,16 @@ export async function analyzeStoredResume(
     .update({ content_text: resumeText })
     .eq("id", resume.id)
     .eq("user_id", userId);
+  try {
+    await syncResumeEvidence(supabase, userId, detectedSkills, resume.file_name);
+  } catch (error) {
+    // The saved audit remains usable even if syncing derived profile evidence
+    // fails; the next analysis can safely retry the reconciliation.
+    console.warn("[CareerPilot][analyzeResume] skill evidence sync failed", {
+      userId,
+      resumeId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
   return { ...result, id: analysis.id };
 }
