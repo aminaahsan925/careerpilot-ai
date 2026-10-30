@@ -728,6 +728,9 @@ function Landing() {
             <Link to="/privacy" className="transition hover:text-foreground">
               Privacy
             </Link>
+            <Link to="/pricing" className="transition hover:text-foreground">
+              Pricing
+            </Link>
             <Link to="/terms" className="transition hover:text-foreground">
               Terms
             </Link>

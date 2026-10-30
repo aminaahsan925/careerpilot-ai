@@ -1,0 +1,75 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+
+export const Route = createFileRoute("/pricing")({
+  component: PricingPage,
+});
+
+function PricingPage() {
+  return (
+    <div className="mx-auto max-w-3xl px-6 py-16">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-terracotta">
+        For final-year CS students chasing backend roles
+      </p>
+      <h1 className="mt-4 text-3xl font-bold tracking-tight">Pricing</h1>
+      <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
+        One free score to prove where you stand. One paid plan for the students who want to
+        close the gaps, week by week, with proof.
+      </p>
+
+      <div className="mt-10 grid gap-6 md:grid-cols-2">
+        <div className="rounded-2xl border border-border p-6">
+          <h2 className="text-xl font-bold">Free</h2>
+          <p className="mt-1 text-2xl font-bold">Rs 0</p>
+          <ul className="mt-4 list-disc space-y-2 pl-5 text-[14px] leading-relaxed">
+            <li>One backend-job readiness score from your resume, projects, and GitHub</li>
+            <li>Your top 3 gaps, in plain words</li>
+            <li>Up to 10 AI calls per day</li>
+          </ul>
+          <Link
+            to="/diagnosis"
+            className="mt-6 inline-flex rounded-lg bg-terracotta px-5 py-3 text-[13.5px] font-semibold text-primary-foreground"
+          >
+            Start free →
+          </Link>
+        </div>
+
+        <div className="rounded-2xl border-2 border-terracotta p-6">
+          <h2 className="text-xl font-bold">Proof Plan</h2>
+          <p className="mt-1 text-[14px] font-semibold text-muted-foreground">
+            Price announced with the beta — it is not guessed here.
+          </p>
+          <ul className="mt-4 list-disc space-y-2 pl-5 text-[14px] leading-relaxed">
+            <li>Everything in Free, plus a full roadmap of proof tasks</li>
+            <li>Recruiter-style audit after each proof task</li>
+            <li>Weekly proof checks — did you actually build it, or just claim it?</li>
+            <li>Up to 100 AI calls per day</li>
+          </ul>
+          <p className="mt-6 text-[13.5px] leading-relaxed text-muted-foreground">
+            The price is being tested with the first 50 beta students first. If you want to be
+            one of them, start with the free score and tell us what the plan would be worth to
+            you.
+          </p>
+          <Link
+            to="/diagnosis"
+            className="mt-4 inline-flex rounded-lg border border-terracotta px-5 py-3 text-[13.5px] font-semibold text-terracotta"
+          >
+            Join the beta →
+          </Link>
+        </div>
+      </div>
+
+      <p className="mt-10 text-sm text-muted-foreground">
+        Scores and audits are guidance based on the evidence you provide — not a guarantee of an
+        interview or a job. See the{" "}
+        <Link to="/terms" className="font-semibold text-terracotta hover:underline">
+          Terms
+        </Link>{" "}
+        and{" "}
+        <Link to="/privacy" className="font-semibold text-terracotta hover:underline">
+          Privacy Policy
+        </Link>
+        .
+      </p>
+    </div>
+  );
+}

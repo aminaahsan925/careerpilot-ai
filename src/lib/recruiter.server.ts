@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { matchCompanyTruth, type CompanyHiringTruth } from "@/data/company-truth";
 import type { Database } from "@/integrations/supabase/types";
 import { clampScore, groqChat, parseJsonObject, stringList } from "./ai.server";
+import { consumeAiCall } from "./billing.server";
 import { buildCareerState, careerStateToPrompt, type CareerState } from "./career-state.server";
 import { formatEvidenceContext, retrieveGroundedEvidence } from "./intelligence.server";
 
@@ -251,6 +252,9 @@ export async function runRecruiterAudit(
   options: { company?: string; role?: string } = {},
 ): Promise<RecruiterSession> {
   console.info("[CareerPilot][recruiter-audit] start", { userId, options });
+
+  // Quota first: one AI call is consumed before the provider is called.
+  await consumeAiCall(supabase, userId, "recruiter-audit");
 
   const state = await buildCareerState(supabase, userId);
   const targetRole = options.role?.trim() || state.targetRole || "Associate Software Engineer";
