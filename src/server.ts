@@ -46,6 +46,23 @@ function isH3SwallowedErrorBody(body: string): boolean {
 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    // Safepay webhook: a public POST endpoint the gateway calls directly.
+    // It must not go through the TanStack router, and it must not require
+    // a user session — verification happens inside the handler by
+    // re-fetching the tracker from Safepay with our secret key.
+    try {
+      const url = new URL(request.url);
+      if (url.pathname === "/api/safepay-webhook" && request.method === "POST") {
+        const { handleSafepayWebhook } = await import("./lib/safepay-webhook.server");
+        return await handleSafepayWebhook(request);
+      }
+    } catch (error) {
+      console.error("[CareerPilot][safepay-webhook]", error);
+      return new Response(JSON.stringify({ ok: false, error: "Webhook error" }), {
+        status: 500,
+        headers: { "content-type": "application/json" },
+      });
+    }
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);

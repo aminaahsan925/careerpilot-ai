@@ -728,7 +728,11 @@ function Landing() {
             <Link to="/privacy" className="transition hover:text-foreground">
               Privacy
             </Link>
-            <Link to="/pricing" className="transition hover:text-foreground">
+            <Link
+              to="/pricing"
+              search={{ paid: undefined, cancelled: undefined }}
+              className="transition hover:text-foreground"
+            >
               Pricing
             </Link>
             <Link to="/terms" className="transition hover:text-foreground">

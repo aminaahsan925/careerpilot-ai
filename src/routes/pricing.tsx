@@ -1,12 +1,77 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 
+import { getBillingStatus, startProofPlanCheckout } from "@/lib/billing.functions";
+
 export const Route = createFileRoute("/pricing")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    paid: search["paid"] === "1" ? true : undefined,
+    cancelled: search["cancelled"] === "1" ? true : undefined,
+  }),
   component: PricingPage,
 });
 
+function PayWithSafepayButton() {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [configured, setConfigured] = useState<boolean | null>(null);
+
+  async function handlePay() {
+    setBusy(true);
+    setError(null);
+    try {
+      const status = await getBillingStatus();
+      setConfigured(status.safepayConfigured);
+      if (!status.safepayConfigured) {
+        setError(
+          "Automatic payments are not open yet — Safepay approval is pending. Pay manually by JazzCash/Easypaisa for now (see below).",
+        );
+        return;
+      }
+      const { url } = await startProofPlanCheckout({ data: { origin: window.location.origin } });
+      window.location.href = url;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not start checkout. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mt-4">
+      <button
+        type="button"
+        onClick={handlePay}
+        disabled={busy}
+        className="inline-flex rounded-lg bg-terracotta px-5 py-3 text-[13.5px] font-semibold text-primary-foreground disabled:opacity-60"
+      >
+        {busy ? "Starting checkout…" : "Pay Rs 499 with Safepay →"}
+      </button>
+      {error ? <p className="mt-3 text-[13px] text-terracotta">{error}</p> : null}
+      {configured === false ? (
+        <p className="mt-3 text-[13px] text-muted-foreground">
+          Manual beta payment (below) is active until Safepay approves the account.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 function PricingPage() {
+  const search = Route.useSearch();
   return (
     <div className="mx-auto max-w-3xl px-6 py-16">
+      {search.paid ? (
+        <p className="mb-6 rounded-xl border border-border bg-secondary px-4 py-3 text-[13.5px]">
+          Payment received — your Proof Plan activates automatically once Safepay confirms it.
+          If it is not active within a few minutes, sign out and back in, then check your plan.
+        </p>
+      ) : null}
+      {search.cancelled ? (
+        <p className="mb-6 rounded-xl border border-border bg-secondary px-4 py-3 text-[13.5px]">
+          Checkout was cancelled — no payment was taken. You can try again below.
+        </p>
+      ) : null}
       <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-terracotta">
         For final-year CS students chasing backend roles
       </p>
@@ -42,11 +107,12 @@ function PricingPage() {
             <li>Weekly proof checks — did you actually build it, or just claim it?</li>
             <li>Up to 100 AI calls per day</li>
           </ul>
+          <PayWithSafepayButton />
           <p className="mt-6 text-[13.5px] leading-relaxed text-muted-foreground">
-            Beta payment is manual: pay Rs 499/month by JazzCash or Easypaisa, send your
-            payment screenshot, and your Proof Plan is activated by the founder. No card
-            gateway yet — Stripe does not onboard Pakistan businesses, so the first 50
-            students pay this way while the price is being tested.
+            Until Safepay approves the account, beta payment is manual: pay Rs 499/month by
+            JazzCash or Easypaisa, send your payment screenshot, and your Proof Plan is
+            activated by the founder. Once Safepay is live, the Pay button above activates
+            it automatically — no screenshot, no waiting.
           </p>
           <Link
             to="/diagnosis"
