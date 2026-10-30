@@ -25,8 +25,10 @@ export type PlanId = "free" | "proof";
 export const FREE_DAILY_AI_CALLS = 10;
 export const PROOF_DAILY_AI_CALLS = 100;
 
-/** No price is published until it is tested with the first 50 beta users. */
-export const PROOF_PLAN_PRICE: string | null = null;
+/** Price chosen by the founder on 2026-10-30, to be tested with the first 50 beta users.
+ * Payment is manual for the beta (JazzCash/Easypaisa + screenshot, founder
+ * activates the row) because Stripe does not onboard Pakistan businesses. */
+export const PROOF_PLAN_PRICE: string | null = "Rs 499/month";
 export const STRIPE_CONFIGURED = false;
 
 export class QuotaError extends Error {

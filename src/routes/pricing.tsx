@@ -35,9 +35,7 @@ function PricingPage() {
 
         <div className="rounded-2xl border-2 border-terracotta p-6">
           <h2 className="text-xl font-bold">Proof Plan</h2>
-          <p className="mt-1 text-[14px] font-semibold text-muted-foreground">
-            Price announced with the beta — it is not guessed here.
-          </p>
+          <p className="mt-1 text-2xl font-bold">Rs 499/month</p>
           <ul className="mt-4 list-disc space-y-2 pl-5 text-[14px] leading-relaxed">
             <li>Everything in Free, plus a full roadmap of proof tasks</li>
             <li>Recruiter-style audit after each proof task</li>
@@ -45,15 +43,16 @@ function PricingPage() {
             <li>Up to 100 AI calls per day</li>
           </ul>
           <p className="mt-6 text-[13.5px] leading-relaxed text-muted-foreground">
-            The price is being tested with the first 50 beta students first. If you want to be
-            one of them, start with the free score and tell us what the plan would be worth to
-            you.
+            Beta payment is manual: pay Rs 499/month by JazzCash or Easypaisa, send your
+            payment screenshot, and your Proof Plan is activated by the founder. No card
+            gateway yet — Stripe does not onboard Pakistan businesses, so the first 50
+            students pay this way while the price is being tested.
           </p>
           <Link
             to="/diagnosis"
             className="mt-4 inline-flex rounded-lg border border-terracotta px-5 py-3 text-[13.5px] font-semibold text-terracotta"
           >
-            Join the beta →
+            Start free, then upgrade →
           </Link>
         </div>
       </div>
