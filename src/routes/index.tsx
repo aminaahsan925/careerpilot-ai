@@ -152,7 +152,7 @@ function Landing() {
           <span className="text-[15px] font-extrabold tracking-[0.14em]">CAREERPILOT</span>
           <span className="text-[12px] font-semibold tracking-[0.16em] text-terracotta">AI</span>
         </div>
-        <nav className="hidden items-center gap-7 text-[13px] font-medium text-muted-foreground md:flex">
+        <nav className="hidden items-center gap-7 text-[13px] font-medium text-muted-foreground lg:flex">
           <a href="#how" className="transition hover:text-foreground">
             Workflow
           </a>
@@ -169,12 +169,21 @@ function Landing() {
             Diagnosis
           </Link>
         </nav>
-        <Link
-          to="/dashboard"
-          className="rounded-lg bg-terracotta px-4 py-2.5 text-[13px] font-semibold text-primary-foreground transition-transform hover:-translate-y-0.5 shadow-sm"
-        >
-          Open Dashboard
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            to="/auth"
+            search={{ redirect: undefined, reset: undefined }}
+            className="hidden text-[13px] font-semibold text-muted-foreground transition hover:text-foreground sm:block"
+          >
+            Sign in
+          </Link>
+          <Link
+            to="/dashboard"
+            className="whitespace-nowrap rounded-lg bg-terracotta px-4 py-2.5 text-[13px] font-semibold text-primary-foreground transition-transform hover:-translate-y-0.5 shadow-sm"
+          >
+            Open Dashboard
+          </Link>
+        </div>
       </header>
 
       <main className="mx-auto max-w-6xl px-6">
@@ -348,6 +357,9 @@ function Landing() {
                       <h4 className="text-[15px] font-bold text-foreground">
                         Recruiter Audit Report
                       </h4>
+                      <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                        Example
+                      </span>
                       <p className="text-[11.5px] text-muted-foreground flex items-center gap-1.5">
                         <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                         ATS Match Score: <strong className="text-foreground">91%</strong>
@@ -423,7 +435,7 @@ function Landing() {
                     </p>
                   </div>
                   <span className="flex items-center gap-1.5 rounded-lg border border-terracotta/30 bg-terracotta/10 px-3 py-1.5 text-[12px] font-semibold text-terracotta">
-                    <Activity className="h-3.5 w-3.5 animate-pulse" /> Live Q3 2026 Radar
+                    <Activity className="h-3.5 w-3.5 animate-pulse" /> Sample Market Snapshot
                   </span>
                 </div>
 
@@ -694,7 +706,7 @@ function Landing() {
             </p>
             <div className="pt-2">
               <Link
-                to="/dashboard"
+                to="/diagnosis"
                 className="inline-flex items-center gap-2 rounded-xl bg-terracotta px-8 py-4 text-[14px] font-semibold text-primary-foreground transition-transform hover:-translate-y-0.5 shadow-lift"
               >
                 Start Your Career Diagnosis <ArrowRight className="h-4 w-4" />

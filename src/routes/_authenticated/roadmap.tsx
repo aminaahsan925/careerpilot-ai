@@ -103,7 +103,11 @@ function LearningPathCard({ path }: { path: LearningPath }) {
   const [quizDayId, setQuizDayId] = useState("");
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [quizResult, setQuizResult] = useState<McqAttemptResult | null>(null);
-  const { data: days } = useDailyWork(expanded ? path.id : undefined);
+  // BUG FIX (2026-10-30): days were only fetched when a card was expanded,
+  // so every collapsed card showed "0/? days" while the header said 0/12.
+  // Fetch per-path days always (cached by React Query) so collapsed totals
+  // are real.
+  const { data: days } = useDailyWork(path.id);
   const dayList = (Array.isArray(days) ? days : []) as DailyWork[];
   const completedDays = dayList.filter((d) => d.completed).length;
   const totalDays = dayList.length;

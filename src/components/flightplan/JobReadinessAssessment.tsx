@@ -280,6 +280,12 @@ export function JobReadinessAssessment({
       );
       return;
     }
+    // BUG FIX (2026-10-30): the JD field was only `required`, so an empty
+    // submit just moved focus with no visible error. Show an explicit error.
+    if (!jobDescription.trim()) {
+      setFormError("Paste the exact job description before assessing your readiness.");
+      return;
+    }
     assessment.mutate({
       role,
       company,
@@ -431,7 +437,6 @@ export function JobReadinessAssessment({
               onChange={(event) => setJobDescription(event.target.value)}
               className="mt-2 min-h-36 w-full resize-y rounded-xl border border-border bg-background p-3 text-sm leading-6 outline-none transition-colors focus:border-terracotta"
               placeholder="Paste the responsibilities, requirements, and qualifications from the job posting..."
-              required
             />
             <span className="mt-1.5 block text-[11px] text-muted-foreground">
               Use a complete posting so the comparison stays specific to this role.

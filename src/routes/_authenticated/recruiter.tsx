@@ -346,6 +346,19 @@ function RecruiterPage() {
   useEffect(() => {
     if (existingSession && !currentSession) {
       setCurrentSession(existingSession);
+      // BUG FIX (2026-10-30): Step 1 defaulted to Systems Limited even when
+      // the loaded session was for another company (e.g. NetSol), so
+      // "Source Proof" showed the session's company while the header
+      // showed a different one. Sync the form to the loaded session.
+      const featured = FEATURED_COMPANIES.some((co) => co.name === existingSession.companyName);
+      if (featured) {
+        setIsCustomCompany(false);
+        setSelectedCompany(existingSession.companyName);
+      } else {
+        setIsCustomCompany(true);
+        setCustomCompanyInput(existingSession.companyName);
+      }
+      if (existingSession.targetRole) setSelectedRole(existingSession.targetRole);
     }
   }, [existingSession, currentSession]);
 
@@ -356,6 +369,10 @@ function RecruiterPage() {
     }
     if (!isCustomCompany && !selectedCompany) {
       toast.error("Please select a target company.");
+      return;
+    }
+    if (!selectedRole.trim()) {
+      toast.error("Please enter a target role position.");
       return;
     }
 
@@ -490,7 +507,7 @@ function RecruiterPage() {
 
                   <Button
                     onClick={handleRunAudit}
-                    disabled={runAudit.isPending}
+                    disabled={runAudit.isPending || !selectedRole.trim()}
                     className="w-full rounded-xl py-3 font-bold text-xs bg-terracotta hover:bg-terracotta/90 text-white"
                   >
                     {runAudit.isPending ? (

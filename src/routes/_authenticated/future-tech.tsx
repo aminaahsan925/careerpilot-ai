@@ -55,16 +55,22 @@ function FutureTechPage() {
   const trackedNames = new Set((tracking ?? []).map((t) => t.technology_name));
 
   // Filter by category AND mode
+  // BUG FIX (2026-10-30): cached AI output can contain a placeholder trend
+  // named "Unknown" (category "Other", medium confidence). Never show it
+  // as if it were a real technology.
+  const isRealTrend = (name: string | undefined) =>
+    Boolean(name) && name !== "Unknown";
   const filteredTrends = trends?.alsoWatching.filter((t) => {
     const matchesCategory = category === "All" || t.category === category;
     const matchesMode = mode === "global" || trackedNames.has(t.name);
-    return matchesCategory && matchesMode;
+    return isRealTrend(t.name) && matchesCategory && matchesMode;
   });
 
   // Also filter featured by mode
   const featuredTrend = trends?.featured;
   const showFeatured =
     featuredTrend &&
+    isRealTrend(featuredTrend.name) &&
     (mode === "global" || trackedNames.has(featuredTrend.name)) &&
     (category === "All" || featuredTrend.category === category);
 

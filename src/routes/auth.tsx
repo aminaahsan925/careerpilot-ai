@@ -96,8 +96,8 @@ function AuthPage() {
       }
 
       if (mode === "reset") {
-        if (password.length < 6)
-          throw new Error("Please use a password with at least 6 characters.");
+        if (password.length < 8)
+          throw new Error("Please use a password with at least 8 characters.");
         if (password !== confirmPassword) throw new Error("Passwords do not match.");
 
         const { error: updateError } = await supabase.auth.updateUser({ password });
@@ -111,6 +111,8 @@ function AuthPage() {
       }
 
       if (mode === "signup") {
+        if (password.length < 8)
+          throw new Error("Please use a password with at least 8 characters.");
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
@@ -265,11 +267,11 @@ function AuthPage() {
                   id="password"
                   type="password"
                   required
-                  minLength={6}
+                  minLength={mode === "signin" ? 6 : 8}
                   autoComplete={mode === "signin" ? "current-password" : "new-password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="At least 6 characters"
+                  placeholder={mode === "signin" ? "Your password" : "At least 8 characters"}
                   className="mt-1.5 w-full rounded-xl border border-border bg-card px-4 py-3 text-[13.5px] outline-none transition-colors focus:border-terracotta"
                 />
               </div>
@@ -284,7 +286,7 @@ function AuthPage() {
                   id="confirm-password"
                   type="password"
                   required
-                  minLength={6}
+                  minLength={8}
                   autoComplete="new-password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}

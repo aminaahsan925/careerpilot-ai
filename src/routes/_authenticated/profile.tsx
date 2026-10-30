@@ -99,7 +99,15 @@ const BIGGEST_PROBLEM_OPTIONS = [
   "I don't know where to start",
 ];
 
+/* BUG FIX (2026-10-30): these options diverged from the onboarding options
+   ("I don't know yet", "Less than 3 hours", "3-5 hours", ...), so saved
+   values showed as "Select..." in Edit and risked being overwritten on save.
+   Keep both sets so any previously saved value still matches an option. */
 const EDUCATION_PREP_OPTIONS = [
+  "Very well",
+  "Somewhat",
+  "Not much",
+  "I don't know yet",
   "My university prepares me well",
   "Somewhat prepares me",
   "Not really preparing me",
@@ -107,12 +115,42 @@ const EDUCATION_PREP_OPTIONS = [
 ];
 
 const WEEKLY_HOURS_OPTIONS = [
-  "Less than 5 hours",
+  "Less than 3 hours",
+  "3-5 hours",
   "5-10 hours",
+  "10-15 hours",
+  "15+ hours",
+  "Less than 5 hours",
   "10-20 hours",
   "20-30 hours",
   "More than 30 hours",
 ];
+
+/* BUG FIX (2026-10-30): onboarding saves experience / learning_history as
+   JSON-stringified arrays (e.g. '["No projects yet"]') into text columns,
+   while Profile treated them as plain strings. Unwrap them for display and
+   for single-select editing (first item), so Edit no longer shows "Select..."
+   for a saved value and Save no longer risks blanking it. */
+function parseStoredList(value: string | null | undefined): string[] {
+  if (!value) return [];
+  const trimmed = value.trim();
+  if (!trimmed.startsWith("[")) return [trimmed];
+  try {
+    const parsed: unknown = JSON.parse(trimmed);
+    if (Array.isArray(parsed)) return parsed.filter((v): v is string => typeof v === "string");
+  } catch {
+    // Fall through to the raw value below.
+  }
+  return [trimmed];
+}
+
+function displayStoredValue(value: string | null | undefined): string {
+  return parseStoredList(value).join(", ");
+}
+
+function firstStoredValue(value: string | null | undefined): string {
+  return parseStoredList(value)[0] ?? "";
+}
 
 const EDUCATION_LEVELS = ["High School", "Diploma", "Bachelor's", "Master's", "PhD", "Self-taught"];
 
@@ -143,9 +181,11 @@ function ProfilePage() {
   // Know Me fields
   const [currentStatus, setCurrentStatus] = useState(user?.profile?.current_status ?? "");
   const [academicYear, setAcademicYear] = useState(user?.profile?.academic_year ?? "");
-  const [experience, setExperience] = useState(user?.profile?.experience ?? "");
+  const [experience, setExperience] = useState(firstStoredValue(user?.profile?.experience));
   const [projectCount, setProjectCount] = useState(user?.profile?.project_count ?? "");
-  const [learningHistory, setLearningHistory] = useState(user?.profile?.learning_history ?? "");
+  const [learningHistory, setLearningHistory] = useState(
+    firstStoredValue(user?.profile?.learning_history),
+  );
   const [certifications, setCertifications] = useState(user?.profile?.certifications ?? "");
   const [careerClarity, setCareerClarity] = useState(user?.profile?.career_clarity ?? "");
   const [biggestProblem, setBiggestProblem] = useState(user?.profile?.biggest_problem ?? "");
@@ -177,9 +217,9 @@ function ProfilePage() {
     setGraduationYear(user.profile?.graduation_year?.toString() ?? "");
     setCurrentStatus(user.profile?.current_status ?? "");
     setAcademicYear(user.profile?.academic_year ?? "");
-    setExperience(user.profile?.experience ?? "");
+    setExperience(firstStoredValue(user.profile?.experience));
     setProjectCount(user.profile?.project_count ?? "");
-    setLearningHistory(user.profile?.learning_history ?? "");
+    setLearningHistory(firstStoredValue(user.profile?.learning_history));
     setCertifications(user.profile?.certifications ?? "");
     setCareerClarity(user.profile?.career_clarity ?? "");
     setBiggestProblem(user.profile?.biggest_problem ?? "");
@@ -556,6 +596,9 @@ function ProfileField({
         type === "select" ? (
           <select value={value} onChange={(e) => onChange(e.target.value)} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-[13px] outline-none focus:border-terracotta">
             <option value="">Select...</option>
+            {/* Keep a saved value visible even if it is not in the option list,
+                instead of silently falling back to "Select...". */}
+            {value && !options.includes(value) && <option value={value}>{value}</option>}
             {options.map((opt) => (<option key={opt} value={opt}>{opt}</option>))}
           </select>
         ) : (
@@ -563,7 +606,7 @@ function ProfileField({
         )
       ) : (
         <div className="min-h-[40px] rounded-lg border border-border/50 bg-muted/30 px-3 py-2 text-[13px] text-foreground">
-          {value || <span className="text-muted-foreground">Not set</span>}
+          {displayStoredValue(value) || <span className="text-muted-foreground">Not set</span>}
         </div>
       )}
     </div>

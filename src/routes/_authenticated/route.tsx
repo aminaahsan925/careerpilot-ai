@@ -35,7 +35,7 @@ function withTimeout<T>(promise: PromiseLike<T>, timeoutMs: number, label: strin
   });
 }
 
-async function readAuthGate(): Promise<AuthGateResult> {
+async function readAuthGate(requestedPath?: string): Promise<AuthGateResult> {
   if (authGateCache && Date.now() - authGateCache.checkedAt < AUTH_CHECK_TTL_MS) {
     return authGateCache.result;
   }
@@ -61,7 +61,14 @@ async function readAuthGate(): Promise<AuthGateResult> {
       );
       user = userResult.data.user;
     }
-    if (!user) throw redirect({ to: "/auth", search: { redirect: "/", reset: undefined } });
+    // BUG FIX (2026-10-30): this used to redirect to /auth?redirect=/,
+    // losing the page the user actually requested (e.g. /recruiter).
+    // Use the requested path passed from beforeLoad instead.
+    if (!user)
+      throw redirect({
+        to: "/auth",
+        search: { redirect: requestedPath && requestedPath !== "/auth" ? requestedPath : "/", reset: undefined },
+      });
 
     let onboarded = false;
     let phase1Done = false;
@@ -121,7 +128,7 @@ export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async ({ location }) => {
     try {
-      const { user, onboarded, phase1Done } = await readAuthGate();
+      const { user, onboarded, phase1Done } = await readAuthGate(location.pathname);
       const onOnboarding = location.pathname.startsWith("/onboarding");
 
       if ((!onboarded || !phase1Done) && !onOnboarding) {
@@ -136,6 +143,9 @@ export const Route = createFileRoute("/_authenticated")({
     }
   },
   component: AuthenticatedLayout,
+  // BUG FIX (2026-10-30): show the loading state immediately on navigation
+  // instead of leaving the previous page's content visible under a new URL.
+  pendingMs: 0,
   pendingComponent: AuthPending,
 });
 
