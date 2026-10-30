@@ -111,7 +111,7 @@ function PricingPage() {
         </p>
       ) : null}
       <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-terracotta">
-        For final-year CS students chasing backend roles
+        For university students, whatever career you want next
       </p>
       <h1 className="mt-4 text-3xl font-bold tracking-tight">Pricing</h1>
       <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
@@ -124,7 +124,7 @@ function PricingPage() {
           <h2 className="text-xl font-bold">Free</h2>
           <p className="mt-1 text-2xl font-bold">Rs 0</p>
           <ul className="mt-4 list-disc space-y-2 pl-5 text-[14px] leading-relaxed">
-            <li>One backend-job readiness score from your resume, projects, and GitHub</li>
+            <li>One job-readiness score from your resume, projects, and experience — for any target role</li>
             <li>Your top 3 gaps, in plain words</li>
             <li>Up to 10 AI calls per day</li>
           </ul>

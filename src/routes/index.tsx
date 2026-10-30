@@ -204,7 +204,7 @@ function Landing() {
           />
           <div className="relative z-20 max-w-[560px] px-8 py-16 md:px-14 md:py-24">
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-terracotta">
-              For final-year CS students chasing backend roles
+              For university students, whatever career you want next
             </p>
             <h1 className="editorial-title mt-6 text-[clamp(2.6rem,7vw,5rem)]">
               <span className="block">Build</span>
@@ -212,10 +212,10 @@ function Landing() {
               <span className="block text-terracotta">Future</span>
             </h1>
             <p className="mt-6 max-w-[420px] text-[14px] leading-relaxed text-white/75">
-              CareerPilot turns your resume, projects, and GitHub into one backend-job readiness
+              CareerPilot turns your resume, projects, and experience into one job-readiness
               score — with the exact proof you must build next to get interviews. Not generic career
-              advice: upload your evidence, compare it with one target backend job, and get 3 gaps
-              and 1 proof task.
+              advice: upload your evidence, compare it with the job you actually want, and get 3 gaps
+              and 1 proof task, whether that is backend, design, data, or anything else.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <Link
