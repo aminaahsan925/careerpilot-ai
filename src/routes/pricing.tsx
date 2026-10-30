@@ -1,15 +1,50 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 
-import { getBillingStatus, startProofPlanCheckout } from "@/lib/billing.functions";
+import { checkProofPayment, getBillingStatus, startProofPlanCheckout } from "@/lib/billing.functions";
 
 export const Route = createFileRoute("/pricing")({
   validateSearch: (search: Record<string, unknown>) => ({
     paid: search["paid"] === "1" ? true : undefined,
     cancelled: search["cancelled"] === "1" ? true : undefined,
+    tracker: typeof search["tracker"] === "string" ? (search["tracker"] as string) : undefined,
   }),
   component: PricingPage,
 });
+
+function CheckPaymentButton({ tracker }: { tracker: string }) {
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  async function handleCheck() {
+    setBusy(true);
+    setMessage(null);
+    try {
+      const result = await checkProofPayment({ data: { tracker } });
+      setMessage(
+        result.activated
+          ? "Proof Plan activated! Sign out and back in if your plan still shows Free."
+          : `Payment not confirmed yet (status: ${result.state}). Wait a minute and check again.`,
+      );
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Could not check the payment.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="mt-3">
+      <button
+        type="button"
+        onClick={handleCheck}
+        disabled={busy}
+        className="inline-flex rounded-lg border border-terracotta px-5 py-3 text-[13.5px] font-semibold text-terracotta disabled:opacity-60"
+      >
+        {busy ? "Checking…" : "Check payment & activate my plan"}
+      </button>
+      {message ? <p className="mt-3 text-[13.5px]">{message}</p> : null}
+    </div>
+  );
+}
 
 function PayWithSafepayButton() {
   const [busy, setBusy] = useState(false);
@@ -62,10 +97,13 @@ function PricingPage() {
   return (
     <div className="mx-auto max-w-3xl px-6 py-16">
       {search.paid ? (
-        <p className="mb-6 rounded-xl border border-border bg-secondary px-4 py-3 text-[13.5px]">
-          Payment received — your Proof Plan activates automatically once Safepay confirms it.
-          If it is not active within a few minutes, sign out and back in, then check your plan.
-        </p>
+        <div className="mb-6 rounded-xl border border-border bg-secondary px-4 py-3 text-[13.5px]">
+          <p>
+            Payment received — your Proof Plan activates automatically once Safepay confirms it.
+            If it is not active, use the button below to check it directly (no webhook needed).
+          </p>
+          {search.tracker ? <CheckPaymentButton tracker={search.tracker} /> : null}
+        </div>
       ) : null}
       {search.cancelled ? (
         <p className="mb-6 rounded-xl border border-border bg-secondary px-4 py-3 text-[13.5px]">

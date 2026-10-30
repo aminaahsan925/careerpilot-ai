@@ -86,6 +86,48 @@ export async function createProofPlanCheckout(
   return { url, tracker, orderId };
 }
 
+/** Activate a user from a verified tracker. Shared by the webhook handler
+ * and by the manual "Check payment" fallback, so activation does not
+ * depend on the webhook being registered in Safepay at all. */
+export async function activateFromTracker(
+  tracker: string,
+  expectedUserId?: string,
+): Promise<{ activated: boolean; state: string; userId: string }> {
+  const checked = await fetchTrackerState(tracker);
+  if (checked.state !== "TRACKER_ENDED") {
+    return { activated: false, state: checked.state, userId: "" };
+  }
+  if (checked.amount !== PROOF_PLAN_AMOUNT_PAISA || checked.currency !== PROOF_PLAN_CURRENCY) {
+    throw new Error("Payment amount or currency does not match the Rs 499 Proof Plan.");
+  }
+  const userId = String(checked.metadata["user_id"] ?? "");
+  if (!userId) throw new Error("This payment has no user attached, so it cannot be activated.");
+  if (expectedUserId && expectedUserId !== userId) {
+    throw new Error("This payment belongs to a different account.");
+  }
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const admin = supabaseAdmin as unknown as {
+    from: (t: string) => {
+      upsert: (row: Record<string, unknown>) => Promise<{ error: unknown }>;
+    };
+  };
+  const orderId = `proof-${userId.slice(0, 8)}-${tracker}`;
+  const { error: paymentError } = await admin.from("payments").upsert({
+    order_id: orderId,
+    user_id: userId,
+    tracker,
+    amount: PROOF_PLAN_AMOUNT_PAISA,
+    currency: PROOF_PLAN_CURRENCY,
+    status: "paid",
+  });
+  if (paymentError) throw new Error("Could not record the payment. Please try again.");
+  const { error: subError } = await admin
+    .from("user_subscriptions")
+    .upsert({ user_id: userId, plan: "proof", status: "active" });
+  if (subError) throw new Error("Could not activate the plan. Please try again.");
+  return { activated: true, state: checked.state, userId };
+}
+
 /** Authenticated re-check: fetch the tracker from Safepay and confirm it ended paid. */
 export async function fetchTrackerState(tracker: string): Promise<{
   state: string;

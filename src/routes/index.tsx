@@ -730,7 +730,7 @@ function Landing() {
             </Link>
             <Link
               to="/pricing"
-              search={{ paid: undefined, cancelled: undefined }}
+              search={{ paid: undefined, cancelled: undefined, tracker: undefined }}
               className="transition hover:text-foreground"
             >
               Pricing

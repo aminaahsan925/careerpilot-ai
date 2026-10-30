@@ -7,14 +7,7 @@
  * harmless: the payments row is upserted by tracker and the subscription
  * row is upserted by user.
  */
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-
-import {
-  PROOF_PLAN_AMOUNT_PAISA,
-  PROOF_PLAN_CURRENCY,
-  fetchTrackerState,
-  isSafepayConfigured,
-} from "./safepay.server";
+import { activateFromTracker, isSafepayConfigured } from "./safepay.server";
 
 export async function handleSafepayWebhook(request: Request): Promise<Response> {
   if (!isSafepayConfigured()) {
@@ -45,71 +38,21 @@ export async function handleSafepayWebhook(request: Request): Promise<Response> 
     });
   }
 
-  const checked = await fetchTrackerState(tracker);
-  if (checked.state !== "TRACKER_ENDED") {
-    return new Response(JSON.stringify({ ok: true, ignored: `state=${checked.state}` }), {
+  try {
+    const result = await activateFromTracker(tracker);
+    if (!result.activated) {
+      return new Response(JSON.stringify({ ok: true, ignored: `state=${result.state}` }), {
+        headers: { "content-type": "application/json" },
+      });
+    }
+    return new Response(JSON.stringify({ ok: true, activated: true }), {
       headers: { "content-type": "application/json" },
     });
+  } catch (err) {
+    console.error("[CareerPilot][safepay] webhook activation failed:", err);
+    return new Response(
+      JSON.stringify({ ok: false, error: err instanceof Error ? err.message : "Activation failed" }),
+      { status: 500, headers: { "content-type": "application/json" } },
+    );
   }
-  if (checked.amount !== PROOF_PLAN_AMOUNT_PAISA || checked.currency !== PROOF_PLAN_CURRENCY) {
-    return new Response(JSON.stringify({ ok: false, error: "Amount or currency mismatch" }), {
-      status: 400,
-      headers: { "content-type": "application/json" },
-    });
-  }
-
-  const userId = String(
-    checked.metadata["user_id"] ??
-      payload.notification?.metadata?.["user_id"] ??
-      payload.metadata?.["user_id"] ??
-      "",
-  );
-  if (!userId) {
-    return new Response(JSON.stringify({ ok: false, error: "No user_id in payment metadata" }), {
-      status: 400,
-      headers: { "content-type": "application/json" },
-    });
-  }
-
-  const orderId = `proof-${userId.slice(0, 8)}-${tracker}`;
-  const { error: paymentError } = await (supabaseAdmin as unknown as {
-    from: (t: string) => {
-      upsert: (row: Record<string, unknown>) => Promise<{ error: unknown }>;
-    };
-  })
-    .from("payments")
-    .upsert({
-      order_id: orderId,
-      user_id: userId,
-      tracker,
-      amount: PROOF_PLAN_AMOUNT_PAISA,
-      currency: PROOF_PLAN_CURRENCY,
-      status: "paid",
-    });
-  if (paymentError) {
-    console.error("[CareerPilot][safepay] payment upsert failed:", paymentError);
-    return new Response(JSON.stringify({ ok: false, error: "Payment record failed" }), {
-      status: 500,
-      headers: { "content-type": "application/json" },
-    });
-  }
-
-  const { error: subError } = await (supabaseAdmin as unknown as {
-    from: (t: string) => {
-      upsert: (row: Record<string, unknown>) => Promise<{ error: unknown }>;
-    };
-  })
-    .from("user_subscriptions")
-    .upsert({ user_id: userId, plan: "proof", status: "active" });
-  if (subError) {
-    console.error("[CareerPilot][safepay] subscription upsert failed:", subError);
-    return new Response(JSON.stringify({ ok: false, error: "Activation failed" }), {
-      status: 500,
-      headers: { "content-type": "application/json" },
-    });
-  }
-
-  return new Response(JSON.stringify({ ok: true, activated: true }), {
-    headers: { "content-type": "application/json" },
-  });
 }
