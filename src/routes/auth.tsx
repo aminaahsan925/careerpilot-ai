@@ -54,6 +54,7 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -111,6 +112,8 @@ function AuthPage() {
       }
 
       if (mode === "signup") {
+        if (!acceptedTerms)
+          throw new Error("Please accept the Terms of Use and Privacy Policy to create an account.");
         if (password.length < 8)
           throw new Error("Please use a password with at least 8 characters.");
         const { data, error: signUpError } = await supabase.auth.signUp({
@@ -305,6 +308,28 @@ function AuthPage() {
               <p className="rounded-xl border border-border bg-secondary px-4 py-3 text-[12.5px] text-foreground">
                 {notice}
               </p>
+            ) : null}
+
+            {mode === "signup" ? (
+              <label className="flex items-start gap-2.5 text-[12.5px] leading-5 text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={acceptedTerms}
+                  onChange={(e) => setAcceptedTerms(e.target.checked)}
+                  className="mt-1 accent-[var(--terracotta)]"
+                />
+                <span>
+                  I agree to the{" "}
+                  <Link to="/terms" className="font-semibold text-terracotta hover:underline">
+                    Terms of Use
+                  </Link>{" "}
+                  and{" "}
+                  <Link to="/privacy" className="font-semibold text-terracotta hover:underline">
+                    Privacy Policy
+                  </Link>
+                  .
+                </span>
+              </label>
             ) : null}
 
             <button
