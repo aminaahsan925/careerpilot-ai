@@ -18,9 +18,13 @@ export interface TechEvent {
   registrationOpen: boolean;
   prizePool?: string;
   isAiGrounded?: boolean;
+  /** True for the hardcoded sample list: unverified example events, never presented as live listings. */
+  isSample?: boolean;
 }
 
-// Fallback high-fidelity verified tech events across major cities
+// Sample events used only when live event research fails. They are
+// unverified examples (isVerified: false) and must always be date-filtered
+// through getUpcomingFallbackEvents() so past events are never shown.
 export const INITIAL_TECH_EVENTS: TechEvent[] = [
   // Lahore
   {
@@ -34,8 +38,9 @@ export const INITIAL_TECH_EVENTS: TechEvent[] = [
     eventUrl: 'https://fast.edu.pk/hackathons',
     description: '48-hour national hackathon focused on Generative AI pipelines, Distributed Systems, and FinTech integrations.',
     tags: ['AI/ML', 'FullStack', 'Prize: PKR 500k'],
-    isVerified: true,
-    registrationOpen: true,
+    isVerified: false,
+    registrationOpen: false,
+    isSample: true,
     prizePool: 'PKR 500,000',
   },
   {
@@ -49,8 +54,9 @@ export const INITIAL_TECH_EVENTS: TechEvent[] = [
     eventUrl: 'https://gdg.community.dev/gdg-lahore',
     description: 'Hands-on live engineering workshop building multi-agent systems, tool calling, and MCP server bridges.',
     tags: ['GenAI', 'Python', 'Agents'],
-    isVerified: true,
-    registrationOpen: true,
+    isVerified: false,
+    registrationOpen: false,
+    isSample: true,
   },
   {
     id: 'lhr-conf-3',
@@ -63,8 +69,9 @@ export const INITIAL_TECH_EVENTS: TechEvent[] = [
     eventUrl: 'https://devops.pk',
     description: 'Keynotes from principal architects on Kubernetes orchestration, Serverless patterns, and CI/CD security.',
     tags: ['DevOps', 'Kubernetes', 'Cloud'],
-    isVerified: true,
-    registrationOpen: true,
+    isVerified: false,
+    registrationOpen: false,
+    isSample: true,
   },
   {
     id: 'lhr-mtp-4',
@@ -77,8 +84,9 @@ export const INITIAL_TECH_EVENTS: TechEvent[] = [
     eventUrl: 'https://meetup.com/react-lahore',
     description: 'Technical deep-dive on React 19 Compiler, Server Components, and TanStack Router architectures.',
     tags: ['React', 'TypeScript', 'Frontend'],
-    isVerified: true,
-    registrationOpen: true,
+    isVerified: false,
+    registrationOpen: false,
+    isSample: true,
   },
 
   // Karachi
@@ -93,8 +101,9 @@ export const INITIAL_TECH_EVENTS: TechEvent[] = [
     eventUrl: 'https://iba.edu.pk',
     description: 'Build real-time payment rails, open banking APIs, and decentralized identity solutions with industry mentors.',
     tags: ['FinTech', 'APIs', 'Prize: PKR 400k'],
-    isVerified: true,
-    registrationOpen: true,
+    isVerified: false,
+    registrationOpen: false,
+    isSample: true,
     prizePool: 'PKR 400,000',
   },
   {
@@ -108,8 +117,9 @@ export const INITIAL_TECH_EVENTS: TechEvent[] = [
     eventUrl: 'https://pasha.org.pk',
     description: 'Over 80+ tech companies conducting instant technical interviews, code challenges, and networking for graduates.',
     tags: ['Hiring', 'Networking', 'Careers'],
-    isVerified: true,
-    registrationOpen: true,
+    isVerified: false,
+    registrationOpen: false,
+    isSample: true,
   },
   {
     id: 'khi-wrk-3',
@@ -122,8 +132,9 @@ export const INITIAL_TECH_EVENTS: TechEvent[] = [
     eventUrl: 'https://10pearls.com/university',
     description: 'Master indexing, query execution plans, connection pooling, and replication in high-throughput architectures.',
     tags: ['PostgreSQL', 'Databases', 'Backend'],
-    isVerified: true,
-    registrationOpen: true,
+    isVerified: false,
+    registrationOpen: false,
+    isSample: true,
   },
 
   // Islamabad / Rawalpindi
@@ -138,8 +149,9 @@ export const INITIAL_TECH_EVENTS: TechEvent[] = [
     eventUrl: 'https://seecs.nust.edu.pk',
     description: 'Develop vision AI, autonomous drone navigators, and conversational clinical assistants over a 36-hour sprint.',
     tags: ['ComputerVision', 'Robotics', 'Prize: PKR 600k'],
-    isVerified: true,
-    registrationOpen: true,
+    isVerified: false,
+    registrationOpen: false,
+    isSample: true,
     prizePool: 'PKR 600,000',
   },
   {
@@ -153,8 +165,9 @@ export const INITIAL_TECH_EVENTS: TechEvent[] = [
     eventUrl: 'https://nccs.pk',
     description: 'Zero-trust architecture, threat simulation, and AI red-teaming with international defense researchers.',
     tags: ['Security', 'Infra', 'ZeroTrust'],
-    isVerified: true,
-    registrationOpen: true,
+    isVerified: false,
+    registrationOpen: false,
+    isSample: true,
   },
 
   // Peshawar
@@ -169,8 +182,9 @@ export const INITIAL_TECH_EVENTS: TechEvent[] = [
     eventUrl: 'https://kpitb.gov.pk',
     description: 'Solving regional education and digital health challenges using edge computing and mobile technologies.',
     tags: ['KPITB', 'Mobile', 'Prize: PKR 350k'],
-    isVerified: true,
-    registrationOpen: true,
+    isVerified: false,
+    registrationOpen: false,
+    isSample: true,
     prizePool: 'PKR 350,000',
   },
 
@@ -186,8 +200,9 @@ export const INITIAL_TECH_EVENTS: TechEvent[] = [
     eventUrl: 'https://cfd.fast.edu.pk',
     description: 'End-to-end fullstack deployment with Server Actions, Supabase, Vector Embeddings, and Vercel edge runtime.',
     tags: ['Next.js', 'Cloud', 'FullStack'],
-    isVerified: true,
-    registrationOpen: true,
+    isVerified: false,
+    registrationOpen: false,
+    isSample: true,
   },
 
   // Remote / Virtual
@@ -202,8 +217,9 @@ export const INITIAL_TECH_EVENTS: TechEvent[] = [
     eventUrl: 'https://devpost.com',
     description: 'Build production autonomous assistants and automated code generation systems. Open to all Pakistani students.',
     tags: ['Global', 'AI Agents', 'Prize: $10,000 USD'],
-    isVerified: true,
-    registrationOpen: true,
+    isVerified: false,
+    registrationOpen: false,
+    isSample: true,
     prizePool: '$10,000 USD',
   },
 ];
@@ -228,4 +244,20 @@ export function getDaysUntil(dateString: string): number {
   } catch {
     return 0;
   }
+}
+
+/** True when the event date is today or in the future. Unparseable dates are treated as past. */
+export function isUpcomingEvent(event: TechEvent, now: Date = new Date()): boolean {
+  const target = new Date(event.eventDate);
+  if (Number.isNaN(target.getTime())) return false;
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  return target.getTime() >= startOfToday;
+}
+
+/**
+ * The sample fallback list, filtered to upcoming events only. Past sample
+ * events must never be shown as verified, open, or upcoming.
+ */
+export function getUpcomingFallbackEvents(now: Date = new Date()): TechEvent[] {
+  return INITIAL_TECH_EVENTS.filter((event) => isUpcomingEvent(event, now));
 }

@@ -159,7 +159,7 @@ const EDUCATION_LEVELS = ["High School", "Diploma", "Bachelor's", "Master's", "P
 /* ------------------------------------------------------------------ */
 
 function ProfilePage() {
-  const { data: user, isLoading } = useCurrentUser();
+  const { data: user, isLoading, error } = useCurrentUser();
   const saveMutation = useSaveProfile();
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -246,8 +246,16 @@ function ProfilePage() {
     return (
       <AppLayout title="Profile" subtitle="">
         <div className="mx-auto max-w-md text-center">
-          <p className="text-[15px] font-semibold text-foreground">Profile not available</p>
-          <p className="mt-2 text-[13px] text-muted-foreground">Please sign in to view your profile.</p>
+          <p className="text-[15px] font-semibold text-foreground">
+            {error ? "Couldn't load your profile" : "Profile not available"}
+          </p>
+          <p className="mt-2 text-[13px] text-muted-foreground">
+            {error
+              ? error instanceof Error
+                ? error.message
+                : "Something went wrong while loading your profile. Try refreshing the page."
+              : "Please sign in to view your profile."}
+          </p>
         </div>
       </AppLayout>
     );

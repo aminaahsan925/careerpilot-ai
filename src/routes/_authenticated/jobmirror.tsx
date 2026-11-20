@@ -430,9 +430,15 @@ function InterviewPrepPage() {
                   className="w-full max-w-full rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-[12px] text-white outline-none placeholder:text-white/35 sm:w-auto"
                 />
               )}
-              <span className="text-[11px] text-white/40">
-                Research-backed prompts, not leaked interview questions
-              </span>
+              {selectedCompany && !intel.companyResearched ? (
+                <span className="text-[11px] text-amber-300">
+                  “{selectedCompany}” is not researched yet — showing role-based interview prep, not company-specific standards.
+                </span>
+              ) : (
+                <span className="text-[11px] text-white/40">
+                  Research-backed prompts, not leaked interview questions
+                </span>
+              )}
             </div>
           </div>
           <div className="flex gap-1 overflow-x-auto border-t border-white/10 px-4 py-2 sm:px-6">

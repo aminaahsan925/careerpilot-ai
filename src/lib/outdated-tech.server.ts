@@ -1,5 +1,6 @@
 import { tavilySearch, type TavilySearchResponse } from "./tavily.server";
 import { groqChat, parseJsonObject } from "./ai.server";
+import { consumeAiCall } from "./billing.server";
 import { resolveRoleProfile, type RoleTruthProfile } from "@/data/market-truth";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -109,6 +110,12 @@ export async function detectOutdatedTechnologies(
   // 3. Use Tavily to search for declining technologies in this role's domain
   const tavilyResults = await searchDecliningTech(targetRole, studentSkills);
 
+  // Quota first: one AI call is consumed before the provider is called.
+  // This check sits OUTSIDE analyzeOutdatedTech's try/catch on purpose:
+  // that catch returns a report on any error, and a quota refusal must
+  // reach the user as an error, never as a clean bill of health.
+  await consumeAiCall(supabaseAdmin, userId, "outdated-tech");
+
   // 4. Use Groq to synthesize the analysis
   const report = await analyzeOutdatedTech(
     targetRole,
@@ -141,7 +148,9 @@ async function searchDecliningTech(
   }
 
   const results: TavilySearchResponse[] = [];
-  for (const query of queries.slice(0, 2)) {
+  // Run every query, including the skill-specific third one: the student's
+  // own skills must actually be searched.
+  for (const query of queries) {
     try {
       const result = await tavilySearch(query, { maxResults: 4, searchDepth: "basic" });
       results.push(result);
@@ -255,15 +264,10 @@ Return a JSON object:
     };
   } catch (error) {
     console.error("[OutdatedTech] AI analysis failed:", error);
-    // Return a minimal report when AI fails
-    return {
-      targetRole,
-      studentSkills,
-      roleRequiredSkills,
-      outdatedItems: [],
-      healthySkills: studentSkills,
-      researchedAt: new Date().toISOString(),
-      fromCache: false,
-    };
+    // Never return a fake "all healthy" report: the check did not run, so
+    // say so. Callers show an error state instead of a clean bill of health.
+    throw new Error(
+      "Outdated-technology check unavailable — the analysis failed, so your skills have not been checked. Please try again.",
+    );
   }
 }

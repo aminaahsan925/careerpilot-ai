@@ -5,13 +5,18 @@ type SparklineProps = {
 };
 
 export function Sparkline({ data, color = "var(--terracotta)", className }: SparklineProps) {
+  if (data.length === 0) return null;
+
   const w = 100;
   const h = 40;
   const max = Math.max(...data);
   const min = Math.min(...data);
   const span = max - min || 1;
+  // A single point has no interval to divide by (data.length - 1 === 0);
+  // render it flat at x = 0 instead of producing NaN coordinates.
+  const xDivisor = data.length - 1 || 1;
   const points = data.map((v, i) => {
-    const x = (i / (data.length - 1)) * w;
+    const x = (i / xDivisor) * w;
     const y = h - ((v - min) / span) * (h - 4) - 2;
     return [x, y] as const;
   });

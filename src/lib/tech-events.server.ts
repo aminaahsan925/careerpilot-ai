@@ -1,4 +1,4 @@
-import { INITIAL_TECH_EVENTS, type TechEvent } from "@/data/tech-events";
+import { getUpcomingFallbackEvents, type TechEvent } from "@/data/tech-events";
 import { groqChat, parseJsonObject } from "./ai.server";
 import { tavilySearch } from "./tavily.server";
 
@@ -25,7 +25,9 @@ const EVENT_TYPES = new Set<TechEvent["eventType"]>([
 ]);
 
 function fallbackEvents(city: string): TechEvent[] {
-  return INITIAL_TECH_EVENTS.filter(
+  // Sample list only, and only events still in the future. Past samples are
+  // never shown as upcoming.
+  return getUpcomingFallbackEvents().filter(
     (event) =>
       city === "All Cities" ||
       event.city.toLowerCase().includes(city.toLowerCase()) ||
@@ -91,8 +93,11 @@ function normalizeEvents(city: string, drafts: EventDraft[]): TechEvent[] {
  * (Groq -> Gemini -> OpenRouter) to turn search evidence into safe event cards. */
 export async function getLiveTechEvents(city: string, targetRole?: string): Promise<TechEvent[]> {
   const cleanCity = city.trim() || "Lahore";
+  // "All Cities" is a filter, not a place: search Pakistan-wide instead of
+  // asking the web for events "in All Cities".
+  const queryCity = cleanCity === "All Cities" ? "Pakistan" : cleanCity;
   const query = [
-    `upcoming developer hackathons conferences workshops meetups in ${cleanCity}, Pakistan only`,
+    `upcoming developer hackathons conferences workshops meetups in ${queryCity}, Pakistan only`,
     "official registration 2026 2027",
     targetRole ? `relevant to ${targetRole}` : "students and early-career developers",
   ].join(" ");
@@ -108,6 +113,11 @@ export async function getLiveTechEvents(city: string, targetRole?: string): Prom
       )
       .join("\n\n");
 
+    const scopeInstruction =
+      cleanCity === "All Cities"
+        ? "Find events happening anywhere in Pakistan from this evidence."
+        : `Find only events physically happening in ${cleanCity}, Pakistan from this evidence. Exclude events from other cities and nationwide listings unless they explicitly have a ${cleanCity} venue or city-specific date.`;
+
     const raw = await groqChat(
       [
         {
@@ -117,7 +127,7 @@ export async function getLiveTechEvents(city: string, targetRole?: string): Prom
         },
         {
           role: "user",
-          content: `Find only events physically happening in ${cleanCity}, Pakistan from this evidence. Exclude events from other cities and nationwide listings unless they explicitly have a ${cleanCity} venue or city-specific date. Return at most 8 events with keys city, title, eventType, organizer, venue, eventDate (YYYY-MM-DD), eventUrl, registrationUrl, description, tags, prizePool, preparationTips. For preparationTips, give 3 concise, event-specific actions based on the event format, title, tags, and description. Do not give generic advice that ignores the event.\n\n${evidence}`,
+          content: `${scopeInstruction} Return at most 8 events with keys city, title, eventType, organizer, venue, eventDate (YYYY-MM-DD), eventUrl, registrationUrl, description, tags, prizePool, preparationTips. For preparationTips, give 3 concise, event-specific actions based on the event format, title, tags, and description. Do not give generic advice that ignores the event.\n\n${evidence}`,
         },
       ],
       { json: true, maxTokens: 2200, temperature: 0.1, totalTimeoutMs: 28_000 },

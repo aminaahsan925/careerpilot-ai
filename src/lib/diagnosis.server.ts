@@ -11,6 +11,7 @@ import {
 } from "@/data/company-truth";
 import type { Database } from "@/integrations/supabase/types";
 import { groqChat, parseJsonObject, stringList } from "./ai.server";
+import { consumeAiCall } from "./billing.server";
 import { buildCareerState, careerStateToPrompt, type CareerState } from "./career-state.server";
 import { formatEvidenceContext, retrieveGroundedEvidence, type EvidenceItem } from "./intelligence.server";
 import { benchmarkRole, type MarketBenchmark } from "./market-fit";
@@ -53,6 +54,8 @@ export type CompanyRejectionDiagnosis = {
   companyId: string;
   companyName: string;
   companyTagline: string;
+  /** False when the target company has no researched hiring profile. Company-specific claims must not be made then. */
+  companyResearched: boolean;
   /** Percentage of role must-have skills without project/repository proof; not a hiring probability. */
   rejectionRisk: number | null;
   riskTier: "Most must-haves unproven" | "Several must-haves unproven" | "Some must-haves unproven" | "Must-haves demonstrated" | "Not enough evidence";
@@ -109,6 +112,10 @@ export type CareerDiagnosis = {
   };
   marketBenchmark: MarketBenchmark | null;
   companyDiagnosis?: CompanyRejectionDiagnosis | null;
+  /** "template" when the AI call failed and the deterministic template was used instead. */
+  diagnosisSource: "ai" | "template";
+  /** False when the live Tavily research step failed and only stored evidence was used. */
+  researchAvailable: boolean;
 };
 
 const SYSTEM = `You are CareerPilot's chief career diagnostician & senior technical hiring auditor.
@@ -206,6 +213,7 @@ function buildDeterministicCompanyDiagnosis(
     companyId: company.id,
     companyName: company.name,
     companyTagline: company.tagline,
+    companyResearched: true,
     rejectionRisk: riskScore,
     riskTier,
     whyUnemployedReasons: whyUnemployedReasons.slice(0, 4),
@@ -274,6 +282,181 @@ function buildDeterministicCompanyDiagnosis(
   };
 }
 
+/**
+ * Deterministic diagnosis for a target company CareerPilot has NOT
+ * researched. Uses only the role benchmark and the student's recorded
+ * evidence — never invented hiring bars, rejection rates, or interview
+ * stages for the company.
+ */
+function buildUnresearchedCompanyDiagnosis(
+  targetCompany: string | null,
+  targetRole: string | null,
+  state: CareerState,
+  benchmark: MarketBenchmark,
+  readiness: Readiness,
+): CompanyRejectionDiagnosis {
+  const companyLabel = targetCompany?.trim() || "No company selected";
+  const companySlug = targetCompany
+    ? targetCompany.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-")
+    : "no-company";
+  const riskScore = evidenceGapPercentage(benchmark);
+  const riskTier = evidenceGapLabel(riskScore);
+  const unproven = benchmark.unprovenMustHaves ?? [];
+  const claimedOnly = benchmark.claimedOnlyMustHaves ?? [];
+  const hasResume = state.resume.hasResume;
+  const projectCount = state.projects.length;
+
+  const whyUnemployedReasons: CompanyRejectionDiagnosis["whyUnemployedReasons"] = [
+    {
+      title: "Company hiring bar unknown",
+      detail: targetCompany
+        ? `CareerPilot has no researched hiring profile for ${companyLabel}, so no company-specific rejection reasons can be given. This diagnosis uses the ${targetRole ?? "target role"} requirements instead.`
+        : "No company was selected, so this diagnosis uses the target role requirements only.",
+      recruiterPerspective:
+        "Compare the resume and projects against a real job description from this employer before judging company fit.",
+      severity: "warning",
+    },
+  ];
+
+  if (projectCount === 0 && !hasResume) {
+    whyUnemployedReasons.push({
+      title: "Zero Tangible Evidence & Invisible to Recruiters",
+      detail:
+        "You have neither an uploaded resume nor any recorded projects. Screening filters require verified technical footprints.",
+      recruiterPerspective:
+        "We cannot invite a candidate for technical testing when there is zero public code or resume evidence.",
+      severity: "fatal",
+    });
+  } else if (projectCount === 0) {
+    whyUnemployedReasons.push({
+      title: "Claims Without Project Proof",
+      detail:
+        "Your resume makes technical claims, but you have zero standalone projects proving you can ship software outside of course assignments.",
+      recruiterPerspective:
+        "Interviewers discount unverified resume claims unless backed by public GitHub repositories with clean commits.",
+      severity: "fatal",
+    });
+  } else if (unproven.length > 0) {
+    whyUnemployedReasons.push({
+      title: "Role must-haves without proof",
+      detail: `${unproven.length} must-have skill(s) for ${targetRole ?? "this role"} have no project or repository proof: ${unproven.slice(0, 4).join(", ")}.`,
+      recruiterPerspective:
+        "A skill listed without a project or repository link reads as a claim, not evidence.",
+      severity: "critical",
+    });
+  } else {
+    whyUnemployedReasons.push({
+      title: "Project quality has not been verified",
+      detail: `${projectCount} project(s) are recorded, but CareerPilot has not inspected their code, tests, deployment, or architecture. Those capabilities remain unverified, not proven absent.`,
+      recruiterPerspective: "A reviewer needs accessible project artifacts to judge implementation quality.",
+      severity: "warning",
+    });
+  }
+
+  if (claimedOnly.length > 0) {
+    whyUnemployedReasons.push({
+      title: "Skills claimed without project evidence",
+      detail: `${claimedOnly.slice(0, 4).join(", ")} appear on the profile but have no linked project or repository.`,
+      recruiterPerspective: "Claimed-only skills are the first thing a technical screen probes.",
+      severity: "warning",
+    });
+  }
+
+  return {
+    companyId: `unresearched-${companySlug}`,
+    companyName: companyLabel,
+    companyTagline: targetCompany
+      ? "Not researched yet — no hiring bar is available for this company."
+      : "No company selected — assessed against the target role only.",
+    companyResearched: false,
+    rejectionRisk: riskScore,
+    riskTier,
+    whyUnemployedReasons: whyUnemployedReasons.slice(0, 4),
+    whatIsLacking: {
+      missingNonNegotiables:
+        unproven.length > 0
+          ? unproven.slice(0, 4).map((skill) => `${skill} (required for ${targetRole ?? "the target role"}, no project proof yet)`)
+          : ["No unproven role must-haves were found in the current benchmark."],
+      projectDeficiencies: [
+        projectCount === 0
+          ? "No project is recorded in CareerPilot; public repositories and live URLs have not been checked."
+          : "Project records exist, but code, tests, deployment, and architecture have not been verified.",
+      ],
+      cvAndAtsFlaws: [
+        !hasResume
+          ? "No resume uploaded — completely blocked from initial ATS keyword parsing."
+          : "Resume lists general tools rather than quantified engineering outcomes (e.g. 'Optimized query latency by 40%').",
+        targetCompany
+          ? `Compare the resume with a real ${companyLabel} job description before identifying missing ATS keywords; no vacancy was supplied.`
+          : "Compare the resume with a real job description for the target role before identifying missing ATS keywords; no vacancy was supplied.",
+      ],
+    },
+    prescription: {
+      immediateCvFixes: [
+        "Reformat resume into single-column, ATS-friendly markdown/PDF with standard section headings.",
+        `Add the target role's must-have keywords only where a project or repository proves them: ${unproven.slice(0, 3).join(", ") || "see the benchmark above"}.`,
+        "Add live demo links and public GitHub repository URLs for every project.",
+      ],
+      recommendedProofProject: {
+        title: `${targetRole ?? "Target role"} proof project`,
+        description:
+          "A production-grade project that demonstrates the role's unproven must-haves with a live deployment and a readable repository.",
+        techStack: state.skills.slice(0, 4).map((skill) => skill.name),
+        mustHaveFeatures: [
+          "User authentication and authorization",
+          "Relational database with a normalized schema and indexes",
+          "Live deployed application accessible via public URL",
+          "Clean, documented GitHub repository with README and architecture notes",
+        ],
+        unacceptableClones: ["Basic Todo list", "Generic unstyled tutorial clones", "Static templates without backend"],
+      },
+      interviewPrepFocus: [
+        `Role must-haves to prove: ${unproven.slice(0, 3).join(", ") || "see the benchmark above"}`,
+        "Explain one project end to end: the problem, your design decisions, and what you would change.",
+        "Prepare evidence for every skill claimed on the resume.",
+      ],
+      fourWeekPlan: [
+        {
+          week: 1,
+          focus: "CV Restructuring & Core Technical Foundations",
+          deliverables: [
+            "Rewrite resume using XYZ formula with live GitHub links",
+            "Solve 15 LeetCode Easy/Medium problems on Arrays and HashMaps",
+            "Study Database Normalization (1NF-3NF) & Indexing fundamentals",
+          ],
+        },
+        {
+          week: 2,
+          focus: "Build Flagship Proof Project",
+          deliverables: [
+            "Initialize the proof project for the target role",
+            "Implement secure JWT authentication and role-based permissions",
+            "Design normalized relational database schema with indexed foreign keys",
+          ],
+        },
+        {
+          week: 3,
+          focus: "Production Polish, Testing & Deployment",
+          deliverables: [
+            "Write comprehensive unit test suite (>70% coverage)",
+            "Containerize with Docker and set up GitHub Actions CI/CD",
+            "Deploy live on cloud provider (Vercel / Render / AWS) with public API docs",
+          ],
+        },
+        {
+          week: 4,
+          focus: "Interview Simulation & Targeted Applications",
+          deliverables: [
+            "Complete 3 mock technical interviews for the target role",
+            "Prepare 2-minute architectural walk-through of your flagship project",
+            "Apply to real vacancies and compare each job description against your proof",
+          ],
+        },
+      ],
+    },
+  };
+}
+
 function evidenceGapPercentage(benchmark: MarketBenchmark | null | undefined): number | null {
   if (benchmark?.isFallback) return null;
   const total = benchmark?.mustHave?.total;
@@ -295,9 +478,18 @@ function mapRow(row: Record<string, unknown>): CareerDiagnosis {
   const storedCompanyDiag = (meta["company_diagnosis"] as CompanyRejectionDiagnosis | undefined) ?? null;
   const marketBenchmark = (meta["benchmark"] as MarketBenchmark | null) ?? readBenchmark(row["market_benchmark"]);
   const gapPct = evidenceGapPercentage(marketBenchmark);
-  const companyDiag = storedCompanyDiag && row["target_role"]
-    ? { ...storedCompanyDiag, rejectionRisk: gapPct, riskTier: evidenceGapLabel(gapPct) }
-    : storedCompanyDiag;
+  // Records saved before the flag existed predate the honesty fix; the
+  // direction-discovery baseline is the only known unresearched shape.
+  const normalizedCompanyDiag = storedCompanyDiag
+    ? {
+        ...storedCompanyDiag,
+        companyResearched:
+          storedCompanyDiag.companyResearched ?? storedCompanyDiag.companyId !== "career-direction-discovery",
+      }
+    : null;
+  const companyDiag = normalizedCompanyDiag && row["target_role"]
+    ? { ...normalizedCompanyDiag, rejectionRisk: gapPct, riskTier: evidenceGapLabel(gapPct) }
+    : normalizedCompanyDiag;
 
   return {
     id: row["id"] as string,
@@ -323,6 +515,8 @@ function mapRow(row: Record<string, unknown>): CareerDiagnosis {
     },
     marketBenchmark,
     companyDiagnosis: companyDiag,
+    diagnosisSource: meta["diagnosis_source"] === "template" ? "template" : "ai",
+    researchAvailable: meta["research_available"] !== false,
   };
 }
 
@@ -530,6 +724,7 @@ function buildDirectionDiscoveryDiagnosis(
     companyId: "career-direction-discovery",
     companyName: "Career direction baseline",
     companyTagline: "A starting-point assessment, not an employer rejection prediction.",
+    companyResearched: false,
     // No employer or target was selected, so a rejection percentage would be fabricated.
     rejectionRisk: null,
     riskTier: "Not enough evidence",
@@ -622,6 +817,10 @@ export async function runCareerDiagnosis(
   options: { company?: string; role?: string } = {},
 ): Promise<CareerDiagnosis> {
   console.info("[CareerPilot][diagnosis-engine] start", { userId, options });
+  // Quota first: one AI call is consumed before the provider is called.
+  // Throws QuotaError at the limit, QuotaUnavailableError when the quota
+  // check itself fails — either way the AI call must not run.
+  await consumeAiCall(supabase, userId, "diagnosis");
   const [loadedState, intakeResult] = await Promise.all([
     buildCareerState(supabase, userId),
     supabase.from("diagnostic_intakes").select("*").eq("user_id", userId).maybeSingle(),
@@ -658,7 +857,9 @@ export async function runCareerDiagnosis(
   const targetCompany = targetKnown
     ? options.company?.trim() || state.targetJob?.company || null
     : null;
-  const companyTruth = matchCompanyTruth(targetCompany || "general technology company");
+  // Null when the company has no researched hiring profile. Never invent
+  // company specifics for an unresearched employer.
+  const companyTruth = targetCompany ? matchCompanyTruth(targetCompany) : null;
   const roleMatch = matchRoleProfile(targetRole || "");
   const benchmark = benchmarkRole(
     targetRole || "",
@@ -676,6 +877,7 @@ export async function runCareerDiagnosis(
     : "official software and technology career pathways; beginner programming, problem solving, digital, data, and web fundamentals before specialization";
   let liveEvidence: EvidenceItem[] = [];
   let liveSources: { title: string; url: string; publishedAt?: string }[] = [];
+  let researchAvailable = true;
   try {
     const research = await tavilySearch(researchQuery, {
       maxResults: 3,
@@ -717,6 +919,9 @@ export async function runCareerDiagnosis(
       );
     }
   } catch (error) {
+    // Live research failed: surface it on the saved record instead of
+    // silently diagnosing from stored evidence only.
+    researchAvailable = false;
     console.warn("[CareerPilot][diagnosis-engine] live official research unavailable", {
       userId,
       message: error instanceof Error ? error.message : String(error),
@@ -742,12 +947,17 @@ export async function runCareerDiagnosis(
     .slice(0, 10);
   const foundationPlan = targetKnown ? null : buildFoundationPlan(state, intake);
 
-  // Generate the deterministic company rejection diagnosis baseline
+  // Generate the deterministic company rejection diagnosis baseline.
+  // An unresearched company gets a role-only diagnosis, never invented
+  // company specifics.
   const deterministicCompanyDiag = targetKnown
-    ? buildDeterministicCompanyDiagnosis(companyTruth, state, benchmark, readiness)
+    ? companyTruth
+      ? buildDeterministicCompanyDiagnosis(companyTruth, state, benchmark, readiness)
+      : buildUnresearchedCompanyDiagnosis(targetCompany, targetRole, state, benchmark, readiness)
     : null;
 
   let raw = "{}";
+  let aiUnavailable = false;
   try {
     const prompt = `=== DIAGNOSTIC MODE ===
 ${targetKnown ? `Target selected: ${targetRole}. Produce a role-specific evidence gap diagnosis.` : `No target role selected. Do not invent an employer or job rejection prediction. Determine the student's starting level from recorded evidence and prioritize foundations before advanced topics when fundamentals are not demonstrated. Recommend exploration before specialization.`}
@@ -771,7 +981,7 @@ Treat these answers as self-reported, not verified proof.` : ""}
 === TARGET ROLE & TARGET COMPANY ===
 Target Role: ${targetRole ?? "Not selected; career direction discovery"}
 Target Company: ${targetCompany ?? "Not selected; do not make employer-specific claims"}
-${targetKnown ? `Company non-negotiables: ${companyTruth.hiringBar.nonNegotiables.map((n) => n.skill).join(", ")}\nCompany rejection patterns: ${companyTruth.rejectionTruths.map((t) => t.title).join("; ")}` : "No company hiring bar may be assumed."}
+${targetKnown && companyTruth ? `Company non-negotiables: ${companyTruth.hiringBar.nonNegotiables.map((n) => n.skill).join(", ")}\nCompany rejection patterns: ${companyTruth.rejectionTruths.map((t) => t.title).join("; ")}` : targetKnown ? `Target company "${targetCompany ?? "not selected"}" is not researched yet. Do not make employer-specific claims about it; assess against the target role only.` : "No company hiring bar may be assumed."}
 
 === BENCHMARK COVERAGE ===
 Must-Have Skills Proven: ${benchmark.mustHave.covered}/${benchmark.mustHave.total} (${benchmark.mustHave.pct}%)
@@ -838,6 +1048,7 @@ Return JSON with:
     );
   } catch (err) {
     console.warn("[CareerPilot][diagnosis-engine] AI call failed, using deterministic hiring intelligence engine:", err);
+    aiUnavailable = true;
     raw = "{}";
   }
 
@@ -845,6 +1056,9 @@ Return JSON with:
   try {
     out = parseJsonObject<Record<string, unknown>>(raw);
   } catch {
+    // Unusable AI output is the same as no AI output: the deterministic
+    // template fills every field below, so flag it as such.
+    aiUnavailable = true;
     out = {};
   }
 
@@ -854,9 +1068,10 @@ Return JSON with:
   const companyDiagnosis: CompanyRejectionDiagnosis = !targetKnown
     ? buildDirectionDiscoveryDiagnosis(state, readiness, foundationPlan!)
     : {
-    companyId: companyTruth.id,
-    companyName: companyTruth.name,
-    companyTagline: companyTruth.tagline,
+    companyId: deterministicCompanyDiag!.companyId,
+    companyName: deterministicCompanyDiag!.companyName,
+    companyTagline: deterministicCompanyDiag!.companyTagline,
+    companyResearched: deterministicCompanyDiag!.companyResearched,
     rejectionRisk: evidenceGapPercentage(benchmark),
     riskTier: evidenceGapLabel(evidenceGapPercentage(benchmark)),
     whyUnemployedReasons: Array.isArray(out["why_unemployed_reasons"]) && (out["why_unemployed_reasons"] as unknown[]).length > 0
@@ -950,6 +1165,9 @@ Return JSON with:
     benchmark,
     target_company: targetCompany,
     target_clarity: targetKnown ? "selected" : "undecided",
+    // Persisted source flags: a fallback may degrade, never impersonate.
+    diagnosis_source: aiUnavailable ? "template" : "ai",
+    research_available: researchAvailable,
     live_sources: liveSources,
     retrieved_evidence: groundedEvidence.map((item) => ({
       provenance: item.provenance,

@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/events")({
 });
 
 function TechEventsPage() {
-  const { data: user } = useCurrentUser();
+  const { data: user, isLoading } = useCurrentUser();
 
   return (
     <AppLayout
@@ -30,13 +30,20 @@ function TechEventsPage() {
           <Sparkles className="h-5 w-5 text-terracotta" />
         </span>
       }
-      subtitle="Discover verified hackathons, workshops, and hiring conferences in your city. Pin them as milestone targets in your career roadmap."
+      subtitle="Discover hackathons, workshops, and hiring conferences in your city. Pin them as milestone targets in your career roadmap."
     >
       <div className="space-y-6 pb-12">
-        <TechEventsSection
-          userCity="Lahore"
-          targetRole={user?.role || "Software Engineer"}
-        />
+        {isLoading ? (
+          <div className="space-y-4">
+            <div className="h-44 animate-pulse rounded-3xl bg-secondary/80" />
+            <div className="h-40 animate-pulse rounded-3xl bg-secondary/80" />
+          </div>
+        ) : (
+          <TechEventsSection
+            userCity={user?.city?.trim() ? user.city : undefined}
+            targetRole={user?.role || "Software Engineer"}
+          />
+        )}
       </div>
     </AppLayout>
   );

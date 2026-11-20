@@ -11,9 +11,7 @@ import {
   Globe2,
   Info,
   Radio,
-  Send,
   Settings2,
-  ShieldCheck,
   Sparkles,
   Target,
   Zap,
@@ -37,7 +35,6 @@ import {
   isPushSubscribed,
   type NotificationPreferences,
 } from "@/lib/push-notifications";
-import { triggerInstantDailyIntelAlert } from "@/lib/daily-intel";
 import { cn } from "@/lib/utils";
 
 function notificationIcon(type: RoadmapNotification["type"]) {
@@ -62,7 +59,6 @@ export function NotificationBell() {
   const [activeTab, setActiveTab] = useState<"activity" | "offline_settings">("activity");
   const [isPushActive, setIsPushActive] = useState(false);
   const [prefs, setPrefs] = useState<NotificationPreferences>(getNotificationPreferences());
-  const [isTesting, setIsTesting] = useState(false);
 
   const { data: count = 0 } = useUnreadNotificationCount();
   const { data: notifications = [], isLoading } = useAllNotifications();
@@ -99,22 +95,6 @@ export function NotificationBell() {
     setPrefs(updated);
     saveNotificationPreferences(updated);
     toast.success("Preference saved.");
-  };
-
-  const handleTestAlert = async () => {
-    setIsTesting(true);
-    try {
-      const ok = await triggerInstantDailyIntelAlert(prefs.city, "Software Engineer");
-      if (ok) {
-        toast.success("Native OS Alert sent! Check your notification tray.");
-      } else {
-        toast.info("Please allow browser notifications to see the native alert banner.");
-      }
-    } catch {
-      toast.error("Could not send test notification.");
-    } finally {
-      setIsTesting(false);
-    }
   };
 
   return (
@@ -368,23 +348,6 @@ export function NotificationBell() {
                     className="data-[state=checked]:bg-terracotta"
                   />
                 </div>
-              </div>
-
-              {/* Test Notification Trigger */}
-              <div className="flex items-center justify-between pt-1">
-                <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> W3C Web Push
-                </span>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={isTesting}
-                  onClick={handleTestAlert}
-                  className="h-7 rounded-lg text-[10.5px] font-bold border-terracotta/30 text-terracotta hover:bg-terracotta/10"
-                >
-                  <Send className="mr-1 h-3 w-3" />
-                  {isTesting ? "Sending..." : "Test Native Alert"}
-                </Button>
               </div>
             </div>
           )}

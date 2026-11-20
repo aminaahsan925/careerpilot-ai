@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { AiError, groqChat, parseJsonObject, type ChatMsg } from "./ai.server";
+import { consumeAiCall } from "./billing.server";
 import {
   researchTechTrends,
   tavilySearch,
@@ -47,7 +48,8 @@ export type TechTrend = {
   firstProject: string;
   careerRelevance: string;
   sources: { title: string; url: string; date: string | null; summary: string }[];
-  lastResearched: string;
+  /** ISO date the trend was last researched, or null when it was never researched (sample data). */
+  lastResearched: string | null;
 };
 
 export type TechTrendsReport = {
@@ -60,6 +62,8 @@ export type TechTrendsReport = {
   };
   totalTechnologies: number;
   fromCache: boolean;
+  /** "sample" when live research failed and the hardcoded sample list is shown instead. */
+  source: "live" | "sample";
 };
 
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -77,6 +81,7 @@ const GLOBAL_TOPIC = "global_tech_trends";
  */
 export async function getTechTrends(
   supabase: Client,
+  userId: string,
   opts?: { forceRefresh?: boolean; category?: string },
 ): Promise<TechTrendsReport> {
   const category = opts?.category ?? "All";
@@ -97,9 +102,9 @@ export async function getTechTrends(
   } catch (error) {
     if (error instanceof TavilyError) {
       console.warn("[TechTrends] Tavily research failed, using static fallback:", error.message);
-      // Return static fallback instead of breaking the page
+      // Sample data, visibly labelled: never cached as fresh, never stamped
+      // with a research date it does not have.
       const fallback = buildStaticFallback(category);
-      await saveToCache(supabase, GLOBAL_TOPIC, fallback);
       return { ...fallback, fromCache: false };
     }
     throw error;
@@ -110,11 +115,15 @@ export async function getTechTrends(
   if (tavilyResults.length === 0 || tavilyResults.every((r) => r.results.length === 0)) {
     console.warn("[TechTrends] Tavily returned no results, using static fallback");
     const fallback = buildStaticFallback(category);
-    await saveToCache(supabase, GLOBAL_TOPIC, fallback);
     return { ...fallback, fromCache: false };
   }
 
   // 3. Synthesise via AI
+  // Quota is checked AFTER the cache check and the Tavily research, so a
+  // cached report or a failed research run costs no AI call. One AI call
+  // is consumed before the provider is called; throws QuotaError at the
+  // limit, QuotaUnavailableError when the quota check itself fails.
+  await consumeAiCall(supabase, userId, "tech-trends");
   let report: TechTrendsReport;
   try {
     report = await synthesiseTrends(tavilyResults, category);
@@ -139,6 +148,7 @@ export async function getTechTrends(
  */
 export async function getTechTrendDetail(
   supabase: Client,
+  userId: string,
   technologyName: string,
 ): Promise<TechTrend> {
   // Search for the specific technology
@@ -147,6 +157,9 @@ export async function getTechTrendDetail(
     `${technologyName} technology 2026 emerging trends use cases`,
     { maxResults: 5, searchDepth: "basic" },
   );
+
+  // Quota first: one AI call is consumed before the provider is called.
+  await consumeAiCall(supabase, userId, "tech-trend-detail");
 
   const messages: ChatMsg[] = [
     { role: "system", content: DETAIL_SYSTEM_PROMPT },
@@ -328,6 +341,7 @@ async function synthesiseTrends(
       pulse,
       totalTechnologies: 1 + alsoWatching.length,
       fromCache: false,
+      source: "live",
     },
     tavilyResults,
   );
@@ -439,6 +453,9 @@ function buildFallbackFromTavily(
     pulse: { gainingAttention: 1, worthWatching: alsoWatching.length, newDevelopments: 0 },
     totalTechnologies: 1 + alsoWatching.length,
     fromCache: false,
+    // Built from live Tavily evidence (unsynthesised because AI failed), so
+    // this is live data with low confidence, not a sample.
+    source: "live",
   };
 }
 
@@ -492,6 +509,16 @@ function parseCachedReport(raw: Record<string, unknown>): TechTrendsReport {
   const alsoWatchingRaw = (raw["alsoWatching"] as Record<string, unknown>[]) ?? [];
   const pulseRaw = (raw["pulse"] as Record<string, unknown>) ?? {};
 
+  // Reports cached before the honesty fix may be the old static fallback
+  // stamped as fresh. Live reports always carry sources; the sample list
+  // never does, so empty sources on every trend identifies a sample.
+  const allTrends = [featured, ...alsoWatchingRaw];
+  const hasAnySource = allTrends.some(
+    (trend) => Array.isArray(trend["sources"]) && (trend["sources"] as unknown[]).length > 0,
+  );
+  const source: TechTrendsReport["source"] =
+    raw["source"] === "sample" || !hasAnySource ? "sample" : "live";
+
   return {
     featured: shapeTechTrend(featured, (featured["name"] as string) ?? "Unknown"),
     alsoWatching: alsoWatchingRaw.map((t) => shapeTechTrend(t, (t["name"] as string) ?? "Unknown")),
@@ -505,6 +532,7 @@ function parseCachedReport(raw: Record<string, unknown>): TechTrendsReport {
     totalTechnologies:
       typeof raw["totalTechnologies"] === "number" ? (raw["totalTechnologies"] as number) : 1,
     fromCache: true,
+    source,
   };
 }
 
@@ -549,7 +577,11 @@ function shapeTechTrend(raw: Record<string, unknown>, fallbackName: string): Tec
       }))
       .slice(0, 5),
     lastResearched:
-      typeof raw["lastResearched"] === "string" ? raw["lastResearched"] : new Date().toISOString(),
+      typeof raw["lastResearched"] === "string"
+        ? raw["lastResearched"]
+        : raw["lastResearched"] === null
+          ? null
+          : new Date().toISOString(),
   };
 }
 
@@ -568,9 +600,9 @@ function buildDetailPrompt(technologyName: string, searchResult: TavilySearchRes
 /* ------------------------------------------------------------------ */
 
 function buildStaticFallback(category: string): TechTrendsReport {
-  const now = new Date().toISOString();
-
-  // Curated fallback data based on well-known emerging tech trends
+  // Curated sample data used only when live research fails. These trends
+  // were never researched, so lastResearched stays null and the report is
+  // labelled "sample" — it must never be cached as fresh.
   const fallbackTrends: Record<string, TechTrend[]> = {
     AI: [
       {
@@ -608,7 +640,7 @@ function buildStaticFallback(category: string): TechTrendsReport {
         careerRelevance:
           "Every major tech company is investing in agentic AI. Engineers who can build reliable agents will be in extremely high demand.",
         sources: [],
-        lastResearched: now,
+        lastResearched: null,
       },
       {
         name: "Small Language Models (SLMs)",
@@ -641,7 +673,7 @@ function buildStaticFallback(category: string): TechTrendsReport {
         careerRelevance:
           "Edge AI is growing fast. Companies want engineers who can deploy AI without cloud dependency.",
         sources: [],
-        lastResearched: now,
+        lastResearched: null,
       },
     ],
     Software: [
@@ -679,7 +711,7 @@ function buildStaticFallback(category: string): TechTrendsReport {
         careerRelevance:
           "Rust developers command premium salaries. It's increasingly required for infrastructure and performance-critical roles.",
         sources: [],
-        lastResearched: now,
+        lastResearched: null,
       },
     ],
     Cloud: [
@@ -714,7 +746,7 @@ function buildStaticFallback(category: string): TechTrendsReport {
         careerRelevance:
           "Platform Engineering is one of the fastest-growing roles. Companies are hiring aggressively for this.",
         sources: [],
-        lastResearched: now,
+        lastResearched: null,
       },
     ],
     Cybersecurity: [
@@ -748,7 +780,7 @@ function buildStaticFallback(category: string): TechTrendsReport {
         careerRelevance:
           "Cybersecurity + AI is a powerful combination. This skillset commands top salaries in security.",
         sources: [],
-        lastResearched: now,
+        lastResearched: null,
       },
     ],
   };
@@ -782,5 +814,6 @@ function buildStaticFallback(category: string): TechTrendsReport {
     },
     totalTechnologies: 1 + alsoWatching.length,
     fromCache: false,
+    source: "sample",
   };
 }

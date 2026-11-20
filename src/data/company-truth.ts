@@ -859,7 +859,9 @@ export const FEATURED_COMPANIES: CompanyHiringTruth[] = [
 
 /**
  * Broader employer directory for discovery. Detailed hiring truths remain
- * curated above; directory companies fall back to a role-specific framework.
+ * curated above. Directory companies have NO researched hiring profile:
+ * matchCompanyTruth returns null for them, and callers must show an honest
+ * "not researched yet" state instead of inventing company specifics.
  */
 export const PAKISTAN_COMPANY_DIRECTORY = [
   "Afiniti",
@@ -896,12 +898,16 @@ export const PAKISTAN_COMPANY_DIRECTORY = [
 ] as const;
 
 /**
- * Match a user's target company string to a grounded hiring truth profile,
- * or generate a dynamic contextual profile for any custom company.
+ * Match a user's target company string to a researched hiring truth profile.
+ *
+ * Returns null when the company has no researched profile. Callers must
+ * handle null honestly ("not researched yet") — never invent hiring data
+ * for an unknown company. A previous version of this function fabricated a
+ * generic profile for any name; that branch was deleted on 2026-11-20.
  */
-export function matchCompanyTruth(companyName?: string | null): CompanyHiringTruth {
+export function matchCompanyTruth(companyName?: string | null): CompanyHiringTruth | null {
   if (!companyName || !companyName.trim()) {
-    return FEATURED_COMPANIES[0]!; // Default to Systems Limited
+    return null;
   }
 
   const query = companyName.toLowerCase().trim();
@@ -915,132 +921,7 @@ export function matchCompanyTruth(companyName?: string | null): CompanyHiringTru
     return idMatch || nameMatch || shortMatch;
   });
 
-  if (found) return found;
-
-  // Generate a dynamic, highly accurate generic employer profile for any custom company
-  const cleanName = companyName.trim();
-  return {
-    id: cleanName.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-    name: cleanName,
-    shortName: cleanName,
-    category: "Services & Consulting",
-    location: "Target Market",
-    tier: "Competitive Tech Employer",
-    tagline: `Hiring standards and entry-level engineering filters for ${cleanName}.`,
-    accentColor: "#E05A47",
-    entryRoles: [
-      "Associate Software Engineer",
-      "Full Stack Developer",
-      "Frontend Engineer",
-      "Backend Developer",
-      "QA Engineer",
-    ],
-    primaryStack: [
-      "TypeScript / JavaScript",
-      "React / Next.js",
-      "Node.js / Python / .NET",
-      "PostgreSQL / MongoDB",
-      "Docker / Cloud",
-    ],
-    hiringBar: {
-      screeningFilterRate: "75%+ rejected at resume & test filter",
-      evaluationStages: [
-        "1. ATS Resume Screening & Project Verification",
-        "2. Technical Screening (Data Structures, Language Fundamentals, SQL)",
-        "3. System Architecture & Live Coding Interview",
-        "4. Final Managerial & Cultural Evaluation",
-      ],
-      nonNegotiables: [
-        {
-          skill: "Verified Live Projects with Production Deployment",
-          whyRequired: `${cleanName} evaluates candidates on tangible execution, not theoretical claims.`,
-          level: "Crucial",
-        },
-        {
-          skill: "Core Data Structures & Algorithmic Problem Solving",
-          whyRequired: "Technical screening tests time-bound problem solving and coding agility.",
-          level: "Crucial",
-        },
-        {
-          skill: "Clean Code & Modern Stack Standards",
-          whyRequired:
-            "Code must be maintainable, typed (TypeScript), and follow standard design patterns.",
-          level: "High Priority",
-        },
-        {
-          skill: "Relational Database Schema Design & Optimization",
-          whyRequired:
-            "Real applications require structured data models, indexing, and transactional integrity.",
-          level: "High Priority",
-        },
-      ],
-    },
-    rejectionTruths: [
-      {
-        rank: 1,
-        title: `Lack of Demonstrated Project Proof for ${cleanName}'s Tech Stack`,
-        whyCompanyRejects: `Hiring managers at ${cleanName} reject candidates whose resumes list skills without verified, deployed project links or active GitHub repositories.`,
-        whatCandidateDidWrong:
-          "Claimed technical skills on CV without linking to live working applications or clean GitHub code.",
-        fixAction:
-          "Deploy a full-stack production application with real authentication, database indexing, and link it prominently on your CV.",
-      },
-      {
-        rank: 2,
-        title: "Failing the Technical Screening & Live Coding Assessment",
-        whyCompanyRejects:
-          "Candidates who cannot write clean, bug-free code under a live interview setting are eliminated immediately.",
-        whatCandidateDidWrong:
-          "Did not practice live coding, whiteboard problem solving, or timed DSA challenges.",
-        fixAction:
-          "Practice live coding daily on LeetCode / HackerRank and practice explaining your logic out loud while coding.",
-      },
-      {
-        rank: 3,
-        title: "Weak CV Formatting & Unoptimized ATS Score",
-        whyCompanyRejects: `ATS scanners and HR screeners at ${cleanName} filter out resumes that fail keyword density and lack quantified achievements.`,
-        whatCandidateDidWrong:
-          "Used non-standard resume templates with graphic skill bars instead of clean text and metric-driven bullet points.",
-        fixAction:
-          "Reformat resume to single-column ATS standard and rewrite bullets to highlight measurable outcomes and technologies used.",
-      },
-    ],
-    projectExpectation: {
-      title: `Production-Grade Full Stack Application for ${cleanName}`,
-      mustHaveFeatures: [
-        "User authentication and authorization (JWT / OAuth)",
-        "Relational database with normalized schema and indexes",
-        "Live deployed application accessible via public URL",
-        "Clean, documented GitHub repository with README and architecture explanation",
-      ],
-      unacceptableClones: [
-        "Basic Todo list",
-        "Generic unstyled tutorial clones",
-        "Static templates without backend",
-      ],
-      recommendedTechStack: [
-        "TypeScript / React",
-        "Node.js or Python",
-        "PostgreSQL",
-        "Docker",
-        "Vercel / Render",
-      ],
-    },
-    interviewPreparation: {
-      dsaFocus: [
-        "Arrays, Strings, Hash Maps",
-        "Two pointers and sliding window",
-        "Basic Recursion and Searching",
-      ],
-      coreTheory: [
-        "OOP principles & Design Patterns",
-        "REST API architecture & HTTP status codes",
-        "Database indexing & ACID properties",
-      ],
-      behavioralKeys: [
-        `Deep knowledge of ${cleanName}'s products and industry`,
-        "Ability to explain complex technical trade-offs clearly",
-      ],
-    },
-  };
+  // No researched profile for this company. Return null so callers can show
+  // an honest "not researched yet" state instead of invented specifics.
+  return found ?? null;
 }

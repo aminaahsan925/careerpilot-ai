@@ -1,4 +1,5 @@
 import { type Variants, motion } from "motion/react";
+import { useNavigate } from "@tanstack/react-router";
 
 import { cn } from "@/lib/utils";
 
@@ -23,6 +24,8 @@ const wordVariants: Variants = {
 };
 
 export function CareerHero({ personImage, className, compact }: CareerHeroProps) {
+  const navigate = useNavigate();
+
   return (
     <motion.section
       initial={{ opacity: 0 }}
@@ -124,6 +127,7 @@ export function CareerHero({ personImage, className, compact }: CareerHeroProps)
           whileHover={{ y: -2, scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           type="button"
+          onClick={() => navigate({ to: "/roadmap" })}
           className="mt-6 inline-flex items-center gap-2 rounded-lg bg-terracotta px-5 py-3 text-[13px] font-semibold text-primary-foreground"
         >
           Start Roadmap <span aria-hidden>→</span>

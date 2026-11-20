@@ -157,12 +157,12 @@ function ScanningOverlay({ companyName, roleName }: { companyName: string; roleN
                 isCurrent
                   ? "border-terracotta/40 bg-card shadow-md font-bold text-foreground"
                   : isDone
-                    ? "border-emerald-500/20 bg-emerald-50/40 text-emerald-900 dark:bg-emerald-950/20 dark:text-emerald-300"
+                    ? "border-emerald-500/20 bg-emerald-50/40 text-emerald-900"
                     : "border-transparent bg-secondary/40 text-muted-foreground",
               )}
             >
               {isDone ? (
-                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300">
+                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
                   <Check className="h-3.5 w-3.5" />
                 </div>
               ) : isCurrent ? (
@@ -317,8 +317,17 @@ function WizardSetup({
                   className="h-12 rounded-xl text-sm border-border focus:border-terracotta shadow-xs"
                 />
                 <p className="text-[11px] text-muted-foreground">
-                  We will perform a live diagnostic audit on real hiring standards for this specific
-                  organization.
+                  {isCustom && customCompany.trim() && !matchedTruth ? (
+                    <>
+                      “{customCompany.trim()}” is not researched yet. The audit will assess your
+                      target role&apos;s requirements without company-specific hiring standards.
+                    </>
+                  ) : (
+                    <>
+                      We will perform a diagnostic audit against the hiring standards for this
+                      specific organization.
+                    </>
+                  )}
                 </p>
               </div>
             ) : (
@@ -492,7 +501,7 @@ function WizardSetup({
 
                 <div className="grid gap-3 pt-2 sm:grid-cols-2 text-xs">
                   <div className="rounded-2xl border border-white/10 bg-white/5 p-3.5">
-                    <p className="text-[11px] font-bold text-terracotta uppercase">
+                    <p className="text-xs font-bold text-terracotta uppercase">
                       What We Will Inspect:
                     </p>
                     <p className="text-white/80 mt-1">
@@ -501,7 +510,7 @@ function WizardSetup({
                     </p>
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-white/5 p-3.5">
-                    <p className="text-[11px] font-bold text-emerald-400 uppercase">
+                    <p className="text-xs font-bold text-emerald-400 uppercase">
                       What You Will Get:
                     </p>
                     <p className="text-white/80 mt-1">
@@ -586,6 +595,51 @@ function DiagnosticResultsView({
 
   return (
     <div className="space-y-6 pb-12">
+      {/* Honesty banners: a fallback may degrade, never impersonate. */}
+      {d.diagnosisSource === "template" && (
+        <div className="flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-5 py-4">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+          <div>
+            <p className="text-[13px] font-bold text-foreground">
+              Template diagnosis — AI unavailable
+            </p>
+            <p className="mt-0.5 text-[12px] leading-relaxed text-muted-foreground">
+              The AI analysis failed for this run, so this diagnosis uses the deterministic template
+              built from your recorded evidence and the role benchmark. Re-run the audit to try the
+              AI analysis again.
+            </p>
+          </div>
+        </div>
+      )}
+      {d.researchAvailable === false && (
+        <div className="flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-5 py-4">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+          <div>
+            <p className="text-[13px] font-bold text-foreground">
+              Live research unavailable
+            </p>
+            <p className="mt-0.5 text-[12px] leading-relaxed text-muted-foreground">
+              The live official-source research step failed for this run, so this diagnosis used
+              stored evidence only.
+            </p>
+          </div>
+        </div>
+      )}
+      {d.targetRole && companyDiag.companyResearched === false && (
+        <div className="flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-5 py-4">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+          <div>
+            <p className="text-[13px] font-bold text-foreground">
+              Company not researched yet
+            </p>
+            <p className="mt-0.5 text-[12px] leading-relaxed text-muted-foreground">
+              CareerPilot has no researched hiring profile for {companyDiag.companyName}, so this
+              diagnosis assesses your target role only. Compare your resume against a real job
+              description from this employer before judging company fit.
+            </p>
+          </div>
+        </div>
+      )}
       {/* Top Banner: Rejection Verdict & High-Impact Metric Ring */}
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-ink via-neutral-900 to-neutral-800 p-8 text-white sm:p-10 shadow-2xl border border-terracotta/30">
         <div className="pointer-events-none absolute -bottom-14 -right-14 h-72 w-72 rounded-full bg-terracotta/25 blur-3xl animate-pulse" />
@@ -724,7 +778,7 @@ function DiagnosticResultsView({
                 screening criteria.
               </p>
             </div>
-            <span className="rounded-full bg-rose-500/10 border border-rose-500/20 px-3.5 py-1 text-xs font-extrabold text-rose-600 dark:text-rose-400">
+            <span className="rounded-full bg-rose-500/10 border border-rose-500/20 px-3.5 py-1 text-xs font-extrabold text-rose-600">
               {companyDiag.whyUnemployedReasons.length} Critical Barriers Detected
             </span>
           </div>
@@ -804,7 +858,7 @@ function DiagnosticResultsView({
           <div className="grid gap-6 md:grid-cols-3">
             {/* Missing Non-Negotiables */}
             <div className="rounded-2xl border border-rose-500/30 bg-gradient-to-b from-rose-500/5 to-card p-5 space-y-3.5 shadow-xs">
-              <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
+              <div className="flex items-center gap-2 text-rose-600">
                 <X className="h-4 w-4 shrink-0 font-bold" />
                 <h3 className="text-xs font-black uppercase tracking-wider">
                   Missing Non-Negotiables
@@ -825,7 +879,7 @@ function DiagnosticResultsView({
 
             {/* Project Deficiencies */}
             <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-b from-amber-500/5 to-card p-5 space-y-3.5 shadow-xs">
-              <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+              <div className="flex items-center gap-2 text-amber-600">
                 <AlertTriangle className="h-4 w-4 shrink-0" />
                 <h3 className="text-xs font-black uppercase tracking-wider">
                   Project Deficiencies
@@ -846,7 +900,7 @@ function DiagnosticResultsView({
 
             {/* ATS & Formatting Flaws */}
             <div className="rounded-2xl border border-blue-500/30 bg-gradient-to-b from-blue-500/5 to-card p-5 space-y-3.5 shadow-xs">
-              <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+              <div className="flex items-center gap-2 text-blue-600">
                 <FileCheck className="h-4 w-4 shrink-0" />
                 <h3 className="text-xs font-black uppercase tracking-wider">
                   Profile & Evidence Flaws

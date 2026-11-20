@@ -165,6 +165,19 @@ function ResumePage() {
       subtitle="Recruiter-grade resume parsing, ATS scoring, and position rewrites"
     >
       <div className="w-full space-y-6 pb-12">
+        {/* Surface load failures instead of silently showing an empty page. */}
+        {(resumeError || analysisError) && (
+          <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-5 py-4">
+            <p className="text-[13px] font-semibold text-destructive">
+              Couldn&apos;t load your resume data
+            </p>
+            <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
+              {(resumeError ?? analysisError) instanceof Error
+                ? (resumeError ?? analysisError)?.message
+                : "Something went wrong while loading your saved resume and analysis. Try refreshing the page."}
+            </p>
+          </div>
+        )}
         {/* INTERACTIVE UPLOAD DROPZONE */}
         <div
           onDragOver={handleDragOver}
@@ -279,7 +292,7 @@ function ResumePage() {
                       Heuristic text/format checks; not a score from an employer’s ATS.
                     </p>
                   </div>
-                  <span className="rounded-lg bg-emerald-500/10 px-3 py-1 text-[12px] font-semibold text-emerald-600 dark:text-emerald-400">
+                  <span className="rounded-lg bg-emerald-500/10 px-3 py-1 text-[12px] font-semibold text-emerald-600">
                     Analysis Active
                   </span>
                 </div>
@@ -399,7 +412,7 @@ function ResumePage() {
                             {item.title}
                           </p>
                         </div>
-                        <span className="inline-flex max-w-full whitespace-normal break-words rounded-md bg-terracotta/10 px-2.5 py-1 text-left text-[11px] font-bold text-terracotta sm:max-w-[58%]">
+                        <span className="inline-flex max-w-full whitespace-normal break-words rounded-md bg-terracotta/10 px-2.5 py-1 text-left text-xs font-bold text-terracotta sm:max-w-[58%]">
                           {item.impact}
                         </span>
                       </div>
@@ -424,7 +437,7 @@ function ResumePage() {
                     <div>
                       <div className="flex items-center gap-2 text-terracotta">
                         <Target className="h-4 w-4" />
-                        <span className="text-[11px] font-bold uppercase tracking-[0.16em]">
+                        <span className="text-xs font-bold uppercase tracking-[0.16em]">
                           Decision rail
                         </span>
                       </div>
@@ -472,7 +485,7 @@ function ResumePage() {
                   <div>
                     <div className="flex items-center gap-2 text-terracotta">
                       <ArrowUpRight className="h-4 w-4" />
-                      <span className="text-[11px] font-bold uppercase tracking-[0.14em]">
+                      <span className="text-xs font-bold uppercase tracking-[0.14em]">
                         Immediate moves
                       </span>
                     </div>
@@ -603,7 +616,7 @@ function ResumePage() {
                 <div>
                   <div className="flex items-center justify-between border-b border-border pb-3">
                     <div>
-                      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-terracotta">
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-terracotta">
                         Evidence health
                       </p>
                       <h4 className="mt-1 text-[15px] font-bold text-foreground">

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Award,
@@ -25,7 +25,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   CITIES,
-  INITIAL_TECH_EVENTS,
+  getUpcomingFallbackEvents,
   getDaysUntil,
   type TechEvent,
 } from '@/data/tech-events';
@@ -38,7 +38,7 @@ import {
 import { cn } from '@/lib/utils';
 
 interface TechEventsSectionProps {
-  userCity?: string;
+  userCity?: string | undefined;
   targetRole?: string;
 }
 
@@ -74,15 +74,64 @@ function preparationTipsFor(event: TechEvent): string[] {
   ];
 }
 
-export function TechEventsSection({ userCity = 'Lahore', targetRole }: TechEventsSectionProps) {
-  const [selectedCity, setSelectedCity] = useState(userCity || 'Lahore');
+export function TechEventsSection({ userCity, targetRole }: TechEventsSectionProps) {
+  const initialCity = userCity?.trim() ? userCity : 'All Cities';
+  const [selectedCity, setSelectedCity] = useState(initialCity);
   const [selectedType, setSelectedType] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [eventsList, setEventsList] = useState<TechEvent[]>(INITIAL_TECH_EVENTS);
+  // Sample list only, and only events still in the future. Live data is
+  // fetched on mount below; the page never renders a stale list as current.
+  const [eventsList, setEventsList] = useState<TechEvent[]>(() => getUpcomingFallbackEvents());
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [hasFetchedLive, setHasFetchedLive] = useState(false);
+  const [liveFetchFailed, setLiveFetchFailed] = useState(false);
   const [pinnedEventIds, setPinnedEventIds] = useState<string[]>(() =>
     getPinnedEvents().map((e) => e.id)
   );
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  const fetchLiveEvents = useCallback(
+    async (city: string): Promise<boolean> => {
+      setIsRefreshing(true);
+      try {
+        const live = await getLiveTechEvents({
+          data: { city, ...(targetRole ? { targetRole } : {}) },
+        });
+        if (!mountedRef.current) return true;
+        setEventsList(live);
+        setLiveFetchFailed(false);
+        return true;
+      } catch {
+        if (mountedRef.current) setLiveFetchFailed(true);
+        return false;
+      } finally {
+        if (mountedRef.current) {
+          setIsRefreshing(false);
+          setHasFetchedLive(true);
+        }
+      }
+    },
+    [targetRole],
+  );
+
+  // Fetch live events on mount instead of showing the sample list until a
+  // manual refresh.
+  const initialCityRef = useRef(initialCity);
+  useEffect(() => {
+    void fetchLiveEvents(initialCityRef.current);
+  }, [fetchLiveEvents]);
+
+  // True when every visible event is an unverified sample (live research
+  // failed server-side and fell back to the sample list).
+  const showingSamples =
+    eventsList.length > 0 && eventsList.every((event) => event.isSample);
 
   // Filter events cleanly
   const filteredEvents = useMemo(() => {
@@ -106,17 +155,11 @@ export function TechEventsSection({ userCity = 'Lahore', targetRole }: TechEvent
   }, [eventsList, selectedCity, selectedType, searchQuery]);
 
   const handleRefresh = async () => {
-    setIsRefreshing(true);
-    try {
-      const live = await getLiveTechEvents({
-        data: { city: selectedCity, ...(targetRole ? { targetRole } : {}) },
-      });
-      setEventsList(live);
+    const ok = await fetchLiveEvents(selectedCity);
+    if (ok) {
       toast.success(`Events refreshed for ${selectedCity}!`);
-    } catch {
+    } else {
       toast.error('Could not refresh events.');
-    } finally {
-      setIsRefreshing(false);
     }
   };
 
@@ -170,7 +213,7 @@ export function TechEventsSection({ userCity = 'Lahore', targetRole }: TechEvent
                 <Flame className="h-3 w-3" /> Tech Ecosystem
               </span>
               <span className="text-[11px] text-muted-foreground">
-                • Verified Competitions & Meetups
+                • Competitions & Meetups
               </span>
             </div>
             <h2 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
@@ -268,6 +311,20 @@ export function TechEventsSection({ userCity = 'Lahore', targetRole }: TechEvent
         </div>
       </div>
 
+      {/* ── Sample-data banner: never present samples as live listings ── */}
+      {(showingSamples || liveFetchFailed) && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-5 py-4">
+          <p className="text-[13px] font-semibold text-foreground">
+            Showing sample events — live refresh failed
+          </p>
+          <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
+            {showingSamples
+              ? "These are unverified example events, not confirmed live listings. Check the organizer's page before planning around one."
+              : "Live event research is unavailable right now. Try refreshing again shortly."}
+          </p>
+        </div>
+      )}
+
       {/* ── Events Grid ───────────────────────────────────────────── */}
       <div className="flex flex-col gap-4">
         <AnimatePresence mode="popLayout">
@@ -324,6 +381,11 @@ export function TechEventsSection({ userCity = 'Lahore', targetRole }: TechEvent
                       >
                         {event.eventType}
                       </span>
+                      {event.isSample && (
+                        <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider text-amber-800">
+                          Sample
+                        </span>
+                      )}
                       {daysLeft > 0 && (
                         <span className="text-[10.5px] font-medium text-muted-foreground">
                           · in {daysLeft}d
@@ -443,10 +505,18 @@ export function TechEventsSection({ userCity = 'Lahore', targetRole }: TechEvent
         <div className="card-surface p-12 text-center rounded-3xl border-border">
           <Globe2 className="mx-auto h-8 w-8 text-muted-foreground/40" />
           <h3 className="mt-3 font-display text-base font-bold text-foreground">
-            No events found for {selectedCity}
+            {isRefreshing
+              ? "Searching live events…"
+              : hasFetchedLive && eventsList.length === 0
+                ? `No upcoming events found for ${selectedCity}`
+                : `No events found for ${selectedCity}`}
           </h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            Try switching the city or resetting your filters.
+            {isRefreshing
+              ? "Checking the live web for hackathons, workshops, and conferences."
+              : hasFetchedLive && eventsList.length === 0
+                ? "Live refresh found nothing upcoming yet. Try another city or refresh again later."
+                : "Try switching the city or resetting your filters."}
           </p>
         </div>
       )}

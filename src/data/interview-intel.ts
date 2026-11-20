@@ -24,6 +24,8 @@ export type InterviewIntel = {
   role: string;
   company: string;
   companyTagline: string;
+  /** False when the selected company has no researched hiring profile; content is role-based only then. */
+  companyResearched: boolean;
   stages: string[];
   focusAreas: string[];
   questions: InterviewQuestion[];
@@ -569,6 +571,7 @@ export function buildInterviewIntel(
     companyTagline:
       company?.tagline ??
       `General hiring standards and best practices for ${roleProfile.displayName} interviews.`,
+    companyResearched: isGroundedCompany,
     stages: company?.hiringBar.evaluationStages ?? [
       "1. Role fundamentals and problem solving",
       "2. Technical and system design discussion",
@@ -589,8 +592,8 @@ export function buildInterviewIntel(
     note:
       company && isGroundedCompany
         ? `These MCQs are grounded in ${company.name}'s recorded hiring bar and ${roleProfile.displayName} requirements, not leaked interview questions.`
-        : company
-          ? `These MCQs use general employer best practices for ${roleProfile.displayName} and the custom company context “${company.name}”; verify them against the employer's job description.`
+        : hasCompany
+          ? `“${companyName!.trim()}” is not researched yet, so these MCQs use general industry best practices for ${roleProfile.displayName}; verify them against the employer's job description.`
           : `These MCQs use general industry best practices for ${roleProfile.displayName}; select a company for employer-specific standards.`,
   };
 }

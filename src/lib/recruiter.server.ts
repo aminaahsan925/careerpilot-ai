@@ -253,13 +253,20 @@ export async function runRecruiterAudit(
 ): Promise<RecruiterSession> {
   console.info("[CareerPilot][recruiter-audit] start", { userId, options });
 
-  // Quota first: one AI call is consumed before the provider is called.
-  await consumeAiCall(supabase, userId, "recruiter-audit");
-
   const state = await buildCareerState(supabase, userId);
   const targetRole = options.role?.trim() || state.targetRole || "Associate Software Engineer";
   const targetCompany = options.company?.trim() || state.targetJob?.company || "Systems Limited";
   const companyTruth = matchCompanyTruth(targetCompany);
+  // No researched hiring profile: refuse the audit rather than screening
+  // against invented company data. Checked before consuming AI quota.
+  if (!companyTruth) {
+    throw new Error(
+      `"${targetCompany}" is not researched yet — CareerPilot has no hiring profile for this company, so a recruiter audit cannot run. Pick one of the researched companies instead.`,
+    );
+  }
+
+  // Quota first: one AI call is consumed before the provider is called.
+  await consumeAiCall(supabase, userId, "recruiter-audit");
 
   // Deterministic baseline
   const baseline = computeBaselineScore(state, companyTruth);
@@ -472,24 +479,30 @@ export async function chatWithRecruiter(
     content: m.content,
   }));
 
-  const contextPrompt = `You previously audited this candidate and gave them ${audit.overallScore}/100.
+  let reply: string;
+  if (!companyTruth) {
+    // Legacy session for a company with no researched profile: do not
+    // roleplay as its hiring panel. Answer honestly instead.
+    reply = `"${session.company_name}" is not researched yet — CareerPilot has no hiring profile for this company, so I can't continue as its hiring panel. Run a new audit for a researched company to keep practicing.`;
+  } else {
+    const contextPrompt = `You previously audited this candidate and gave them ${audit.overallScore}/100.
 Verdict: ${audit.verdictTier}. Headline: ${audit.headline}.
 Missing critical skills: ${audit.missingCritical.join(", ")}.
 Stay in character as ${companyTruth.name}'s Head of Talent. Answer the student's question honestly and helpfully.
 Keep responses concise (2-4 paragraphs max). Be direct, specific, and actionable.`;
 
-  const aiMessages = [
-    { role: "system" as const, content: recruiterSystemPrompt(companyTruth, session.target_role) },
-    { role: "user" as const, content: contextPrompt },
-    ...chatHistory,
-    { role: "user" as const, content: userMessage },
-  ];
+    const aiMessages = [
+      { role: "system" as const, content: recruiterSystemPrompt(companyTruth, session.target_role) },
+      { role: "user" as const, content: contextPrompt },
+      ...chatHistory,
+      { role: "user" as const, content: userMessage },
+    ];
 
-  let reply: string;
-  try {
-    reply = await groqChat(aiMessages, { maxTokens: 800, temperature: 0.5 });
-  } catch {
-    reply = "I'm having trouble connecting right now. Please try again in a moment.";
+    try {
+      reply = await groqChat(aiMessages, { maxTokens: 800, temperature: 0.5 });
+    } catch {
+      reply = "I'm having trouble connecting right now. Please try again in a moment.";
+    }
   }
 
   // Append new messages
