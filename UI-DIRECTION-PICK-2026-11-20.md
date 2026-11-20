@@ -38,6 +38,40 @@ standing rule); no invented data anywhere; tsc 0 errors, build exit 0, tests
 pass; visual proof (desktop + mobile screenshots of the key screens) before
 calling it done. Deploy needs her word + GitHub permission in the moment.
 
+## Outcome: REJECTED
+
+Built + verified 20 Nov ~17:13 PKT (local commit 0b9bad2; proof at
+~/workspace/careerpilot-d2-proof/). **Amina REJECTED it 20 Nov 17:17 PKT: "no
+its not good". Reason given 17:19 PKT: it looks like AI-generated generic work
+("what ai generated gig") and does not grab her attention.** Per the
+explore-multiple-designs rule, do NOT tweak Direction 2 — explore a FRESH
+direction instead. Fresh exploration started 17:19 PKT: Pinterest + Dribbble
+again, brief = designs that stop the scroll, NOT generic SaaS dashboards
+(dark-with-glow and light-indigo-cards are exactly what was rejected); real
+designer work preferred, note anything AI-generated.
+
+## Round 2 pick: Character-Led / Living World
+
+Round 2 research (16 references) synthesised at
+UI-EXPLORATION-R2-SYNTHESIS-2026-11-20.md; directions page rebuilt as round 2
+(artifact careerpilot-ui-directions). **Amina picked Fresh Direction 3,
+Character-Led / Living World, 20 Nov 17:33 PKT** (tapped the picker; she could
+not open the designs page, so screenshots were being prepared when she picked).
+Set aside: Fresh Direction 1 Poster Brutalism (loudest, furthest from the
+rejected dashboard) and Fresh Direction 2 Editorial Magazine (safest strong
+bet), plus the mix both researchers recommended (brutalism landing + mascot
+recruiter + magazine jobs/roadmap). The mix is NOT to be built unless she asks.
+Build brief: the AI Recruiter gets an ORIGINAL hand-drawn SVG mascot face
+(Plopp/Loop pattern; NO AI-generated imagery — a generic generated mascot
+repeats the exact rejection), roadmap as a friendly loop/streak with
+encouraging copy, resume score as a face that changes expression, Market Mirror
+as a living koi pond (original illustration/motion), home screen as a map of
+destinations, tilted collage of cards, toy-bright palette (mustard, orange-red,
+green, lime, navy, periwinkle, chocolate + cream + sky blue), chunky rounded
+bold sans. Revert Direction 2 (commit 0b9bad2) first. Local only, no GitHub
+push, no deploy, no .env reads. Honesty rules from the rebuild still apply: no
+invented data, no fake probabilities, banded verdicts.
+
 ## Set aside
 
 - Direction 1, Soft Indigo AI SaaS: set aside — proven and friendly, but the
