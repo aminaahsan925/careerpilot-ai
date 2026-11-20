@@ -10,34 +10,34 @@ interface RecruiterHeroCardProps {
 
 export function RecruiterHeroCard({ targetCompany, targetRole, score = null }: RecruiterHeroCardProps) {
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-terracotta/20 bg-gradient-to-br from-background via-card to-background p-6 sm:p-8 shadow-xl">
+    <div className="relative overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-background via-card to-background p-6 sm:p-8 shadow-xl">
       {/* Background Decorative Circles */}
-      <div className="pointer-events-none absolute -top-12 -left-12 h-48 w-48 rounded-full bg-terracotta/5 blur-2xl" />
-      <div className="pointer-events-none absolute -bottom-12 -right-12 h-48 w-48 rounded-full bg-terracotta/8 blur-2xl" />
+      <div className="pointer-events-none absolute -top-12 -left-12 h-48 w-48 rounded-full bg-primary/5 blur-2xl" />
+      <div className="pointer-events-none absolute -bottom-12 -right-12 h-48 w-48 rounded-full bg-primary/8 blur-2xl" />
 
       <div className="relative z-10 grid gap-8 lg:grid-cols-[1.1fr_0.9fr] items-center">
         {/* Left Side: Editorial Typography & Subheadings */}
         <div className="space-y-5">
-          <div className="inline-flex items-center gap-2 rounded-full border border-terracotta/30 bg-terracotta/10 px-3.5 py-1 text-xs font-extrabold uppercase tracking-widest text-terracotta">
-            <Sparkles className="h-3.5 w-3.5" /> RECRUITER AI ENGINE
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 text-xs font-extrabold uppercase tracking-widest text-primary">
+            <Sparkles className="h-3.5 w-3.5" /> AI SCREENING COACH
           </div>
 
           <div className="space-y-1.5">
             <h1 className="font-display text-3xl font-black tracking-tight text-foreground sm:text-4xl lg:text-5xl leading-tight">
               Audit Right. <br />
-              <span className="text-terracotta">Build Better.</span>
+              <span className="text-primary">Build Better.</span>
             </h1>
             <p className="text-xs sm:text-sm font-medium leading-relaxed text-muted-foreground max-w-md pt-1">
               We analyze your resume, projects, and evidence footprint for{" "}
               <strong className="text-foreground">{targetRole}</strong> at{" "}
-              <span className="font-bold text-terracotta">{targetCompany}</span> with zero flattery.
+              <span className="font-bold text-primary">{targetCompany}</span> with zero flattery.
             </p>
           </div>
 
           {/* Quick Feature Badges (Matching Screenshot Left Sidebar) */}
           <div className="grid grid-cols-2 gap-3 pt-2">
             <div className="flex items-center gap-2.5 rounded-2xl border border-border bg-card p-3 shadow-xs">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-terracotta/10 text-terracotta">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <Search className="h-4 w-4" />
               </div>
               <div>
@@ -47,7 +47,7 @@ export function RecruiterHeroCard({ targetCompany, targetRole, score = null }: R
             </div>
 
             <div className="flex items-center gap-2.5 rounded-2xl border border-border bg-card p-3 shadow-xs">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-terracotta/10 text-terracotta">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <UserCheck className="h-4 w-4" />
               </div>
               <div>
@@ -69,11 +69,11 @@ export function RecruiterHeroCard({ targetCompany, targetRole, score = null }: R
               transition={{ duration: 0.5, delay: 0.2 }}
               className="absolute -top-4 left-6 z-20 flex items-center gap-2 rounded-full border border-border bg-card px-3.5 py-1.5 shadow-md"
             >
-              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-terracotta text-white">
+              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white">
                 <Search className="h-3 w-3" />
               </div>
               <div className="text-[11px] font-bold text-foreground">
-                Target: <span className="text-terracotta">{targetRole.slice(0, 18)}</span>
+                Target: <span className="text-primary">{targetRole.slice(0, 18)}</span>
               </div>
             </motion.div>
 
@@ -89,7 +89,7 @@ export function RecruiterHeroCard({ targetCompany, targetRole, score = null }: R
               </div>
               <div>
                 <p className="text-[11px] font-bold text-foreground">Candidate Fit</p>
-                <p className="text-[10px] font-extrabold text-terracotta">{score === null ? "Run audit first" : `${score}/100 evidence`}</p>
+                <p className="text-[10px] font-extrabold text-primary">{score === null ? "Run audit first" : `${score}/100 evidence`}</p>
               </div>
               <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white">
                 <Check className="h-3 w-3 stroke-[3]" />
@@ -100,7 +100,7 @@ export function RecruiterHeroCard({ targetCompany, targetRole, score = null }: R
             <div className="relative z-10 flex items-center justify-center pt-2">
               <motion.img
                 src={diagnosisGirlLaptop}
-                alt="Recruiter girl using laptop"
+                alt="Illustration of a coach reviewing candidates on a laptop"
                 className="h-auto w-full max-w-[260px] object-contain drop-shadow-md"
                 initial={{ scale: 0.95 }}
                 animate={{ scale: [0.98, 1.02, 0.98] }}
@@ -110,7 +110,7 @@ export function RecruiterHeroCard({ targetCompany, targetRole, score = null }: R
 
             {/* Bottom Laptop Label Badge matching user screenshot */}
             <div className="mt-3 flex items-center justify-between rounded-xl bg-foreground px-4 py-2 text-background shadow-md">
-              <span className="text-xs font-black tracking-widest uppercase text-terracotta">RECRUITER</span>
+              <span className="text-xs font-black tracking-widest uppercase text-primary">AI COACH</span>
               <span className="text-[10px] font-bold opacity-80">{targetCompany} Panel</span>
             </div>
           </div>

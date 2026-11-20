@@ -373,10 +373,10 @@ function HeroSection() {
             <div className="relative mt-4 flex h-32 w-full flex-col justify-between overflow-hidden rounded-2xl bg-white/[0.03] p-3 border border-white/5">
               {/* Radar Grid Background Lines */}
               <div className="pointer-events-none absolute inset-0 flex flex-col justify-between opacity-15">
-                <div className="h-px w-full bg-white" />
-                <div className="h-px w-full bg-white" />
-                <div className="h-px w-full bg-white" />
-                <div className="h-px w-full bg-white" />
+                <div className="h-px w-full bg-white/20" />
+                <div className="h-px w-full bg-white/20" />
+                <div className="h-px w-full bg-white/20" />
+                <div className="h-px w-full bg-white/20" />
               </div>
 
               {/* Dynamic SVG Gradient Path */}
@@ -587,7 +587,7 @@ function FrontierRadar({ targetRole }: { targetRole: string }) {
             career impact, not just a list of tools.
           </p>
         </div>
-        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">
+        <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-bold text-emerald-400">
           Research lenses · 2026 → 2030
         </span>
       </div>
@@ -1249,8 +1249,8 @@ function EmptyState() {
 
 function ConfidenceBadge({ confidence }: { confidence: string }) {
   const colors: Record<string, string> = {
-    high: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    medium: "bg-amber-50 text-amber-700 border-amber-200",
+    high: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
+    medium: "bg-amber-500/10 text-amber-400 border-amber-500/30",
     low: "bg-muted text-muted-foreground border-border",
   };
   return (

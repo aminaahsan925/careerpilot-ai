@@ -32,7 +32,7 @@ export function CareerHero({ personImage, className, compact }: CareerHeroProps)
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6 }}
       className={cn(
-        "relative overflow-hidden rounded-2xl bg-ink text-white",
+        "relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-violet-deep/50 via-card to-ink text-white",
         compact ? "min-h-[300px]" : "min-h-[360px]",
         className,
       )}
@@ -52,12 +52,12 @@ export function CareerHero({ personImage, className, compact }: CareerHeroProps)
         <span>Grow</span>
       </motion.div>
 
-      {/* Terracotta circle with parallax-like float */}
+      {/* Violet glow orb with parallax-like float */}
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.1, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-        className="absolute bottom-0 right-[6%] aspect-square w-[46%] max-w-[380px] translate-y-[30%] rounded-full bg-terracotta"
+        className="absolute bottom-0 right-[6%] aspect-square w-[46%] max-w-[380px] translate-y-[30%] rounded-full bg-gradient-to-br from-primary to-magenta shadow-[0_0_80px_-10px_oklch(0.65_0.18_295/70%)]"
       />
 
       {personImage ? (
@@ -96,14 +96,14 @@ export function CareerHero({ personImage, className, compact }: CareerHeroProps)
             initial="hidden"
             animate="visible"
             variants={wordVariants}
-            className="relative inline-block text-terracotta"
+            className="relative inline-block text-gradient-accent"
           >
             Future
             <motion.span
               initial={{ scale: 0, rotate: -90 }}
               animate={{ scale: 1, rotate: 0 }}
               transition={{ delay: 0.7, type: "spring", stiffness: 400, damping: 15 }}
-              className="absolute -right-4 top-1 text-base text-terracotta"
+              className="absolute -right-4 top-1 text-base text-magenta"
               aria-hidden
             >
               ✳
@@ -115,7 +115,7 @@ export function CareerHero({ personImage, className, compact }: CareerHeroProps)
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.65, duration: 0.5, ease: "easeOut" }}
-          className="mt-5 max-w-[240px] text-[13px] leading-relaxed text-white/70"
+          className="serif-accent mt-5 max-w-[240px] text-[15px] leading-relaxed text-white/75"
         >
           Your career is a journey. We&apos;re here to guide you every step of the way.
         </motion.p>
@@ -128,7 +128,7 @@ export function CareerHero({ personImage, className, compact }: CareerHeroProps)
           whileTap={{ scale: 0.98 }}
           type="button"
           onClick={() => navigate({ to: "/roadmap" })}
-          className="mt-6 inline-flex items-center gap-2 rounded-lg bg-terracotta px-5 py-3 text-[13px] font-semibold text-primary-foreground"
+          className="mt-6 inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-3 text-[13px] font-semibold text-primary-foreground shadow-[0_0_24px_-6px_oklch(0.65_0.18_295/80%)] transition-colors hover:bg-primary/90"
         >
           Start Roadmap <span aria-hidden>→</span>
         </motion.button>

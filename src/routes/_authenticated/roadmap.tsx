@@ -20,12 +20,18 @@ import {
   Trash2,
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useQueries } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { AppLayout } from "@/components/app/AppLayout";
 import { CompletionCertificate } from "@/components/roadmap/CompletionCertificate";
+import {
+  GamifiedHeader,
+  type GamifiedPathRing,
+} from "@/components/roadmap/GamifiedHeader";
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/data/user";
+import { useRoadmapStreak } from "@/data/roadmap-streak";
 import {
   getPinnedEvents,
   togglePinEvent,
@@ -41,10 +47,12 @@ import {
   useMcqsForDay,
   useRoadmapProgress,
   useSubmitMcq,
+  DAILY_WORK_QUERY_KEY,
   type DailyWork,
   type LearningPath,
   type McqAttemptResult,
 } from "@/data/roadmap-v2";
+import { getDailyWorkByPathFn } from "@/lib/roadmap-v2.functions";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/roadmap")({
@@ -68,11 +76,11 @@ export const Route = createFileRoute("/_authenticated/roadmap")({
 function levelColor(level: string) {
   switch (level) {
     case "beginner":
-      return "bg-emerald-100 text-emerald-800 border-emerald-200";
+      return "bg-emerald-500/15 text-emerald-300 border-emerald-500/30";
     case "intermediate":
-      return "bg-amber-100 text-amber-800 border-amber-200";
+      return "bg-amber-500/15 text-amber-300 border-amber-500/30";
     case "expert":
-      return "bg-rose-100 text-rose-800 border-rose-200";
+      return "bg-rose-500/15 text-rose-300 border-rose-500/30";
     default:
       return "bg-secondary text-muted-foreground border-border";
   }
@@ -183,7 +191,7 @@ function LearningPathCard({ path }: { path: LearningPath }) {
           className={cn(
             "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border",
             path.completed
-              ? "border-terracotta bg-terracotta text-white"
+              ? "border-primary bg-primary text-white"
               : "border-border bg-secondary text-muted-foreground",
           )}
         >
@@ -207,7 +215,7 @@ function LearningPathCard({ path }: { path: LearningPath }) {
             {path.description}
           </p>
           {path.outdated_warning && (
-            <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-amber-700">
+            <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-amber-300">
               <AlertTriangle className="h-3.5 w-3.5" />
               {path.outdated_warning}
             </div>
@@ -215,7 +223,7 @@ function LearningPathCard({ path }: { path: LearningPath }) {
           <div className="mt-3 flex items-center gap-3">
             <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-secondary">
               <div
-                className="h-full rounded-full bg-terracotta transition-all"
+                className="h-full rounded-full bg-primary transition-all"
                 style={{
                   width: totalDays > 0 ? `${(completedDays / totalDays) * 100}%` : "0%",
                 }}
@@ -262,7 +270,7 @@ function LearningPathCard({ path }: { path: LearningPath }) {
                 onClick={() => openDay(day)}
                 className={cn(
                   "flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left text-[12.5px] transition-colors hover:bg-muted/50",
-                  selectedDayId === day.id && "ring-1 ring-terracotta/40",
+                  selectedDayId === day.id && "ring-1 ring-primary/40",
                   day.completed ? "bg-muted/40 text-muted-foreground" : "bg-card text-foreground",
                 )}
               >
@@ -270,7 +278,7 @@ function LearningPathCard({ path }: { path: LearningPath }) {
                   className={cn(
                     "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold",
                     day.completed
-                      ? "bg-terracotta text-white"
+                      ? "bg-primary text-white"
                       : "border border-border text-muted-foreground",
                   )}
                 >
@@ -288,7 +296,7 @@ function LearningPathCard({ path }: { path: LearningPath }) {
             <div className="mt-4 rounded-xl border border-border bg-card p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-terracotta">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-primary">
                     Day {selectedDay.day_number} · Topic brief
                   </p>
                   <h4 className="mt-1 text-[14px] font-bold text-foreground">
@@ -330,7 +338,7 @@ function LearningPathCard({ path }: { path: LearningPath }) {
                       target="_blank"
                       rel="noreferrer"
                       onClick={(event) => event.stopPropagation()}
-                      className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-xs font-medium text-terracotta transition-colors hover:bg-terracotta/10"
+                      className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
                     >
                       {link.label}
                       <ExternalLink className="h-3 w-3" />
@@ -341,7 +349,7 @@ function LearningPathCard({ path }: { path: LearningPath }) {
               {!selectedDay.completed && !quizDayId && (
                 <Button
                   size="sm"
-                  className="mt-4 rounded-lg bg-terracotta text-primary-foreground hover:bg-terracotta/90"
+                  className="mt-4 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
                   disabled={claimDay.isPending}
                   onClick={() => startMcq(selectedDay)}
                 >
@@ -358,7 +366,7 @@ function LearningPathCard({ path }: { path: LearningPath }) {
                 <div className="mt-4 border-t border-border pt-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-terracotta">
+                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-primary">
                         Role-specific checkpoint
                       </p>
                       <p className="mt-1 text-[12px] text-muted-foreground">
@@ -376,7 +384,7 @@ function LearningPathCard({ path }: { path: LearningPath }) {
                   {questionsLoading ? (
                     <div className="mt-3 h-20 animate-pulse rounded-lg bg-secondary" />
                   ) : questions.length === 0 ? (
-                    <p className="mt-3 rounded-lg bg-amber-50 p-3 text-[12px] text-amber-800">
+                    <p className="mt-3 rounded-lg bg-amber-500/10 p-3 text-[12px] text-amber-200">
                       This path has no checkpoint questions yet. Regenerate the roadmap to create
                       its company-specific assessment.
                     </p>
@@ -408,13 +416,13 @@ function LearningPathCard({ path }: { path: LearningPath }) {
                                     quizResult?.results.find(
                                       (result) => result.questionId === question.id,
                                     )?.correctOption === key
-                                      ? "border-emerald-500 bg-emerald-50 text-emerald-800"
+                                      ? "border-emerald-500/60 bg-emerald-500/10 text-emerald-200"
                                       : quizResult?.results.find(
                                             (result) => result.questionId === question.id,
                                           )?.selectedOption === key
-                                        ? "border-rose-400 bg-rose-50 text-rose-800"
+                                        ? "border-rose-500/60 bg-rose-500/10 text-rose-200"
                                         : answers[question.id] === key
-                                          ? "border-terracotta bg-terracotta/10 text-foreground"
+                                          ? "border-primary bg-primary/10 text-foreground"
                                           : "border-border text-muted-foreground hover:bg-muted/40",
                                   )}
                                 >
@@ -433,8 +441,8 @@ function LearningPathCard({ path }: { path: LearningPath }) {
                                     className={cn(
                                       "mt-3 rounded-lg p-3 text-xs leading-relaxed",
                                       result.correct
-                                        ? "bg-emerald-50 text-emerald-800"
-                                        : "bg-rose-50 text-rose-800",
+                                        ? "bg-emerald-500/10 text-emerald-200"
+                                        : "bg-rose-500/10 text-rose-200",
                                     )}
                                   >
                                     <p className="font-bold">
@@ -455,7 +463,7 @@ function LearningPathCard({ path }: { path: LearningPath }) {
                       {!quizResult && (
                         <Button
                           size="sm"
-                          className="rounded-lg bg-terracotta text-primary-foreground hover:bg-terracotta/90"
+                          className="rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
                           disabled={submitMcq.isPending}
                           onClick={submitAssessment}
                         >
@@ -489,8 +497,8 @@ function LearningPathCard({ path }: { path: LearningPath }) {
                   className={cn(
                     "mt-3 flex items-center gap-2 rounded-lg p-3 text-[12px]",
                     quizResult.passed
-                      ? "bg-emerald-50 text-emerald-800"
-                      : "bg-amber-50 text-amber-800",
+                      ? "bg-emerald-500/10 text-emerald-200"
+                      : "bg-amber-500/10 text-amber-200",
                   )}
                 >
                   {quizResult.passed ? (
@@ -519,6 +527,12 @@ function RoadmapPage() {
   const { data: user } = useCurrentUser();
   const { data: paths, isLoading, error: pathsError, refetch: refetchPaths } = useLearningPaths();
   const { data: progress } = useRoadmapProgress();
+  const { data: todayWork } = useDailyWork();
+  const {
+    data: streakStats,
+    isPending: streakLoading,
+    isError: streakError,
+  } = useRoadmapStreak();
   const generateRoadmap = useGenerateRoadmapV2();
   const [pinnedEvents, setPinnedEvents] = useState<PinnedEvent[]>([]);
 
@@ -539,6 +553,53 @@ function RoadmapPage() {
   const completedDays = progress?.completedDays ?? 0;
   const overallProgress = totalDays > 0 ? Math.round((completedDays / totalDays) * 100) : 0;
 
+  /* ---------------------------------------------------------------- *
+   * Gamified header inputs — all from real state, nothing invented.
+   *
+   * POINTS FORMULA (defined once, here):
+   *   points = 10 x completed days + 5 x checkpoints (MCQs) passed.
+   * Points are earned from completed work only; a fresh user has 0.
+   *
+   * WEEK PLAN: the roadmap's own cadence is one day of work per
+   * calendar day, so the week plan is 7 days. Days completed this
+   * week come from the streak read (passed MCQ attempts — the real
+   * completion records). `date_assigned` cannot drive this: every day
+   * of a generated roadmap is stamped with the generation date.
+   * ---------------------------------------------------------------- */
+  const checkpointsPassed = progress?.mcqsPassed ?? 0;
+  const points = completedDays * 10 + checkpointsPassed * 5;
+  const weekCompleted = streakStats?.completedThisWeek ?? 0;
+  const weekPlanned = 7;
+  // useDailyWork() with no pathId returns the single next day (or
+  // null); the array shape only comes from the per-path calls.
+  const nextDay: DailyWork | null = Array.isArray(todayWork) ? null : (todayWork ?? null);
+
+  // Per-path day counts for the skill rings. These use the same query
+  // keys as LearningPathCard's useDailyWork(path.id), so they share
+  // its cache and add no extra requests once the cards have loaded.
+  const pathDayQueries = useQueries({
+    queries: pathList.map((path) => ({
+      queryKey: [...DAILY_WORK_QUERY_KEY, path.id],
+      queryFn: async (): Promise<DailyWork[]> =>
+        (await getDailyWorkByPathFn({ data: { pathId: path.id } })) as DailyWork[],
+      staleTime: 60_000,
+    })),
+  });
+  const pathRings: GamifiedPathRing[] = pathList.map((path, index) => {
+    const days = (pathDayQueries[index]?.data ?? []) as DailyWork[];
+    const done = days.filter((day) => day.completed).length;
+    return {
+      id: path.id,
+      title: path.title,
+      // A path with no loaded days yet reads 0% unless the path itself
+      // is marked complete (100% by definition); the ring fills in as
+      // soon as the shared day query resolves.
+      percent: days.length > 0 ? (done / days.length) * 100 : path.completed ? 100 : 0,
+      completedDays: done,
+      totalDays: days.length,
+    };
+  });
+
   return (
     <AppLayout
       title="Career Roadmap"
@@ -546,38 +607,31 @@ function RoadmapPage() {
     >
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
         <div className="space-y-4">
-          {/* Hero */}
-          <div className="card-surface overflow-hidden bg-ink p-8 text-white">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-terracotta">
-              Current Goal
-            </p>
-            <h2 className="editorial-title mt-3 text-[clamp(1.8rem,4vw,2.8rem)]">
-              {user?.goal ?? "Your goal"}
-            </h2>
-            <div className="mt-6 flex items-center gap-4">
-              <span className="h-1.5 max-w-[420px] flex-1 overflow-hidden rounded-full bg-white/15">
-                <motion.span
-                  initial={{ width: 0 }}
-                  animate={{ width: `${overallProgress}%` }}
-                  transition={{ duration: 0.8, ease: "easeOut" }}
-                  className="block h-full rounded-full bg-terracotta"
-                />
-              </span>
-              <span className="text-[13px] font-semibold">{overallProgress}% complete</span>
-            </div>
-            {totalPaths > 0 && (
-              <p className="mt-3 text-[12px] text-white/50">
-                {completedPaths}/{totalPaths} paths · {completedDays}/{totalDays} days
-              </p>
-            )}
-          </div>
+          {/* Gamified header (Direction 2, Mindzy pattern): streak,
+              points, study-flow rings, week challenge, path rings.
+              Presentational — the page owns the hooks and passes props. */}
+          <GamifiedHeader
+            goal={user?.goal ?? "Your goal"}
+            streakDays={streakError ? null : (streakStats?.streakDays ?? null)}
+            streakLoading={streakLoading}
+            points={points}
+            completedDays={completedDays}
+            checkpointsPassed={checkpointsPassed}
+            overallPercent={overallProgress}
+            weekCompleted={weekCompleted}
+            weekPlanned={weekPlanned}
+            nextDayTitle={nextDay?.title ?? null}
+            nextDayPathTitle={nextDay?.roadmap_learning_paths?.title ?? null}
+            hasRoadmap={pathList.length > 0}
+            paths={pathRings}
+          />
 
           {/* Pinned Tech Events & Hackathon Milestones */}
           {pinnedEvents.length > 0 && (
-            <div className="card-surface rounded-3xl border border-terracotta/20 bg-gradient-to-br from-card via-card to-terracotta/5 p-5 sm:p-6 shadow-xs">
+            <div className="card-surface rounded-3xl border border-primary/20 bg-gradient-to-br from-card via-card to-primary/5 p-5 sm:p-6 shadow-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-terracotta/15 text-terracotta">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/15 text-primary">
                     <Flame className="h-4 w-4" />
                   </div>
                   <div>
@@ -591,7 +645,7 @@ function RoadmapPage() {
                 </div>
                 <Link
                   to="/events"
-                  className="text-xs font-semibold text-terracotta hover:underline"
+                  className="text-xs font-semibold text-primary hover:underline"
                 >
                   Browse events →
                 </Link>
@@ -603,11 +657,11 @@ function RoadmapPage() {
                   return (
                     <div
                       key={evt.id}
-                      className="flex items-start justify-between gap-3 rounded-2xl border border-border/80 bg-card p-4 shadow-2xs hover:border-terracotta/30 transition-all"
+                      className="flex items-start justify-between gap-3 rounded-2xl border border-border/80 bg-card p-4 shadow-2xs hover:border-primary/30 transition-all"
                     >
                       <div className="min-w-0 flex-1 space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="rounded-md bg-terracotta/10 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-terracotta">
+                          <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-primary">
                             {evt.eventType}
                           </span>
                           <span className="text-xs font-medium text-muted-foreground">
@@ -618,7 +672,7 @@ function RoadmapPage() {
                           {evt.title}
                         </h4>
                         <p className="flex items-center gap-1 text-xs text-muted-foreground truncate">
-                          <MapPin className="h-3 w-3 text-terracotta shrink-0" />
+                          <MapPin className="h-3 w-3 text-primary shrink-0" />
                           <span className="truncate">{evt.city}</span> · <span className="truncate">{evt.organizer}</span>
                         </p>
                       </div>
@@ -634,7 +688,7 @@ function RoadmapPage() {
                               toast.info(`Could not show a reminder for "${evt.title}". Allow browser alerts and try again.`);
                             }
                           }}
-                          className="flex h-8 w-8 items-center justify-center rounded-xl border border-border text-muted-foreground hover:border-terracotta/40 hover:text-terracotta transition-colors"
+                          className="flex h-8 w-8 items-center justify-center rounded-xl border border-border text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors"
                           title="Send / Test Event Reminder"
                         >
                           <Bell className="h-3.5 w-3.5" />
@@ -643,7 +697,7 @@ function RoadmapPage() {
                           href={evt.eventUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="flex h-8 w-8 items-center justify-center rounded-xl border border-border text-muted-foreground hover:border-terracotta/40 hover:text-terracotta transition-colors"
+                          className="flex h-8 w-8 items-center justify-center rounded-xl border border-border text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors"
                           title="Open Event Website"
                         >
                           <ExternalLink className="h-3.5 w-3.5" />
@@ -651,7 +705,7 @@ function RoadmapPage() {
                         <button
                           type="button"
                           onClick={() => handleRemovePinnedEvent(evt)}
-                          className="flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                          className="flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground hover:bg-rose-500/10 hover:text-rose-300 transition-colors"
                           title="Remove from Roadmap"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -697,11 +751,11 @@ function RoadmapPage() {
             ) : pathList.length > 0 ? (
               pathList.map((path) => <LearningPathCard key={path.id} path={path} />)
             ) : (
-              <div className="card-surface relative overflow-hidden border-terracotta/15 bg-gradient-to-br from-card via-card to-terracotta/[0.06] p-5 sm:p-7">
-                <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-terracotta/10 blur-3xl" />
+              <div className="card-surface relative overflow-hidden border-primary/15 bg-gradient-to-br from-card via-card to-primary/[0.06] p-5 sm:p-7">
+                <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-primary/10 blur-3xl" />
                 <div className="relative grid items-center gap-6 md:grid-cols-[minmax(0,1fr)_minmax(220px,0.85fr)] md:gap-8">
                   <div className="text-center md:text-left">
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-terracotta/20 bg-terracotta/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-terracotta">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-primary">
                       <Sparkles className="h-3 w-3" /> Your next chapter
                     </span>
                     <h4 className="mt-3 font-display text-xl font-bold tracking-tight text-foreground sm:text-2xl">
@@ -712,7 +766,7 @@ function RoadmapPage() {
                       role, and market gaps.
                     </p>
                     <Button
-                      className="mt-5 rounded-xl bg-terracotta text-primary-foreground shadow-lift hover:bg-terracotta/90"
+                      className="mt-5 rounded-xl bg-primary text-primary-foreground shadow-lift hover:bg-primary/90"
                       disabled={generateRoadmap.isPending}
                       onClick={() =>
                         generateRoadmap.mutate(undefined, {
@@ -742,7 +796,7 @@ function RoadmapPage() {
                     </Button>
                   </div>
 
-                  <div className="relative mx-auto w-full max-w-[330px] overflow-hidden rounded-2xl border border-terracotta/15 bg-white shadow-card">
+                  <div className="relative mx-auto w-full max-w-[330px] overflow-hidden rounded-2xl border border-primary/15 bg-card shadow-card">
                     <img
                       src="/careerpilot-learning-illustration.png"
                       alt="Student learning career skills on a laptop"
@@ -832,7 +886,7 @@ function RoadmapPage() {
           <div className="card-surface p-5">
             <div className="flex items-center justify-between gap-3">
               <h3 className="text-[14.5px] font-bold">Proof of progress</h3>
-              <span className="text-xs font-semibold uppercase tracking-[0.12em] text-terracotta">
+              <span className="text-xs font-semibold uppercase tracking-[0.12em] text-primary">
                 Evidence
               </span>
             </div>
@@ -869,8 +923,8 @@ function RoadmapPage() {
           </div>
 
           {/* Next Action */}
-          <div className="card-surface bg-ink p-5 text-white">
-            <p className="text-xs uppercase tracking-[0.18em] text-terracotta">Next Action</p>
+          <div className="card-surface bg-violet-deep p-5 text-white">
+            <p className="text-xs uppercase tracking-[0.18em] text-primary">Next Action</p>
             <p className="mt-2 text-[14px] font-semibold leading-snug">
               {pathList.length > 0
                 ? (pathList.find((p) => !p.completed)?.title ?? "All paths complete!")

@@ -22,6 +22,7 @@ import {
 import { toast } from "sonner";
 
 import { AppLayout } from "@/components/app/AppLayout";
+import { GlowCard, KpiStat, Ring } from "@/components/analytics";
 import { useLatestAnalysis, useLatestResume, useUploadAndAnalyze } from "@/data/resume";
 import { cn } from "@/lib/utils";
 
@@ -43,43 +44,27 @@ export const Route = createFileRoute("/_authenticated/resume")({
 /* Radial Score Ring Component                                         */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Score ring from the shared analytics kit (Direction 2: violet glow ring,
+ * big white numeral). The scores are the deterministic ATS/content checks
+ * and the labelled AI role-fit estimate — unchanged from the analysis data.
+ * A null score renders an honest empty ring, never a fabricated number.
+ */
 function ScoreRing({ value, label, sublabel }: { value: number | null; label: string; sublabel: string }) {
-  const r = 44;
-  const c = 2 * Math.PI * r;
-  const getColor = (v: number) => {
-    if (v >= 80) return "stroke-emerald-500";
-    if (v >= 65) return "stroke-terracotta";
-    return "stroke-amber-500";
-  };
-
   return (
-    <div className="flex flex-col items-center text-center p-4 rounded-2xl border border-border/80 bg-background/50">
-      <div className="relative h-[110px] w-[110px]">
-        <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90">
-          <circle cx="60" cy="60" r={r} fill="none" stroke="var(--secondary)" strokeWidth="8" />
-          <motion.circle
-            cx="60"
-            cy="60"
-            r={r}
-            fill="none"
-            className={cn("transition-all duration-1000", value === null ? "stroke-muted" : getColor(value))}
-            strokeWidth="8"
-            strokeLinecap="round"
-            strokeDasharray={c}
-            initial={{ strokeDashoffset: c }}
-            animate={{ strokeDashoffset: c - ((value ?? 0) / 100) * c }}
-            transition={{ duration: 1, ease: "easeOut" }}
-          />
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-[26px] font-extrabold leading-none tracking-tight text-foreground">
-            {value ?? "N/A"}
+    <div className="flex flex-col items-center rounded-2xl border border-border/80 bg-background/50 p-4 text-center">
+      {value === null ? (
+        <div className="flex h-[110px] w-[110px] flex-col items-center justify-center rounded-full border-2 border-dashed border-border">
+          <span className="numeral text-[26px] leading-none text-muted-foreground">—</span>
+          <span className="mt-1 text-[10px] font-semibold uppercase text-muted-foreground">
+            No data
           </span>
-          {value !== null && <span className="text-[10px] font-semibold text-muted-foreground uppercase">/ 100</span>}
         </div>
-      </div>
+      ) : (
+        <Ring value={value} size={110} stroke={9} label={String(value)} sublabel="/ 100" />
+      )}
       <p className="mt-3 text-[13.5px] font-bold text-foreground">{label}</p>
-      <p className="text-[11.5px] text-muted-foreground mt-0.5">{sublabel}</p>
+      <p className="mt-0.5 text-[11.5px] text-muted-foreground">{sublabel}</p>
     </div>
   );
 }
@@ -186,8 +171,8 @@ function ResumePage() {
           className={cn(
             "card-surface relative overflow-hidden p-7 transition-all duration-300 border-2 border-dashed",
             isDragging
-              ? "border-terracotta bg-terracotta/5 shadow-2xl scale-[1.005]"
-              : "border-border/80 hover:border-terracotta/40",
+              ? "border-primary bg-primary/5 shadow-glow scale-[1.005]"
+              : "border-border/80 hover:border-primary/40",
           )}
         >
           <input
@@ -206,7 +191,7 @@ function ResumePage() {
               <div
                 className={cn(
                   "flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl transition-colors",
-                  isDragging ? "bg-terracotta text-white" : "bg-terracotta/10 text-terracotta",
+                  isDragging ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary",
                 )}
               >
                 {upload.isPending ? (
@@ -244,7 +229,7 @@ function ResumePage() {
                 type="button"
                 disabled={busy}
                 onClick={() => inputRef.current?.click()}
-                className="inline-flex items-center gap-2 rounded-xl bg-terracotta px-6 py-3 text-[13.5px] font-semibold text-primary-foreground transition-transform hover:-translate-y-0.5 disabled:opacity-50 shadow-lift"
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-[13.5px] font-semibold text-primary-foreground transition-all hover:-translate-y-0.5 hover:bg-primary/90 disabled:opacity-50 shadow-lift"
               >
                 {upload.isPending ? (
                   <>
@@ -263,7 +248,7 @@ function ResumePage() {
           {resume && !upload.isPending && (
             <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4 text-[12.5px]">
               <div className="flex items-center gap-2 text-muted-foreground">
-                <FileText className="h-4 w-4 text-terracotta" />
+                <FileText className="h-4 w-4 text-primary" />
                 <span>
                   Active File:{" "}
                   <strong className="text-foreground font-semibold">{resume.file_name}</strong>
@@ -292,7 +277,7 @@ function ResumePage() {
                       Heuristic text/format checks; not a score from an employer’s ATS.
                     </p>
                   </div>
-                  <span className="rounded-lg bg-emerald-500/10 px-3 py-1 text-[12px] font-semibold text-emerald-600">
+                  <span className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[12px] font-semibold text-emerald-400">
                     Analysis Active
                   </span>
                 </div>
@@ -319,7 +304,7 @@ function ResumePage() {
               {/* EXECUTIVE SUMMARY */}
               {analysis.summary && (
                 <div className="card-surface p-6 space-y-3">
-                  <div className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-wider text-terracotta">
+                  <div className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-wider text-primary">
                     <Sparkles className="h-4 w-4" /> Recruiter Executive Summary
                   </div>
                   <p className="text-[14px] leading-relaxed text-foreground/90 font-medium">
@@ -359,7 +344,7 @@ function ResumePage() {
                 {/* WEAKNESSES / RED FLAGS */}
                 <div className="card-surface p-6 space-y-4">
                   <div className="flex items-center gap-2 border-b border-border pb-3">
-                    <AlertTriangle className="h-5 w-5 text-terracotta" />
+                    <AlertTriangle className="h-5 w-5 text-amber-400" />
                     <h4 className="text-[15px] font-bold text-foreground">ATS Red Flags & Gaps</h4>
                   </div>
                   {analysis.weaknesses.length ? (
@@ -369,7 +354,7 @@ function ResumePage() {
                           key={idx}
                           className="flex items-start gap-2.5 text-[13px] text-muted-foreground leading-relaxed"
                         >
-                          <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-terracotta" />
+                          <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
                           <span>{item}</span>
                         </li>
                       ))}
@@ -387,7 +372,7 @@ function ResumePage() {
               <div className="card-surface p-6 space-y-4">
                 <div className="flex items-center justify-between border-b border-border pb-3">
                   <div className="flex items-center gap-2">
-                    <Zap className="h-5 w-5 text-terracotta" />
+                    <Zap className="h-5 w-5 text-primary" />
                     <h4 className="text-[15px] font-bold text-foreground">
                       High-Impact Positioning Rewrites
                     </h4>
@@ -405,14 +390,14 @@ function ResumePage() {
                         className="flex min-w-0 flex-col gap-3 rounded-xl border border-border/80 bg-background/50 p-4 sm:flex-row sm:items-start sm:justify-between"
                       >
                         <div className="flex min-w-0 flex-1 items-start gap-3">
-                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-terracotta/10 text-[11px] font-extrabold text-terracotta">
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-[11px] font-extrabold text-primary">
                             {idx + 1}
                           </span>
                           <p className="min-w-0 break-words text-[13.5px] font-medium text-foreground">
                             {item.title}
                           </p>
                         </div>
-                        <span className="inline-flex max-w-full whitespace-normal break-words rounded-md bg-terracotta/10 px-2.5 py-1 text-left text-xs font-bold text-terracotta sm:max-w-[58%]">
+                        <span className="inline-flex max-w-full whitespace-normal break-words rounded-md bg-primary/10 px-2.5 py-1 text-left text-xs font-bold text-primary sm:max-w-[58%]">
                           {item.impact}
                         </span>
                       </div>
@@ -430,24 +415,24 @@ function ResumePage() {
             {/* RIGHT COLUMN: SKILL INVENTORY & ROLE MATCHES */}
             <div className="space-y-6 xl:sticky xl:top-6 xl:self-start xl:min-h-[calc(100vh-12rem)]">
               {/* DECISION RAIL */}
-              <div className="relative overflow-hidden rounded-2xl border border-ink/10 bg-ink p-6 text-white shadow-lift">
-                <div className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-terracotta/20 blur-2xl" />
+              <GlowCard className="relative overflow-hidden bg-gradient-to-br from-violet-deep/40 via-card to-card">
+                <div className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-primary/20 blur-2xl" />
                 <div className="relative space-y-5">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <div className="flex items-center gap-2 text-terracotta">
+                      <div className="flex items-center gap-2 text-primary">
                         <Target className="h-4 w-4" />
                         <span className="text-xs font-bold uppercase tracking-[0.16em]">
                           Decision rail
                         </span>
                       </div>
-                      <h3 className="mt-2 text-[17px] font-bold">What changes your odds next</h3>
-                      <p className="mt-1 text-[12px] leading-relaxed text-white/65">
+                      <h3 className="mt-2 text-[17px] font-bold text-foreground">What changes your odds next</h3>
+                      <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
                         The lowest score is the constraint. Fix that before adding more tools or
                         courses.
                       </p>
                     </div>
-                    <span className="shrink-0 rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[10px] font-bold text-white/80">
+                    <span className="shrink-0 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-[10px] font-bold text-primary">
                       {readinessLabel}
                     </span>
                   </div>
@@ -456,8 +441,8 @@ function ResumePage() {
                     {scoreRows.map((item) => (
                       <div key={item.label}>
                         <div className="mb-1.5 flex items-center justify-between text-[11.5px]">
-                          <span className="text-white/70">{item.label}</span>
-                          <span className="font-bold text-white">{item.value}/100</span>
+                          <span className="text-muted-foreground">{item.label}</span>
+                          <span className="numeral text-[13px] text-foreground">{item.value}/100</span>
                         </div>
                         <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
                           <motion.div
@@ -470,7 +455,7 @@ function ResumePage() {
                                 ? "bg-emerald-400"
                                 : item.value >= 55
                                   ? "bg-amber-400"
-                                  : "bg-terracotta",
+                                  : "bg-gradient-to-r from-violet-deep to-primary shadow-[0_0_12px_-2px_oklch(0.65_0.18_295/70%)]",
                             )}
                           />
                         </div>
@@ -478,12 +463,12 @@ function ResumePage() {
                     ))}
                   </div>
                 </div>
-              </div>
+              </GlowCard>
 
               <div className="card-surface overflow-hidden p-6">
                 <div className="flex items-start justify-between gap-3 border-b border-border pb-4">
                   <div>
-                    <div className="flex items-center gap-2 text-terracotta">
+                    <div className="flex items-center gap-2 text-primary">
                       <ArrowUpRight className="h-4 w-4" />
                       <span className="text-xs font-bold uppercase tracking-[0.14em]">
                         Immediate moves
@@ -505,7 +490,7 @@ function ResumePage() {
                         key={`${item.title}-${index}`}
                         className="flex gap-3 py-4 first:pt-4 last:pb-0"
                       >
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-terracotta/10 text-[11px] font-extrabold text-terracotta">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-extrabold text-primary">
                           {index + 1}
                         </span>
                         <div className="min-w-0">
@@ -533,7 +518,7 @@ function ResumePage() {
                   <h4 className="text-[15px] font-bold text-foreground">
                     Extracted Technical Skills
                   </h4>
-                  <span className="text-[11.5px] font-bold text-terracotta">
+                  <span className="text-[11.5px] font-bold text-primary">
                     {analysis.detected_skills.length} Detected
                   </span>
                 </div>
@@ -576,14 +561,14 @@ function ResumePage() {
                           <span className="font-semibold text-foreground truncate">
                             {match.role}
                           </span>
-                          <span className="font-bold text-terracotta">{match.match}%</span>
+                          <span className="numeral text-[13px] text-primary">{match.match}%</span>
                         </div>
                         <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
                           <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${match.match}%` }}
                             transition={{ duration: 0.8, ease: "easeOut" }}
-                            className="h-full rounded-full bg-terracotta"
+                            className="h-full rounded-full bg-gradient-to-r from-violet-deep to-primary shadow-[0_0_12px_-2px_oklch(0.65_0.18_295/70%)]"
                           />
                         </div>
                       </div>
@@ -598,14 +583,14 @@ function ResumePage() {
               </div>
 
               {/* EVIDENCE NOTE CARD */}
-              <div className="rounded-2xl border border-border bg-ink p-6 text-white space-y-3 shadow-lift">
-                <div className="flex items-center gap-2 text-terracotta">
+              <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-violet-deep/40 via-card to-card p-6 text-foreground space-y-3 shadow-lift">
+                <div className="flex items-center gap-2 text-primary">
                   <ShieldCheck className="h-5 w-5" />
                   <span className="text-[13px] font-bold uppercase tracking-wider">
                     Proof Verification Policy
                   </span>
                 </div>
-                <p className="text-[12.5px] leading-relaxed text-white/75">
+                <p className="text-[12.5px] leading-relaxed text-muted-foreground">
                   Skills extracted from your resume improve your overall evidence picture, but
                   CareerPilot treats them as unverified mentions until backed by GitHub
                   repositories, project code, or verifiable portfolio links.
@@ -616,31 +601,20 @@ function ResumePage() {
                 <div>
                   <div className="flex items-center justify-between border-b border-border pb-3">
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-terracotta">
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                         Evidence health
                       </p>
                       <h4 className="mt-1 text-[15px] font-bold text-foreground">
                         What a recruiter can verify
                       </h4>
                     </div>
-                    <ShieldCheck className="h-5 w-5 text-terracotta" />
+                    <ShieldCheck className="h-5 w-5 text-primary" />
                   </div>
 
                   <div className="mt-5 grid grid-cols-3 gap-2">
-                    {[
-                      { label: "Skills", value: analysis.detected_skills.length },
-                      { label: "Strengths", value: analysis.strengths.length },
-                      { label: "Gaps", value: analysis.weaknesses.length },
-                    ].map((item) => (
-                      <div key={item.label} className="rounded-xl bg-secondary/70 p-3 text-center">
-                        <p className="text-xl font-extrabold tracking-tight text-foreground">
-                          {item.value}
-                        </p>
-                        <p className="mt-0.5 text-[10.5px] font-semibold text-muted-foreground">
-                          {item.label}
-                        </p>
-                      </div>
-                    ))}
+                    <KpiStat label="Skills" value={String(analysis.detected_skills.length)} />
+                    <KpiStat label="Strengths" value={String(analysis.strengths.length)} />
+                    <KpiStat label="Gaps" value={String(analysis.weaknesses.length)} />
                   </div>
                 </div>
                 <p className="mt-6 text-[12px] leading-relaxed text-muted-foreground">
@@ -652,7 +626,7 @@ function ResumePage() {
           </div>
         ) : (
           <div className="card-surface p-12 text-center space-y-4">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-terracotta/10 text-terracotta">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <FileCode2 className="h-7 w-7" />
             </div>
             <h3 className="text-lg font-bold text-foreground">No Resume Analyzed Yet</h3>

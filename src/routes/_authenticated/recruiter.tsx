@@ -38,6 +38,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 
 import { AppLayout } from "@/components/app/AppLayout";
+import { QuestMap } from "@/components/recruiter/QuestMap";
 import { RecruiterDashboardWidgets } from "@/components/recruiter/RecruiterDashboardWidgets";
 import { RecruiterHeroCard } from "@/components/recruiter/RecruiterHeroCard";
 import { RecruiterPipelineStepper } from "@/components/recruiter/RecruiterPipelineStepper";
@@ -86,9 +87,9 @@ const LAYOUT_SUBTITLE =
 /* ------------------------------------------------------------------ */
 
 function CheckStatusIcon({ status }: { status: "pass" | "fail" | "warn" | "unknown" }) {
-  if (status === "pass") return <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />;
-  if (status === "fail") return <XCircle className="h-4 w-4 shrink-0 text-rose-600" />;
-  if (status === "warn") return <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />;
+  if (status === "pass") return <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />;
+  if (status === "fail") return <XCircle className="h-4 w-4 shrink-0 text-rose-400" />;
+  if (status === "warn") return <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400" />;
   return <CircleHelp className="h-4 w-4 shrink-0 text-muted-foreground" />;
 }
 
@@ -120,7 +121,7 @@ function SectionHeading({
   return (
     <div>
       <h3 className="font-display text-lg font-semibold flex items-center gap-2">
-        <Icon className="h-5 w-5 text-terracotta" />
+        <Icon className="h-5 w-5 text-primary" />
         {title}
       </h3>
       {note && <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{note}</p>}
@@ -132,7 +133,7 @@ function LegacyAuditNotice() {
   return (
     <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-xs leading-relaxed text-foreground">
       <p className="font-bold flex items-center gap-2">
-        <AlertTriangle className="h-4 w-4 text-amber-600" />
+        <AlertTriangle className="h-4 w-4 text-amber-400" />
         This audit predates the staged screens
       </p>
       <p className="mt-1 text-muted-foreground">
@@ -173,11 +174,11 @@ function ScanningOverlay({ companyName }: { companyName: string }) {
       exit={{ opacity: 0, scale: 0.98 }}
     >
       <div className="mx-auto flex max-w-md flex-col items-center">
-        <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-terracotta/10 text-terracotta">
+        <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-primary/10 text-primary">
           <UserCheck className="h-10 w-10 animate-pulse" strokeWidth={1.7} />
         </div>
 
-        <p className="text-xs font-bold uppercase tracking-widest text-terracotta mb-2">
+        <p className="text-xs font-bold uppercase tracking-widest text-primary mb-2">
           {companyName} · Live Screening
         </p>
         <h3 className="font-display text-xl font-bold text-foreground">Recruiter Audit in Progress</h3>
@@ -189,16 +190,16 @@ function ScanningOverlay({ companyName }: { companyName: string }) {
               className={cn(
                 "flex items-center gap-3 rounded-xl border p-3.5 text-xs font-medium transition-colors",
                 i < step
-                  ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-700"
+                  ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-300"
                   : i === step
-                    ? "border-terracotta/30 bg-terracotta/10 text-foreground font-semibold"
+                    ? "border-primary/30 bg-primary/10 text-foreground font-semibold"
                     : "border-border bg-secondary/30 text-muted-foreground",
               )}
             >
               {i < step ? (
                 <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
               ) : i === step ? (
-                <Loader2 className="h-4 w-4 shrink-0 animate-spin text-terracotta" />
+                <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary" />
               ) : (
                 <div className="h-4 w-4 shrink-0 rounded-full border border-border" />
               )}
@@ -222,7 +223,7 @@ function CompanyResearchPanel({ companyName }: { companyName: string }) {
   if (isLoading) {
     return (
       <div className="flex items-center gap-2 rounded-2xl border border-border bg-secondary/30 p-4 text-xs text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin text-terracotta" />
+        <Loader2 className="h-4 w-4 animate-spin text-primary" />
         Checking what CareerPilot knows about {companyName}...
       </div>
     );
@@ -232,7 +233,7 @@ function CompanyResearchPanel({ companyName }: { companyName: string }) {
     return (
       <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-xs leading-relaxed">
         <p className="font-bold text-foreground flex items-center gap-2">
-          <Building2 className="h-4 w-4 text-amber-600" />
+          <Building2 className="h-4 w-4 text-amber-400" />
           {companyName} is not researched yet
         </p>
         <p className="mt-1 text-muted-foreground">
@@ -248,7 +249,7 @@ function CompanyResearchPanel({ companyName }: { companyName: string }) {
     return (
       <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-xs leading-relaxed">
         <p className="font-bold text-foreground flex items-center gap-2">
-          <Building2 className="h-4 w-4 text-amber-600" />
+          <Building2 className="h-4 w-4 text-amber-400" />
           {companyName} is not researched yet
         </p>
         <p className="mt-1 text-muted-foreground">
@@ -276,8 +277,8 @@ function CompanyResearchPanel({ companyName }: { companyName: string }) {
           className={cn(
             "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold",
             researched
-              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700"
-              : "border-amber-500/30 bg-amber-500/10 text-amber-700",
+              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+              : "border-amber-500/30 bg-amber-500/10 text-amber-300",
           )}
         >
           {researched ? <CheckCircle2 className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />}
@@ -302,7 +303,7 @@ function CompanyResearchPanel({ companyName }: { companyName: string }) {
                 href={s.url}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-0.5 font-semibold text-terracotta hover:underline"
+                className="inline-flex items-center gap-0.5 font-semibold text-primary hover:underline"
               >
                 {hostOf(s.url)}
                 <ExternalLink className="h-3 w-3" />
@@ -381,7 +382,7 @@ function ResumeScreenSection({ stage }: { stage: ResumeScreenStage }) {
                 </div>
                 <p className="mt-0.5 text-xs text-muted-foreground">{check.detail}</p>
                 {check.lineRef && (
-                  <p className="mt-1 text-[11px] font-medium text-terracotta">{check.lineRef}</p>
+                  <p className="mt-1 text-[11px] font-medium text-primary">{check.lineRef}</p>
                 )}
               </div>
             </div>
@@ -461,7 +462,7 @@ function EvidenceAuditSection({ stage }: { stage: EvidenceAuditStage }) {
         note="Claimed vs demonstrated: for each skill your resume claims, the proof behind it — a project, a repo link, or nothing."
       />
 
-      <div className="flex flex-wrap items-center gap-4 rounded-2xl bg-terracotta/5 border border-terracotta/20 p-4">
+      <div className="flex flex-wrap items-center gap-4 rounded-2xl bg-primary/5 border border-primary/20 p-4">
         <div>
           <p className="font-display text-3xl font-black text-foreground">
             {stage.evidenceCoverage}%
@@ -489,7 +490,7 @@ function EvidenceAuditSection({ stage }: { stage: EvidenceAuditStage }) {
               className="flex items-start gap-3 rounded-xl border border-border p-3.5"
             >
               {item.proof ? (
-                <Link2 className="h-4 w-4 shrink-0 text-emerald-600 mt-0.5" />
+                <Link2 className="h-4 w-4 shrink-0 text-emerald-400 mt-0.5" />
               ) : (
                 <CircleHelp className="h-4 w-4 shrink-0 text-muted-foreground mt-0.5" />
               )}
@@ -509,7 +510,7 @@ function EvidenceAuditSection({ stage }: { stage: EvidenceAuditStage }) {
                         href={item.proof.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1 font-semibold text-terracotta hover:underline"
+                        className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
                       >
                         {item.proof.label}
                         <ExternalLink className="h-3 w-3" />
@@ -543,7 +544,7 @@ function BarComparisonSection({ stage }: { stage: BarComparisonStage }) {
         />
         <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
           <p className="text-xs font-bold text-foreground flex items-center gap-2">
-            <CircleHelp className="h-4 w-4 text-amber-600" />
+            <CircleHelp className="h-4 w-4 text-amber-400" />
             Bar unknown — stage skipped
           </p>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{stage.reason}</p>
@@ -572,11 +573,11 @@ function BarComparisonSection({ stage }: { stage: BarComparisonStage }) {
             className="flex items-start gap-3 rounded-xl border border-border p-3.5"
           >
             {item.status === "meets" ? (
-              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 mt-0.5" />
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400 mt-0.5" />
             ) : item.status === "partial" ? (
-              <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
+              <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400 mt-0.5" />
             ) : (
-              <XCircle className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" />
+              <XCircle className="h-4 w-4 shrink-0 text-rose-400 mt-0.5" />
             )}
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
@@ -584,9 +585,9 @@ function BarComparisonSection({ stage }: { stage: BarComparisonStage }) {
                 <span
                   className={cn(
                     "rounded-full px-2 py-0.5 text-[10px] font-bold",
-                    item.status === "meets" && "bg-emerald-500/10 text-emerald-700",
-                    item.status === "partial" && "bg-amber-500/10 text-amber-700",
-                    item.status === "missing" && "bg-rose-500/10 text-rose-700",
+                    item.status === "meets" && "bg-emerald-500/10 text-emerald-300",
+                    item.status === "partial" && "bg-amber-500/10 text-amber-300",
+                    item.status === "missing" && "bg-rose-500/10 text-rose-300",
                   )}
                 >
                   {item.status === "meets" ? "Meets" : item.status === "partial" ? "Partial" : "Missing"}
@@ -602,7 +603,7 @@ function BarComparisonSection({ stage }: { stage: BarComparisonStage }) {
                       href={item.sourceUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-0.5 font-semibold text-terracotta hover:underline"
+                      className="inline-flex items-center gap-0.5 font-semibold text-primary hover:underline"
                     >
                       {hostOf(item.sourceUrl)}
                       <ExternalLink className="h-3 w-3" />
@@ -638,17 +639,17 @@ const SEVERITY_BADGES: Record<
   fatal: {
     label: "Fatal",
     icon: ShieldX,
-    className: "border-rose-500/30 bg-rose-500/10 text-rose-700",
+    className: "border-rose-500/30 bg-rose-500/10 text-rose-300",
   },
   critical: {
     label: "Critical",
     icon: ShieldAlert,
-    className: "border-amber-500/30 bg-amber-500/10 text-amber-700",
+    className: "border-amber-500/30 bg-amber-500/10 text-amber-300",
   },
   strong: {
     label: "Strong",
     icon: CheckCircle2,
-    className: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700",
+    className: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
   },
 };
 
@@ -659,13 +660,13 @@ function VerdictCard({ verdict }: { verdict: BrutalVerdict }) {
   const BadgeIcon = badge.icon;
 
   return (
-    <div className="card-surface overflow-hidden transition-all hover:border-terracotta/30 shadow-xs">
+    <div className="card-surface overflow-hidden transition-all hover:border-primary/30 shadow-xs">
       <button
         type="button"
         className="flex w-full items-center gap-3.5 p-5 text-left"
         onClick={() => setExpanded(!expanded)}
       >
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-terracotta/10 text-terracotta">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
           <Icon className="h-5 w-5" strokeWidth={1.7} />
         </div>
         <div className="min-w-0 flex-1">
@@ -692,7 +693,7 @@ function VerdictCard({ verdict }: { verdict: BrutalVerdict }) {
 
       {expanded && (
         <div className="border-t border-border bg-secondary/40 px-5 py-3.5 text-xs leading-relaxed">
-          <p className="font-bold uppercase tracking-wider text-terracotta">Fix Prescription</p>
+          <p className="font-bold uppercase tracking-wider text-primary">Fix Prescription</p>
           <p className="mt-1 text-foreground font-medium">{verdict.whatToFix}</p>
         </div>
       )}
@@ -836,15 +837,15 @@ function MockInterviewSection({ session }: { session: RecruiterSession }) {
                 className={cn(
                   "w-full rounded-xl border p-3.5 text-left transition-colors",
                   isSelected
-                    ? "border-terracotta bg-terracotta/5"
-                    : "border-border hover:border-terracotta/30",
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:border-primary/30",
                 )}
               >
                 <div className="flex items-start gap-3">
                   <div
                     className={cn(
                       "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold",
-                      isSelected ? "bg-terracotta text-white" : "bg-secondary text-muted-foreground",
+                      isSelected ? "bg-primary text-white" : "bg-secondary text-muted-foreground",
                     )}
                   >
                     {q.id.replace("q", "")}
@@ -865,7 +866,7 @@ function MockInterviewSection({ session }: { session: RecruiterSession }) {
         <div className="rounded-2xl border border-border bg-secondary/30 p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs font-bold text-foreground flex items-center gap-2">
-              <Timer className="h-4 w-4 text-terracotta" />
+              <Timer className="h-4 w-4 text-primary" />
               {overTime
                 ? `Over the ${MOCK_TARGET_SECONDS}-second target — you can still submit`
                 : `${formatSeconds(Math.max(0, remaining))} left of the ${MOCK_TARGET_SECONDS}-second target`}
@@ -877,7 +878,7 @@ function MockInterviewSection({ session }: { session: RecruiterSession }) {
           </div>
           <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-secondary">
             <div
-              className={cn("h-full rounded-full transition-all", overTime ? "bg-amber-500" : "bg-terracotta")}
+              className={cn("h-full rounded-full transition-all", overTime ? "bg-amber-500" : "bg-primary")}
               style={{ width: `${Math.min(100, (elapsed / MOCK_TARGET_SECONDS) * 100)}%` }}
             />
           </div>
@@ -885,7 +886,7 @@ function MockInterviewSection({ session }: { session: RecruiterSession }) {
             value={answer}
             onChange={(e) => handleAnswerChange(e.target.value)}
             placeholder="Answer out loud first, then write what you said: situation, action, result — with a number and a project name."
-            className="mt-4 min-h-32 w-full resize-y rounded-2xl border border-border bg-card p-4 text-[13px] leading-relaxed outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-terracotta"
+            className="mt-4 min-h-32 w-full resize-y rounded-2xl border border-border bg-card p-4 text-[13px] leading-relaxed outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary"
           />
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
             <p className="text-[11px] text-muted-foreground">
@@ -894,7 +895,7 @@ function MockInterviewSection({ session }: { session: RecruiterSession }) {
             <Button
               onClick={handleSubmit}
               disabled={submit.isPending || !answer.trim()}
-              className="rounded-xl px-5 py-2.5 font-bold text-xs bg-terracotta hover:bg-terracotta/90 text-white"
+              className="rounded-xl px-5 py-2.5 font-bold text-xs bg-primary hover:bg-primary/90 text-white"
             >
               {submit.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -924,11 +925,11 @@ function MockInterviewSection({ session }: { session: RecruiterSession }) {
                     <p className="text-xs font-bold text-foreground">{row.criterion}</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">{row.rule}</p>
                     {scored && (
-                      <p className="mt-1 text-xs font-medium text-terracotta">{scored.reason}</p>
+                      <p className="mt-1 text-xs font-medium text-primary">{scored.reason}</p>
                     )}
                   </div>
                   {scored && (
-                    <span className="shrink-0 rounded-full bg-terracotta/10 px-2.5 py-1 text-[11px] font-bold text-terracotta">
+                    <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-bold text-primary">
                       {scored.score}/{scored.max}
                     </span>
                   )}
@@ -1025,7 +1026,7 @@ function CoachChat({ session, companyName }: { session: RecruiterSession; compan
   return (
     <div className="card-surface overflow-hidden shadow-md">
       <div className="flex items-center gap-3 border-b border-border bg-secondary/30 px-6 py-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-terracotta text-white font-bold">
+        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-white font-bold">
           <UserCheck className="h-5 w-5" />
         </div>
         <div>
@@ -1050,7 +1051,7 @@ function CoachChat({ session, companyName }: { session: RecruiterSession; compan
               className={cn(
                 "max-w-[85%] rounded-2xl px-4 py-3 text-xs leading-relaxed font-medium",
                 msg.role === "student"
-                  ? "rounded-br-xs bg-terracotta text-white font-semibold"
+                  ? "rounded-br-xs bg-primary text-white font-semibold"
                   : "rounded-bl-xs bg-secondary text-foreground",
               )}
             >
@@ -1061,7 +1062,7 @@ function CoachChat({ session, companyName }: { session: RecruiterSession; compan
         {chat.isPending && (
           <div className="flex justify-start">
             <div className="flex items-center gap-2 rounded-2xl rounded-bl-xs bg-secondary px-4 py-3 text-xs text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin text-terracotta" />
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
               Coach is typing...
             </div>
           </div>
@@ -1091,13 +1092,13 @@ function CoachChat({ session, companyName }: { session: RecruiterSession; compan
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
           placeholder="Ask the coach..."
           disabled={chat.isPending}
-          className="flex-1 rounded-xl border border-border bg-background px-4 py-2.5 text-xs font-medium outline-none focus:border-terracotta"
+          className="flex-1 rounded-xl border border-border bg-background px-4 py-2.5 text-xs font-medium outline-none focus:border-primary"
         />
         <Button
           type="button"
           onClick={() => handleSend()}
           disabled={chat.isPending || !input.trim()}
-          className="rounded-xl px-4 bg-terracotta hover:bg-terracotta/90 text-white"
+          className="rounded-xl px-4 bg-primary hover:bg-primary/90 text-white"
         >
           <Send className="h-4 w-4" />
         </Button>
@@ -1134,7 +1135,7 @@ function VerdictSection({
             "rounded-2xl border p-5",
             verdict.band === "ready" && "border-emerald-500/30 bg-emerald-500/5",
             verdict.band === "one_gap" && "border-amber-500/30 bg-amber-500/5",
-            verdict.band === "not_yet" && "border-terracotta/30 bg-terracotta/5",
+            verdict.band === "not_yet" && "border-primary/30 bg-primary/5",
           )}
         >
           <p className="font-display text-xl font-black text-foreground">{verdict.headline}</p>
@@ -1142,7 +1143,7 @@ function VerdictSection({
             <ol className="mt-3 space-y-2">
               {verdict.topFixes.map((fix, i) => (
                 <li key={i} className="flex items-start gap-2 text-xs leading-relaxed text-foreground">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-terracotta/10 text-[10px] font-bold text-terracotta">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
                     {i + 1}
                   </span>
                   <span>
@@ -1155,8 +1156,8 @@ function VerdictSection({
           )}
         </div>
 
-        <div className="rounded-2xl border border-terracotta/20 bg-terracotta/5 p-5">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-terracotta">
+        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-primary">
             Your single highest-value next action
           </p>
           <p className="mt-2 text-sm font-bold text-foreground">{verdict.nextAction.label}</p>
@@ -1168,7 +1169,7 @@ function VerdictSection({
 
       <div className="card-surface p-6 sm:p-8 space-y-3">
         <h3 className="font-display text-lg font-semibold flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-terracotta" />
+          <Sparkles className="h-5 w-5 text-primary" />
           Recommended Proof Project to Build
         </h3>
         <h4 className="text-sm font-bold text-foreground">{audit.whatYouNeedToBuild.title}</h4>
@@ -1179,7 +1180,7 @@ function VerdictSection({
           {audit.whatYouNeedToBuild.techStack.map((t) => (
             <span
               key={t}
-              className="rounded-full bg-terracotta/10 px-3 py-1 text-xs font-bold text-terracotta"
+              className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary"
             >
               {t}
             </span>
@@ -1190,7 +1191,7 @@ function VerdictSection({
           <Button
             onClick={onAddToRoadmap}
             disabled={roadmapPending}
-            className="w-full rounded-xl py-3 font-bold text-xs bg-terracotta hover:bg-terracotta/90 text-white"
+            className="w-full rounded-xl py-3 font-bold text-xs bg-primary hover:bg-primary/90 text-white"
           >
             {roadmapPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -1260,6 +1261,25 @@ function RecruiterPage() {
       currentSession?.auditResult.verdict,
   );
 
+  /* Quest-map state — derived from the real session only. Before a session
+   * exists (or for a legacy audit with no staged screens) every world reads
+   * as unstarted and the shield as untested. Nothing here is guessed. */
+  const resumeStage = currentSession?.auditResult.resumeScreen;
+  const evidenceStage = currentSession?.auditResult.evidenceAudit;
+  const barStage = currentSession?.auditResult.barComparison;
+  const verdict = currentSession?.auditResult.verdict;
+  const resumePassed =
+    resumeStage?.skillChecks.filter((c) => c.status === "pass").length ?? 0;
+  const resumeTotal = resumeStage?.skillChecks.length ?? 0;
+  const barRetrievedDate =
+    barStage?.state === "compared"
+      ? new Date(barStage.retrievedAt).toLocaleDateString(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        })
+      : null;
+
   function handleRunAudit() {
     if (isCustomCompany && !customCompanyInput.trim()) {
       toast.error("Please enter a custom company name.");
@@ -1322,6 +1342,44 @@ function RecruiterPage() {
           }
         />
 
+        <QuestMap
+          companyName={effectiveCompany}
+          targetRole={selectedRole}
+          resume={
+            !resumeStage
+              ? { status: "unstarted" }
+              : resumeStage.available
+                ? {
+                    status: "done",
+                    detail: `${resumePassed} of ${resumeTotal} must-have skills found in your resume.`,
+                  }
+                : { status: "unavailable", detail: resumeStage.unavailableReason }
+          }
+          skills={
+            !evidenceStage
+              ? { status: "unstarted" }
+              : {
+                  status: "done",
+                  evidenceCoverage: evidenceStage.evidenceCoverage,
+                  skillsWithProof: evidenceStage.skillsWithProof,
+                  claimedSkills: evidenceStage.claimedSkills,
+                }
+          }
+          jobMarket={
+            !barStage
+              ? { status: "unstarted" }
+              : barStage.state === "compared"
+                ? {
+                    status: "researched",
+                    detail: `${barStage.items.length} bar items · researched ${barRetrievedDate ?? "on an unknown date"}.`,
+                  }
+                : { status: "unknown", detail: barStage.reason }
+          }
+          shieldBand={verdict?.band ?? null}
+          missions={verdict?.topFixes ?? []}
+          onNavigate={setActiveStep}
+        />
+
         <RecruiterPipelineStepper
           activeStep={activeStep}
           onStepClick={setActiveStep}
@@ -1352,15 +1410,15 @@ function RecruiterPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => setIsCustomCompany(!isCustomCompany)}
-                      className="rounded-xl border-terracotta/30 text-xs font-bold text-terracotta hover:bg-terracotta/10"
+                      className="rounded-xl border-primary/30 text-xs font-bold text-primary hover:bg-primary/10"
                     >
                       {isCustomCompany ? "← Choose Featured" : "+ Custom Company"}
                     </Button>
                   </div>
 
                   {isCustomCompany ? (
-                    <div className="space-y-3 rounded-2xl border border-terracotta/20 bg-secondary/30 p-5">
-                      <label className="text-xs font-bold uppercase tracking-wider text-terracotta">
+                    <div className="space-y-3 rounded-2xl border border-primary/20 bg-secondary/30 p-5">
+                      <label className="text-xs font-bold uppercase tracking-wider text-primary">
                         Enter Any Company Name
                       </label>
                       <input
@@ -1368,7 +1426,7 @@ function RecruiterPage() {
                         value={customCompanyInput}
                         onChange={(e) => setCustomCompanyInput(e.target.value)}
                         placeholder="e.g. Careem, Devsinc, Google, Arbitsoft, Folio3..."
-                        className="h-11 w-full rounded-xl border border-border bg-background px-4 text-xs font-semibold outline-none focus:border-terracotta"
+                        className="h-11 w-full rounded-xl border border-border bg-background px-4 text-xs font-semibold outline-none focus:border-primary"
                       />
                     </div>
                   ) : (
@@ -1383,8 +1441,8 @@ function RecruiterPage() {
                             className={cn(
                               "group relative flex items-start gap-3.5 rounded-2xl border p-4 text-left transition-all",
                               isSelected
-                                ? "border-terracotta bg-terracotta/5 ring-2 ring-terracotta/40 shadow-xs"
-                                : "border-border bg-card hover:border-terracotta/30",
+                                ? "border-primary bg-primary/5 ring-2 ring-primary/40 shadow-xs"
+                                : "border-border bg-card hover:border-primary/30",
                             )}
                           >
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-secondary font-extrabold text-xs text-foreground">
@@ -1395,7 +1453,7 @@ function RecruiterPage() {
                               <p className="truncate text-[11px] text-muted-foreground">{co.tier}</p>
                             </div>
                             {isSelected && (
-                              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-terracotta text-white">
+                              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-white">
                                 <Check className="h-3 w-3" />
                               </div>
                             )}
@@ -1416,7 +1474,7 @@ function RecruiterPage() {
                       value={selectedRole}
                       onChange={(e) => setSelectedRole(e.target.value)}
                       placeholder="Associate Software Engineer"
-                      className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-4 text-xs font-semibold outline-none focus:border-terracotta"
+                      className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-4 text-xs font-semibold outline-none focus:border-primary"
                     />
                   </div>
 
@@ -1428,7 +1486,7 @@ function RecruiterPage() {
                       value={jobDescription}
                       onChange={(e) => setJobDescription(e.target.value)}
                       placeholder={"Paste the full job description here. The resume screen checks your resume against its must-have skills, and the mock interview questions are drafted from it.\n\nWithout a JD, the screen checks against the company bar instead."}
-                      className="mt-1.5 min-h-36 w-full resize-y rounded-xl border border-border bg-background px-4 py-3 text-xs leading-relaxed outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-terracotta"
+                      className="mt-1.5 min-h-36 w-full resize-y rounded-xl border border-border bg-background px-4 py-3 text-xs leading-relaxed outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary"
                     />
                     <p className="mt-1.5 text-[11px] text-muted-foreground">
                       {jobDescription.trim().length} characters · Only the extracted keywords are
@@ -1444,7 +1502,7 @@ function RecruiterPage() {
                         ? "The audit runs only for researched companies — pick a featured company."
                         : undefined
                     }
-                    className="w-full rounded-xl py-3 font-bold text-xs bg-terracotta hover:bg-terracotta/90 text-white"
+                    className="w-full rounded-xl py-3 font-bold text-xs bg-primary hover:bg-primary/90 text-white"
                   >
                     {runAudit.isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -1469,7 +1527,7 @@ function RecruiterPage() {
                   <Button
                     type="button"
                     onClick={() => setActiveStep(1)}
-                    className="mt-4 rounded-xl bg-terracotta px-5 py-2.5 text-xs font-bold text-white hover:bg-terracotta/90"
+                    className="mt-4 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-white hover:bg-primary/90"
                   >
                     Go to step 1
                   </Button>
@@ -1491,7 +1549,7 @@ function RecruiterPage() {
                   <div className="flex justify-end pt-4 border-t border-border mt-6">
                     <Button
                       onClick={() => setActiveStep(3)}
-                      className="rounded-xl px-6 py-2.5 font-bold text-xs bg-terracotta hover:bg-terracotta/90 text-white"
+                      className="rounded-xl px-6 py-2.5 font-bold text-xs bg-primary hover:bg-primary/90 text-white"
                     >
                       Continue to Evidence & Bar
                       <ArrowRight className="ml-2 h-4 w-4" />
@@ -1517,7 +1575,7 @@ function RecruiterPage() {
 
                   <div>
                     <h3 className="font-display text-lg font-semibold mb-3 flex items-center gap-2">
-                      <Flame className="h-5 w-5 text-terracotta" />
+                      <Flame className="h-5 w-5 text-primary" />
                       Evidence Rubric Detail
                     </h3>
                     <div className="grid gap-3 sm:grid-cols-2">
@@ -1538,7 +1596,7 @@ function RecruiterPage() {
                     </Button>
                     <Button
                       onClick={() => setActiveStep(4)}
-                      className="rounded-xl px-6 py-2.5 font-bold text-xs bg-terracotta hover:bg-terracotta/90 text-white"
+                      className="rounded-xl px-6 py-2.5 font-bold text-xs bg-primary hover:bg-primary/90 text-white"
                     >
                       Continue to Mock Interview
                       <ArrowRight className="ml-2 h-4 w-4" />
@@ -1554,7 +1612,7 @@ function RecruiterPage() {
 
                   <div>
                     <h3 className="font-display text-lg font-semibold mb-3 flex items-center gap-2">
-                      <MessageCircle className="h-5 w-5 text-terracotta" />
+                      <MessageCircle className="h-5 w-5 text-primary" />
                       Practice with the Coach
                     </h3>
                     <CoachChat session={currentSession} companyName={currentSession.companyName} />
@@ -1571,7 +1629,7 @@ function RecruiterPage() {
                     </Button>
                     <Button
                       onClick={() => setActiveStep(5)}
-                      className="rounded-xl px-6 py-2.5 font-bold text-xs bg-terracotta hover:bg-terracotta/90 text-white"
+                      className="rounded-xl px-6 py-2.5 font-bold text-xs bg-primary hover:bg-primary/90 text-white"
                     >
                       Continue to Verdict
                       <ArrowRight className="ml-2 h-4 w-4" />
@@ -1595,7 +1653,7 @@ function RecruiterPage() {
                       <LegacyAuditNotice />
                       <div className="card-surface p-6 sm:p-8 space-y-3">
                         <h3 className="font-display text-lg font-semibold flex items-center gap-2">
-                          <Sparkles className="h-5 w-5 text-terracotta" />
+                          <Sparkles className="h-5 w-5 text-primary" />
                           Recommended Proof Project to Build
                         </h3>
                         <h4 className="text-sm font-bold text-foreground">
@@ -1608,7 +1666,7 @@ function RecruiterPage() {
                           {currentSession.auditResult.whatYouNeedToBuild.techStack.map((t) => (
                             <span
                               key={t}
-                              className="rounded-full bg-terracotta/10 px-3 py-1 text-xs font-bold text-terracotta"
+                              className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary"
                             >
                               {t}
                             </span>
@@ -1618,7 +1676,7 @@ function RecruiterPage() {
                           <Button
                             onClick={handleAddToRoadmap}
                             disabled={generateRoadmap.isPending}
-                            className="w-full rounded-xl py-3 font-bold text-xs bg-terracotta hover:bg-terracotta/90 text-white"
+                            className="w-full rounded-xl py-3 font-bold text-xs bg-primary hover:bg-primary/90 text-white"
                           >
                             {generateRoadmap.isPending ? (
                               <Loader2 className="h-4 w-4 animate-spin" />

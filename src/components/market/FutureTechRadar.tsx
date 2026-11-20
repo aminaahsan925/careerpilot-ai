@@ -74,7 +74,7 @@ const GLOBAL_REGIONS: CountryRegion[] = [
     ],
     opportunityForStudents:
       "Learn open-model self-hosting (vLLM, Ollama), quantization (GGUF), and LoRA fine-tuning to deliver cost-effective enterprise AI.",
-    badgeColor: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+    badgeColor: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
   },
   {
     id: "eu",
@@ -88,7 +88,7 @@ const GLOBAL_REGIONS: CountryRegion[] = [
     ],
     opportunityForStudents:
       "Build expertise in AI Safety, Model Auditability, and Data Privacy Architecture required by multinational enterprises.",
-    badgeColor: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+    badgeColor: "bg-sky-500/10 text-sky-400 border-sky-500/20",
   },
   {
     id: "pakistan_asia",
@@ -102,7 +102,7 @@ const GLOBAL_REGIONS: CountryRegion[] = [
     ],
     opportunityForStudents:
       "Bridge local development with global AI APIs. Students who master building functional AI agents will replace traditional web agency freelancers.",
-    badgeColor: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+    badgeColor: "bg-amber-500/10 text-amber-400 border-amber-500/20",
   },
 ];
 
@@ -209,7 +209,7 @@ export function FutureTechRadar({
   return (
     <div className="space-y-6">
       {/* GLOBAL TECH TRENDS BANNER */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-ink via-neutral-900 to-ink p-7 sm:p-9 text-white border border-terracotta/30 shadow-2xl">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-ink via-violet-deep/30 to-ink p-7 sm:p-9 text-white border border-terracotta/30 shadow-2xl">
         <div className="pointer-events-none absolute -right-16 -top-16 h-80 w-80 rounded-full bg-terracotta/15 blur-[90px]" />
         
         <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
@@ -385,7 +385,7 @@ export function FutureTechRadar({
                               className={cn(
                                 "flex items-center gap-1 rounded-md px-2.5 py-1 text-[11.5px] font-medium transition",
                                 isSaved
-                                  ? "bg-emerald-500/10 text-emerald-600"
+                                  ? "bg-emerald-500/10 text-emerald-400"
                                   : "bg-terracotta/10 text-terracotta hover:bg-terracotta hover:text-white"
                               )}
                             >
@@ -436,7 +436,7 @@ export function FutureTechRadar({
                               <p className="mt-1 text-muted-foreground">{shift.currentEra}</p>
                             </div>
                             <div className="rounded-lg bg-emerald-500/5 border border-emerald-500/10 p-3">
-                              <span className="text-xs font-bold text-emerald-600 uppercase">2030 Standard</span>
+                              <span className="text-xs font-bold text-emerald-400 uppercase">2030 Standard</span>
                               <p className="mt-1 text-muted-foreground">{shift.era2030}</p>
                             </div>
                           </div>

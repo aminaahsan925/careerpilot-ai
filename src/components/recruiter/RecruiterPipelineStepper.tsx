@@ -38,7 +38,7 @@ export function RecruiterPipelineStepper({
                 className={cn(
                   "flex flex-1 items-center gap-2.5 rounded-2xl px-3.5 py-2.5 text-left transition-all border",
                   isActive
-                    ? "border-terracotta bg-terracotta text-white shadow-md font-bold"
+                    ? "border-primary bg-primary text-white shadow-md font-bold"
                     : isDone
                       ? "border-emerald-500/20 bg-secondary text-foreground font-semibold"
                       : disabled
@@ -49,7 +49,7 @@ export function RecruiterPipelineStepper({
                 <div
                   className={cn(
                     "flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-xs font-black",
-                    isActive ? "bg-white text-terracotta" : "bg-secondary text-muted-foreground",
+                    isActive ? "bg-white text-primary" : "bg-secondary text-muted-foreground",
                   )}
                 >
                   <s.icon className="h-3.5 w-3.5" />

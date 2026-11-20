@@ -116,7 +116,7 @@ function ScanningOverlay({ companyName, roleName }: { companyName: string; roleN
           transition={{ duration: 2.4, repeat: Infinity, ease: "easeOut", delay: 0.7 }}
           className="absolute inset-0 rounded-full bg-terracotta/20"
         />
-        <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-ink via-neutral-900 to-neutral-800 text-white shadow-2xl border border-terracotta/40">
+        <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-ink via-violet-deep/30 to-violet-deep/10 text-white shadow-2xl border border-terracotta/40">
           <Building2 className="h-8 w-8 text-terracotta animate-pulse" />
         </div>
       </div>
@@ -157,12 +157,12 @@ function ScanningOverlay({ companyName, roleName }: { companyName: string; roleN
                 isCurrent
                   ? "border-terracotta/40 bg-card shadow-md font-bold text-foreground"
                   : isDone
-                    ? "border-emerald-500/20 bg-emerald-50/40 text-emerald-900"
+                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
                     : "border-transparent bg-secondary/40 text-muted-foreground",
               )}
             >
               {isDone ? (
-                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
                   <Check className="h-3.5 w-3.5" />
                 </div>
               ) : isCurrent ? (
@@ -246,7 +246,7 @@ function WizardSetup({
                     isCurrent
                       ? "bg-terracotta text-white shadow-xs scale-105"
                       : isPassed
-                        ? "bg-emerald-100 text-emerald-800"
+                        ? "bg-emerald-500/15 text-emerald-400"
                         : "bg-secondary text-muted-foreground",
                   )}
                 >
@@ -480,7 +480,7 @@ function WizardSetup({
             className="card-surface p-6 sm:p-8 space-y-6 border-terracotta/20"
           >
             {/* Aesthetic Summary Card */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-ink via-neutral-900 to-neutral-800 p-7 text-white shadow-xl border border-terracotta/30">
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-ink via-violet-deep/30 to-violet-deep/10 p-7 text-white shadow-xl border border-terracotta/30">
               <div className="pointer-events-none absolute -right-10 -bottom-10 h-44 w-44 rounded-full bg-terracotta/20 blur-2xl" />
 
               <div className="relative z-10 space-y-4">
@@ -598,7 +598,7 @@ function DiagnosticResultsView({
       {/* Honesty banners: a fallback may degrade, never impersonate. */}
       {d.diagnosisSource === "template" && (
         <div className="flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-5 py-4">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
           <div>
             <p className="text-[13px] font-bold text-foreground">
               Template diagnosis — AI unavailable
@@ -613,7 +613,7 @@ function DiagnosticResultsView({
       )}
       {d.researchAvailable === false && (
         <div className="flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-5 py-4">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
           <div>
             <p className="text-[13px] font-bold text-foreground">
               Live research unavailable
@@ -627,7 +627,7 @@ function DiagnosticResultsView({
       )}
       {d.targetRole && companyDiag.companyResearched === false && (
         <div className="flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-5 py-4">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
           <div>
             <p className="text-[13px] font-bold text-foreground">
               Company not researched yet
@@ -641,7 +641,7 @@ function DiagnosticResultsView({
         </div>
       )}
       {/* Top Banner: Rejection Verdict & High-Impact Metric Ring */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-ink via-neutral-900 to-neutral-800 p-8 text-white sm:p-10 shadow-2xl border border-terracotta/30">
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-ink via-violet-deep/30 to-violet-deep/10 p-8 text-white sm:p-10 shadow-2xl border border-terracotta/30">
         <div className="pointer-events-none absolute -bottom-14 -right-14 h-72 w-72 rounded-full bg-terracotta/25 blur-3xl animate-pulse" />
         <div className="pointer-events-none absolute -top-10 -left-10 h-48 w-48 rounded-full bg-clay/20 blur-3xl" />
 
@@ -879,7 +879,7 @@ function DiagnosticResultsView({
 
             {/* Project Deficiencies */}
             <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-b from-amber-500/5 to-card p-5 space-y-3.5 shadow-xs">
-              <div className="flex items-center gap-2 text-amber-600">
+              <div className="flex items-center gap-2 text-amber-400">
                 <AlertTriangle className="h-4 w-4 shrink-0" />
                 <h3 className="text-xs font-black uppercase tracking-wider">
                   Project Deficiencies
@@ -900,7 +900,7 @@ function DiagnosticResultsView({
 
             {/* ATS & Formatting Flaws */}
             <div className="rounded-2xl border border-blue-500/30 bg-gradient-to-b from-blue-500/5 to-card p-5 space-y-3.5 shadow-xs">
-              <div className="flex items-center gap-2 text-blue-600">
+              <div className="flex items-center gap-2 text-sky-400">
                 <FileCheck className="h-4 w-4 shrink-0" />
                 <h3 className="text-xs font-black uppercase tracking-wider">
                   Profile & Evidence Flaws
@@ -912,7 +912,7 @@ function DiagnosticResultsView({
                     key={item}
                     className="flex items-start gap-2.5 rounded-xl bg-card p-3 border border-blue-500/15 shadow-2xs"
                   >
-                    <span className="mt-1 h-2 w-2 rounded-full bg-blue-500 shrink-0" />
+                    <span className="mt-1 h-2 w-2 rounded-full bg-sky-400 shrink-0" />
                     <span className="font-medium">{item}</span>
                   </li>
                 ))}

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { ROADMAP_STREAK_QUERY_KEY } from "@/data/roadmap-streak";
 import {
   claimDayCompleteFn,
   generateRoadmapFn,
@@ -438,6 +439,7 @@ export function useSubmitMcq() {
       void queryClient.invalidateQueries({ queryKey: LEARNING_PATHS_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: ROADMAP_PROGRESS_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: ROADMAP_NOTIFICATIONS_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: ROADMAP_STREAK_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: ["current-user"] });
     },
   });

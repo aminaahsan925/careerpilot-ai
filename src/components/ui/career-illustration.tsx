@@ -30,12 +30,12 @@ export function CareerIllustration({ className = "", badgeText = "your employabi
             opacity: { duration: 0.6 },
             y: { duration: 4, repeat: Infinity, ease: "easeInOut" },
           }}
-          className="absolute left-2 top-8 z-0 flex items-end gap-1.5 rounded-2xl border border-amber-900/10 bg-[#F5F0E6]/90 p-3 shadow-md backdrop-blur-xs sm:left-4"
+          className="absolute left-2 top-8 z-0 flex items-end gap-1.5 rounded-2xl border border-border bg-card/90 p-3 shadow-md backdrop-blur-xs sm:left-4"
         >
-          <div className="h-6 w-2.5 rounded-xs bg-[#ea580c]/30" />
-          <div className="h-10 w-2.5 rounded-xs bg-[#ea580c]/60" />
-          <div className="h-14 w-2.5 rounded-xs bg-[#ea580c]" />
-          <div className="h-12 w-2.5 rounded-xs bg-[#d97706]" />
+          <div className="h-6 w-2.5 rounded-xs bg-primary/30" />
+          <div className="h-10 w-2.5 rounded-xs bg-primary/60" />
+          <div className="h-14 w-2.5 rounded-xs bg-primary" />
+          <div className="h-12 w-2.5 rounded-xs bg-magenta" />
         </motion.div>
 
         {/* Floating Donut Chart (Right Background) */}
@@ -50,25 +50,25 @@ export function CareerIllustration({ className = "", badgeText = "your employabi
         >
           <svg viewBox="0 0 100 100" className="h-full w-full drop-shadow-sm">
             {/* Background Donut */}
-            <circle cx="50" cy="50" r="38" fill="none" stroke="#EFEAD8" strokeWidth="18" />
-            {/* Segment 1: Terracotta */}
+            <circle cx="50" cy="50" r="38" fill="none" stroke="var(--muted)" strokeWidth="18" />
+            {/* Segment 1: Violet */}
             <circle
               cx="50"
               cy="50"
               r="38"
               fill="none"
-              stroke="#ea580c"
+              stroke="var(--primary)"
               strokeWidth="18"
               strokeDasharray="140 100"
               strokeDashoffset="20"
             />
-            {/* Segment 2: Clay/Orange */}
+            {/* Segment 2: Magenta */}
             <circle
               cx="50"
               cy="50"
               r="38"
               fill="none"
-              stroke="#f97316"
+              stroke="var(--magenta)"
               strokeWidth="18"
               strokeDasharray="70 170"
               strokeDashoffset="-120"
@@ -85,37 +85,37 @@ export function CareerIllustration({ className = "", badgeText = "your employabi
         >
           {/* Leaves */}
           <div className="flex gap-1 mb-[-4px]">
-            <div className="h-10 w-4 rounded-full bg-[#E5DEC9] rotate-[-25deg] shadow-xs" />
-            <div className="h-12 w-4 rounded-full bg-[#D8CEB3] rotate-[5deg] shadow-xs" />
-            <div className="h-10 w-4 rounded-full bg-[#E5DEC9] rotate-[30deg] shadow-xs" />
+            <div className="h-10 w-4 rounded-full bg-violet-deep rotate-[-25deg] shadow-xs" />
+            <div className="h-12 w-4 rounded-full bg-primary/70 rotate-[5deg] shadow-xs" />
+            <div className="h-10 w-4 rounded-full bg-violet-deep rotate-[30deg] shadow-xs" />
           </div>
           {/* Pot */}
-          <div className="h-9 w-8 rounded-b-lg bg-[#121214] shadow-md" />
+          <div className="h-9 w-8 rounded-b-lg bg-secondary shadow-md" />
         </motion.div>
 
         {/* Central Character & Laptop SVG */}
         <svg viewBox="0 0 340 260" className="relative z-10 w-full h-full">
           {/* Desk Base Line */}
-          <line x1="20" y1="230" x2="320" y2="230" stroke="#121214" strokeWidth="2.5" strokeLinecap="round" />
+          <line x1="20" y1="230" x2="320" y2="230" stroke="var(--muted-foreground)" strokeWidth="2.5" strokeLinecap="round" />
 
-          {/* Torso / Sweaters (Warm Terracotta #ea580c) */}
+          {/* Torso / Sweater (Violet) */}
           <path
             d="M 130 180 C 130 150, 160 145, 185 145 C 220 145, 235 155, 240 210 L 125 210 Z"
-            fill="#ea580c"
+            fill="var(--primary)"
           />
 
           {/* Arms & Hands on Laptop */}
           <path
             d="M 140 185 Q 165 205, 180 210"
             fill="none"
-            stroke="#d97706"
+            stroke="var(--violet-deep)"
             strokeWidth="12"
             strokeLinecap="round"
           />
           <path
             d="M 180 205 Q 200 208, 220 210"
             fill="none"
-            stroke="#ea580c"
+            stroke="var(--magenta)"
             strokeWidth="12"
             strokeLinecap="round"
           />
@@ -149,17 +149,17 @@ export function CareerIllustration({ className = "", badgeText = "your employabi
             fill="#121214"
           />
 
-          {/* Sleek Laptop (#121214) */}
+          {/* Sleek Laptop */}
           {/* Screen Body */}
           <path
             d="M 60 150 L 155 150 L 155 220 L 60 220 Z"
-            fill="#121214"
+            fill="var(--secondary)"
             rx="6"
           />
           {/* Laptop Base keyboard deck */}
           <path
             d="M 25 224 L 165 224 L 160 230 L 30 230 Z"
-            fill="#121214"
+            fill="var(--secondary)"
           />
           {/* Glowing 4-Point Star Emblem on Laptop Cover */}
           <g transform="translate(107, 185)">
@@ -171,7 +171,7 @@ export function CareerIllustration({ className = "", badgeText = "your employabi
         </svg>
 
         {/* Ambient Glow behind Laptop */}
-        <div className="pointer-events-none absolute left-20 bottom-10 h-24 w-24 rounded-full bg-[#ea580c]/20 blur-xl" />
+        <div className="pointer-events-none absolute left-20 bottom-10 h-24 w-24 rounded-full bg-primary/25 blur-xl" />
       </div>
     </div>
   );
