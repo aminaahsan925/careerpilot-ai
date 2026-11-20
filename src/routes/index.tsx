@@ -1,6 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
-import { motion } from "motion/react";
+import { useEffect, useState } from "react";
 import {
   Sparkles,
   ArrowRight,
@@ -11,7 +10,6 @@ import {
   CheckCircle2,
   TrendingUp,
   AlertTriangle,
-  Plane,
   FileCheck,
   Bot,
   Flame,
@@ -20,6 +18,9 @@ import {
   ArrowUpRight,
   Check,
   Activity,
+  Map,
+  Menu,
+  X,
 } from "lucide-react";
 
 import heroPerson from "@/assets/hero-person.png";
@@ -31,13 +32,13 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "CareerPilot AI analyzes your resume, simulates Recruiter Audits, maps Market Reality & Future Tech trends, and powers your daily career Flight Plan.",
+          "CareerPilot AI analyzes your resume, simulates Recruiter Audits, maps Market Reality & Future Tech trends, and turns your gaps into a day-by-day roadmap.",
       },
       { property: "og:title", content: "CareerPilot AI — Build Your Future" },
       {
         property: "og:description",
         content:
-          "Career Intelligence Platform: Recruiter Audit, Market Reality, Flight Plan & AI Mentorship.",
+          "Career Intelligence Platform: Recruiter Audit, Market Reality, Roadmap & AI Mentorship.",
       },
     ],
   }),
@@ -68,10 +69,10 @@ const STAGES = [
   },
   {
     n: "04",
-    title: "FLIGHT PLAN",
-    subtitle: "Daily Execution Cockpit",
-    body: "Transform your multi-month roadmap into daily sprint tasks, weekly velocity metrics, and actionable portfolio milestones.",
-    tags: ["Daily Sprints", "Execution Velocity", "Milestone Tracking"],
+    title: "ROADMAP",
+    subtitle: "Day-by-Day Execution Plan",
+    body: "Turn your skill gaps into a day-by-day roadmap: daily topics, focused tasks, and short checks that unlock the next day.",
+    tags: ["Daily Tasks", "Topic Briefs", "Progress Checks"],
   },
   {
     n: "05",
@@ -89,9 +90,9 @@ const PLATFORM_SUITE = [
     body: "Get an unfiltered evaluation of how top tech recruiters view your candidacy, identifying candidate red flags and positioning fixes.",
   },
   {
-    icon: Plane,
-    title: "Daily Flight Plan",
-    body: "Stay in peak execution momentum with daily sprint tasks, focus priorities, and weekly velocity tracking tailored to your role.",
+    icon: Map,
+    title: "Day-by-Day Roadmap",
+    body: "Work your roadmap one day at a time: daily topics, focused tasks, and checks that unlock the next day, matched to your target role.",
   },
   {
     icon: BarChart3,
@@ -128,12 +129,13 @@ const BEFORE_AFTER = [
   },
   {
     before: "Overwhelmed by a massive learning list with zero daily accountability or structure.",
-    after: "Executing your daily Flight Plan with clear sprint tasks and visible weekly velocity.",
+    after: "Working a day-by-day roadmap with clear daily tasks and visible progress.",
   },
 ];
 
 function Landing() {
   const navigate = useNavigate();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   useEffect(() => {
     // Some Supabase email templates redirect to the site root. Preserve the
@@ -162,8 +164,8 @@ function Landing() {
           <a href="#market-reality" className="transition hover:text-foreground">
             Market Reality
           </a>
-          <a href="#flight-plan" className="transition hover:text-foreground">
-            Flight Plan
+          <a href="#roadmap" className="transition hover:text-foreground">
+            Roadmap
           </a>
           <Link to="/diagnosis" className="transition hover:text-foreground">
             Diagnosis
@@ -183,17 +185,77 @@ function Landing() {
           >
             Open Dashboard
           </Link>
+          <button
+            type="button"
+            aria-label={mobileNavOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileNavOpen}
+            onClick={() => setMobileNavOpen((open) => !open)}
+            className="rounded-lg border border-border bg-card p-2.5 text-foreground lg:hidden"
+          >
+            {mobileNavOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
       </header>
 
+      {/* MOBILE NAV — the desktop nav is hidden below lg, so phones get this panel. */}
+      {mobileNavOpen && (
+        <nav
+          aria-label="Mobile"
+          className="mx-auto max-w-6xl px-6 pb-2 lg:hidden"
+        >
+          <div className="card-surface flex flex-col gap-1 p-3 text-[14px] font-medium text-muted-foreground">
+            <a
+              href="#how"
+              onClick={() => setMobileNavOpen(false)}
+              className="rounded-lg px-3 py-2.5 transition hover:bg-secondary hover:text-foreground"
+            >
+              Workflow
+            </a>
+            <a
+              href="#recruiter-audit"
+              onClick={() => setMobileNavOpen(false)}
+              className="rounded-lg px-3 py-2.5 transition hover:bg-secondary hover:text-foreground"
+            >
+              Recruiter Audit
+            </a>
+            <a
+              href="#market-reality"
+              onClick={() => setMobileNavOpen(false)}
+              className="rounded-lg px-3 py-2.5 transition hover:bg-secondary hover:text-foreground"
+            >
+              Market Reality
+            </a>
+            <a
+              href="#roadmap"
+              onClick={() => setMobileNavOpen(false)}
+              className="rounded-lg px-3 py-2.5 transition hover:bg-secondary hover:text-foreground"
+            >
+              Roadmap
+            </a>
+            <Link
+              to="/diagnosis"
+              onClick={() => setMobileNavOpen(false)}
+              className="rounded-lg px-3 py-2.5 transition hover:bg-secondary hover:text-foreground"
+            >
+              Diagnosis
+            </Link>
+            <Link
+              to="/auth"
+              search={{ redirect: undefined, reset: undefined }}
+              onClick={() => setMobileNavOpen(false)}
+              className="rounded-lg border-t border-border px-3 py-2.5 font-semibold text-foreground transition hover:bg-secondary sm:hidden"
+            >
+              Sign in
+            </Link>
+          </div>
+        </nav>
+      )}
+
       <main className="mx-auto max-w-6xl px-6">
         {/* HERO SECTION - PRESERVED VISUAL COMPOSITION */}
-        <motion.section
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          className="relative mt-4 overflow-hidden rounded-3xl bg-ink text-white"
-        >
+        {/* Content is visible by default; animate-rise-in is a CSS-only
+            progressive enhancement, so the hero renders with no JS too. */}
+        <section className="animate-rise-in relative mt-4 overflow-hidden rounded-3xl bg-ink text-white">
           <div className="absolute bottom-0 right-[8%] aspect-square w-[42%] max-w-[440px] translate-y-[38%] rounded-full bg-terracotta" />
           <img
             src={heroPerson}
@@ -203,7 +265,7 @@ function Landing() {
             className="absolute bottom-0 right-[4%] z-10 hidden h-[88%] w-auto object-contain object-bottom grayscale md:block"
           />
           <div className="relative z-20 max-w-[560px] px-8 py-16 md:px-14 md:py-24">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-terracotta">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-terracotta">
               For university students, whatever career you want next
             </p>
             <h1 className="editorial-title mt-6 text-[clamp(2.6rem,7vw,5rem)]">
@@ -232,12 +294,12 @@ function Landing() {
               </a>
             </div>
           </div>
-        </motion.section>
+        </section>
 
         {/* SECTION 1: END-TO-END WORKFLOW */}
         <section id="how" className="py-24">
           <div className="max-w-2xl">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-terracotta">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-terracotta">
               Complete System Architecture
             </p>
             <h2 className="mt-4 text-[clamp(1.8rem,3.4vw,2.5rem)] font-bold tracking-[-0.03em] text-foreground">
@@ -251,13 +313,10 @@ function Landing() {
 
           <div className="mt-14 space-y-4">
             {STAGES.map((s, idx) => (
-              <motion.div
+              <div
                 key={s.n}
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: idx * 0.08 }}
-                className="card-surface group p-7 transition-all duration-200 hover:border-terracotta/40 hover:shadow-lift"
+                style={{ animationDelay: `${idx * 0.08}s` }}
+                className="animate-rise-in card-surface group p-7 transition-all duration-200 hover:border-terracotta/40 hover:shadow-lift"
               >
                 <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
                   <div className="flex items-start gap-5">
@@ -283,14 +342,14 @@ function Landing() {
                     {s.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="rounded-md bg-secondary/80 px-2.5 py-1 text-[11px] font-medium text-muted-foreground"
+                        className="rounded-md bg-secondary/80 px-2.5 py-1 text-xs font-medium text-muted-foreground"
                       >
                         {tag}
                       </span>
                     ))}
                   </div>
                 </div>
-              </motion.div>
+              </div>
             ))}
           </div>
         </section>
@@ -299,7 +358,7 @@ function Landing() {
         <section id="recruiter-audit" className="border-t border-border py-24">
           <div className="grid gap-12 lg:grid-cols-12 lg:items-center">
             <div className="lg:col-span-5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-terracotta">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-terracotta">
                 Hiring Manager Intelligence
               </p>
               <h2 className="mt-4 text-[clamp(1.8rem,3.4vw,2.5rem)] font-bold tracking-[-0.03em] text-foreground">
@@ -358,10 +417,10 @@ function Landing() {
                       <h4 className="text-[15px] font-bold text-foreground">
                         Recruiter Audit Report
                       </h4>
-                      <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                      <span className="rounded bg-secondary px-1.5 py-0.5 text-xs font-bold uppercase tracking-wider">
                         Example
                       </span>
-                      <p className="text-[11.5px] text-muted-foreground flex items-center gap-1.5">
+                      <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                         <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                         ATS Match Score: <strong className="text-foreground">91%</strong>
                       </p>
@@ -378,10 +437,10 @@ function Landing() {
                 <div className="space-y-3">
                   <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-[12px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                      <span className="text-[12px] font-bold uppercase tracking-wider text-amber-600">
                         Critical Red Flag Detected
                       </span>
-                      <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+                      <span className="text-xs font-semibold text-amber-600">
                         High Priority
                       </span>
                     </div>
@@ -397,10 +456,10 @@ function Landing() {
 
                   <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-[12px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                      <span className="text-[12px] font-bold uppercase tracking-wider text-emerald-600">
                         Strong Positioning Highlight
                       </span>
-                      <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                      <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
                         <Check className="h-3 w-3" /> Verified
                       </span>
                     </div>
@@ -411,7 +470,7 @@ function Landing() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between rounded-lg bg-secondary/50 px-3.5 py-2 text-[11.5px] text-muted-foreground">
+                <div className="flex items-center justify-between rounded-lg bg-secondary/50 px-3.5 py-2 text-xs text-muted-foreground">
                   <span>3 Red Flags Resolved automatically</span>
                   <span className="font-semibold text-terracotta">Ready for Applications</span>
                 </div>
@@ -428,7 +487,7 @@ function Landing() {
               <div className="card-surface p-7 sm:p-8 space-y-6">
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-5">
                   <div>
-                    <span className="text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       Target Role Demands
                     </span>
                     <p className="text-[16px] font-bold text-foreground">
@@ -442,7 +501,7 @@ function Landing() {
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="rounded-xl border border-border/80 bg-background/50 p-4">
-                    <div className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                    <div className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-wider text-emerald-600">
                       <TrendingUp className="h-3.5 w-3.5" /> High Market Demand
                     </div>
                     <div className="mt-3 flex flex-wrap gap-1.5">
@@ -456,7 +515,7 @@ function Landing() {
                       ].map((sk) => (
                         <span
                           key={sk}
-                          className="rounded bg-emerald-500/10 px-2 py-0.5 text-[11.5px] font-medium text-emerald-700 dark:text-emerald-300"
+                          className="rounded bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-700"
                         >
                           {sk}
                         </span>
@@ -472,7 +531,7 @@ function Landing() {
                       {["Legacy jQuery", "REST Monoliths", "Manual Deployments"].map((sk) => (
                         <span
                           key={sk}
-                          className="rounded bg-rose-500/10 px-2 py-0.5 text-[11.5px] font-medium text-rose-700 dark:text-rose-300"
+                          className="rounded bg-rose-500/10 px-2 py-0.5 text-xs font-medium text-rose-700"
                         >
                           {sk}
                         </span>
@@ -494,7 +553,7 @@ function Landing() {
             </div>
 
             <div className="order-1 lg:order-2 lg:col-span-5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-terracotta">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-terracotta">
                 Market Reality Engine
               </p>
               <h2 className="mt-4 text-[clamp(1.8rem,3.4vw,2.5rem)] font-bold tracking-[-0.03em] text-foreground">
@@ -518,30 +577,30 @@ function Landing() {
           </div>
         </section>
 
-        {/* FEATURE SPOTLIGHT 3: FLIGHT PLAN */}
-        <section id="flight-plan" className="border-t border-border py-24">
+        {/* FEATURE SPOTLIGHT 3: ROADMAP */}
+        <section id="roadmap" className="border-t border-border py-24">
           <div className="grid gap-12 lg:grid-cols-12 lg:items-center">
             <div className="lg:col-span-5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-terracotta">
-                Daily Execution Cockpit
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-terracotta">
+                Day-by-Day Roadmap
               </p>
               <h2 className="mt-4 text-[clamp(1.8rem,3.4vw,2.5rem)] font-bold tracking-[-0.03em] text-foreground">
                 Turn your roadmap into focused daily progress.
               </h2>
               <p className="mt-4 text-[14px] leading-relaxed text-muted-foreground">
-                Flight Plan turns your goals into clear daily actions, active project work, and
-                visible weekly progress.
+                Your roadmap breaks your goal into daily work: one topic, one focused task list,
+                and a short check that unlocks the next day.
               </p>
 
               <div className="mt-8 space-y-4">
                 <div className="flex items-start gap-3">
-                  <Plane className="mt-0.5 h-4 w-4 shrink-0 text-terracotta" />
+                  <Map className="mt-0.5 h-4 w-4 shrink-0 text-terracotta" />
                   <div>
                     <p className="text-[13.5px] font-semibold text-foreground">
-                      Daily Sprint Focus
+                      One Day, One Focus
                     </p>
                     <p className="text-[12.5px] text-muted-foreground">
-                      Clear, prioritized daily actions to close your skill gaps step by step.
+                      Each day has a clear topic and task list that closes one gap at a time.
                     </p>
                   </div>
                 </div>
@@ -549,10 +608,10 @@ function Landing() {
                   <Clock className="mt-0.5 h-4 w-4 shrink-0 text-terracotta" />
                   <div>
                     <p className="text-[13.5px] font-semibold text-foreground">
-                      Weekly Velocity Tracking
+                      Visible Daily Progress
                     </p>
                     <p className="text-[12.5px] text-muted-foreground">
-                      Measure real progress every week until you are fully ready to land the role.
+                      Track completed days and paths so you can see exactly how far you have come.
                     </p>
                   </div>
                 </div>
@@ -560,28 +619,28 @@ function Landing() {
 
               <div className="mt-8">
                 <Link
-                  to="/flightplan"
+                  to="/roadmap"
                   className="inline-flex items-center gap-2 text-[13.5px] font-bold text-terracotta hover:underline"
                 >
-                  Open Flight Plan Cockpit <ArrowUpRight className="h-4 w-4" />
+                  Open Your Roadmap <ArrowUpRight className="h-4 w-4" />
                 </Link>
               </div>
             </div>
 
-            {/* FLIGHT PLAN MOCKUP */}
+            {/* ROADMAP MOCKUP */}
             <div className="lg:col-span-7">
               <div className="card-surface p-7 sm:p-8 space-y-6">
                 <div className="flex items-center justify-between border-b border-border pb-4">
                   <div className="flex items-center gap-3">
                     <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-terracotta/10 text-terracotta">
-                      <Plane className="h-5 w-5" />
+                      <Map className="h-5 w-5" />
                     </div>
                     <div>
-                      <h4 className="text-[15px] font-bold text-foreground">Flight Plan Cockpit</h4>
-                      <p className="text-[11.5px] text-muted-foreground">Example daily sprint</p>
+                      <h4 className="text-[15px] font-bold text-foreground">Roadmap · Day Tasks</h4>
+                      <p className="text-xs text-muted-foreground">Example day from your roadmap</p>
                     </div>
                   </div>
-                  <span className="shrink-0 rounded-md bg-secondary px-2.5 py-1 text-[11.5px] font-semibold text-muted-foreground">
+                  <span className="shrink-0 rounded-md bg-secondary px-2.5 py-1 text-xs font-semibold text-muted-foreground">
                     This week
                   </span>
                 </div>
@@ -608,7 +667,7 @@ function Landing() {
                           {task.title}
                         </span>
                       </div>
-                      <span className="shrink-0 text-[11px] font-semibold text-terracotta">
+                      <span className="shrink-0 text-xs font-semibold text-terracotta">
                         {task.tag}
                       </span>
                     </div>
@@ -622,7 +681,7 @@ function Landing() {
         {/* SECTION: PLATFORM CAPABILITIES SUITE */}
         <section id="features" className="border-t border-border py-24">
           <div className="max-w-xl">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-terracotta">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-terracotta">
               Full Platform Suite
             </p>
             <h2 className="mt-4 text-[clamp(1.8rem,3.4vw,2.5rem)] font-bold tracking-[-0.03em] text-foreground">
@@ -658,7 +717,7 @@ function Landing() {
         {/* SECTION: BEFORE VS AFTER TRANSFORMATION */}
         <section className="border-t border-border py-24">
           <div className="text-center">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-terracotta">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-terracotta">
               The Career Transformation
             </p>
             <h2 className="mt-3 text-[clamp(1.8rem,3.4vw,2.5rem)] font-bold tracking-[-0.03em]">
@@ -670,7 +729,7 @@ function Landing() {
             {BEFORE_AFTER.map((item, i) => (
               <div key={i} className="card-surface flex flex-col justify-between p-7">
                 <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/60">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60">
                     Without CareerPilot
                   </span>
                   <p className="mt-2 text-[13.5px] leading-relaxed text-muted-foreground">
@@ -679,7 +738,7 @@ function Landing() {
                 </div>
 
                 <div className="mt-6 border-t border-border/80 pt-6">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-terracotta">
+                  <span className="text-xs font-bold uppercase tracking-wider text-terracotta">
                     With CareerPilot AI
                   </span>
                   <p className="mt-2 text-[14px] font-semibold leading-relaxed text-foreground">
@@ -694,7 +753,7 @@ function Landing() {
         {/* FINAL CALL TO ACTION */}
         <section className="my-16 overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-card to-muted/30 p-10 text-center md:p-16">
           <div className="mx-auto max-w-2xl space-y-6">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-terracotta">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-terracotta">
               Take Control of Your Future
             </p>
             <h2 className="editorial-title text-[clamp(2.2rem,5vw,3.6rem)] text-foreground">
@@ -702,8 +761,8 @@ function Landing() {
               <span className="text-terracotta">START WITH A PLAN.</span>
             </h2>
             <p className="text-[14px] leading-relaxed text-muted-foreground">
-              Audit your profile like a recruiter. Master Market Reality. Execute your daily Flight
-              Plan.
+              Audit your profile like a recruiter. Master Market Reality. Work your roadmap one
+              day at a time.
             </p>
             <div className="pt-2">
               <Link

@@ -105,7 +105,7 @@ const STEPS = [
 function MarketRealityPage() {
   const navigate = useNavigate();
   const { data: user } = useCurrentUser();
-  const { data: market, isLoading, error } = useMarketReality();
+  const { data: market, isLoading, error, refetch } = useMarketReality();
   const { data: outdatedData } = useOutdatedTech();
   const refreshMutation = useRefreshMarketReality();
   const updateRole = useUpdateTargetRole();
@@ -138,8 +138,38 @@ function MarketRealityPage() {
     );
   }
 
-  /* ---- Error / Missing Role State ---- */
-  if (error || !market) {
+  /* ---- Error State: a failed fetch is NOT a missing role ---- */
+  if (error) {
+    return (
+      <AppLayout
+        title="Market Reality"
+        subtitle="The worldwide hiring bar for your target role"
+      >
+        <div className="card-surface mx-auto max-w-lg p-8 text-center sm:p-12">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
+            <AlertTriangle className="h-7 w-7" />
+          </div>
+          <h2 className="mt-4 font-display text-2xl font-bold text-foreground">
+            Market data couldn&apos;t be loaded
+          </h2>
+          <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+            {error instanceof Error
+              ? error.message
+              : "Something went wrong while loading your market report."}
+          </p>
+          <Button
+            className="mt-6 rounded-xl font-bold"
+            onClick={() => void refetch()}
+          >
+            <RefreshCw className="mr-2 h-4 w-4" /> Try again
+          </Button>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  /* ---- Missing Role State ---- */
+  if (!market) {
     return (
       <AppLayout
         title="Market Reality"
@@ -179,18 +209,15 @@ function MarketRealityPage() {
               {[
                 {
                   role: "Frontend Developer",
-                  fit: "82% fit",
                   reason: "A strong route if you enjoy interfaces and visible product work.",
                 },
                 {
                   role: "Data Analyst",
-                  fit: "74% fit",
                   reason:
                     "A practical route if you like patterns, numbers, and business questions.",
                 },
                 {
                   role: "Backend Developer",
-                  fit: "68% fit",
                   reason: "A good route if you prefer systems, APIs, and logic behind the product.",
                 },
               ].map((recommendation) => (
@@ -198,19 +225,14 @@ function MarketRealityPage() {
                   key={recommendation.role}
                   className="rounded-xl border border-border bg-secondary/35 p-3"
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-bold text-foreground">{recommendation.role}</p>
-                    <span className="text-[10px] font-black text-terracotta">
-                      {recommendation.fit}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                  <p className="text-xs font-bold text-foreground">{recommendation.role}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                     {recommendation.reason}
                   </p>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="mt-2 h-7 px-0 text-[10px] font-bold text-terracotta"
+                    className="mt-2 h-7 px-0 text-xs font-bold text-terracotta"
                     onClick={() => updateRole.mutate(recommendation.role)}
                   >
                     Choose this target <ChevronRight className="ml-1 h-3 w-3" />
@@ -221,7 +243,7 @@ function MarketRealityPage() {
           </div>
           <div className="mt-6 border-t border-border pt-5">
             <p className="text-xs font-bold text-foreground">Not sure yet?</p>
-            <p className="mt-1 text-[11px] text-muted-foreground">
+            <p className="mt-1 text-xs text-muted-foreground">
               Use your existing profile to start with a general market baseline, then choose a
               target when you are ready.
             </p>
@@ -300,18 +322,23 @@ function MarketRealityPage() {
   const matchedHighSkills = highDemandSkills.filter((s) =>
     userSkillNames.some((us) => us.includes(s.toLowerCase()) || s.toLowerCase().includes(us)),
   );
+  // The match is computed ONLY from real data. No high-demand skills for
+  // this role means no match to compute: null, never an invented default.
+  // There is no separate global skill list, so no global percentage exists
+  // either; every consumer must handle null.
   const localMatchPct =
     highDemandSkills.length > 0
       ? Math.round((matchedHighSkills.length / highDemandSkills.length) * 100)
-      : 45;
-  const globalMatchPct = Math.max(20, Math.min(95, localMatchPct - 15));
+      : null;
   const criticalGaps = highDemandSkills.filter((skill) => !matchedHighSkills.includes(skill));
   const positionLabel =
-    localMatchPct >= 75
-      ? "Competitive junior"
-      : localMatchPct >= 50
-        ? "Early-career candidate"
-        : "Beginner / building proof";
+    localMatchPct === null
+      ? "Not assessed yet"
+      : localMatchPct >= 75
+        ? "Competitive junior"
+        : localMatchPct >= 50
+          ? "Early-career candidate"
+          : "Beginner / building proof";
   const profileSkills = user?.skills?.map((skill) => skill.name).slice(0, 5) ?? [];
   const firstOutdatedItem = outdatedData?.outdatedItems[0];
   const localDemandSummary = market.pakistanMarket?.demand?.trim() ?? "";
@@ -377,7 +404,7 @@ function MarketRealityPage() {
               <Target className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-terracotta">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-terracotta">
                 Your target career
               </p>
               <h2 className="mt-1 text-lg font-bold tracking-tight text-foreground">
@@ -402,7 +429,7 @@ function MarketRealityPage() {
         {/* PREMIUM LANDING HERO — Market Reality                          */}
         {/* ═══════════════════════════════════════════════════════════════ */}
         {activeStep === 1 && (
-          <section className="relative overflow-hidden rounded-3xl border border-terracotta/20 bg-[#09090b] shadow-2xl">
+          <section className="relative overflow-hidden rounded-3xl border border-terracotta/20 bg-ink shadow-2xl">
             {/* Decorative ambient glows */}
             <div className="pointer-events-none absolute -top-16 -right-16 h-80 w-80 rounded-full bg-terracotta/10 blur-[100px]" />
             <div className="pointer-events-none absolute -bottom-16 -left-16 h-80 w-80 rounded-full bg-terracotta/8 blur-[100px]" />
@@ -410,18 +437,18 @@ function MarketRealityPage() {
             {/* ── Top Row: Illustration + Hero Copy ─────────────────── */}
             <div className="relative z-10 grid min-w-0 items-stretch lg:grid-cols-[1.1fr_0.9fr]">
               {/* Left: Illustration Panel */}
-              <div className="relative order-2 flex min-w-0 min-h-[360px] items-center justify-center overflow-hidden bg-gradient-to-br from-[#f8f2ea] via-[#f5ede3] to-[#ead8c8] p-0 sm:min-h-[440px] lg:order-2 lg:-ml-8 lg:min-h-[560px] lg:rounded-r-3xl lg:pl-8">
+              <div className="relative order-2 flex min-w-0 min-h-[360px] items-center justify-center overflow-hidden bg-gradient-to-br from-background via-secondary to-terracotta/20 p-0 sm:min-h-[440px] lg:order-2 lg:-ml-8 lg:min-h-[560px] lg:rounded-r-3xl lg:pl-8">
                 {/* Subtle corner badge */}
                 <motion.div
                   initial={{ opacity: 0, y: -12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
-                  className="absolute top-4 left-8 z-20 flex items-center gap-2 rounded-full border border-terracotta/25 bg-[#f8f2ea]/85 px-3 py-1.5 shadow-sm backdrop-blur"
+                  className="absolute top-4 left-8 z-20 flex items-center gap-2 rounded-full border border-terracotta/25 bg-background/85 px-3 py-1.5 shadow-sm backdrop-blur"
                 >
                   <div className="flex h-5 w-5 items-center justify-center rounded-full bg-terracotta text-white">
                     <BarChart3 className="h-3 w-3" />
                   </div>
-                  <span className="text-[11px] font-bold text-[#09090b]">Market Reality</span>
+                  <span className="text-xs font-bold text-ink">Market Reality</span>
                 </motion.div>
 
                 <motion.img
@@ -442,7 +469,7 @@ function MarketRealityPage() {
                   transition={{ duration: 0.5, delay: 0.15 }}
                   className="space-y-4"
                 >
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-terracotta/15 px-3.5 py-1 text-[11px] font-extrabold uppercase tracking-widest text-terracotta border border-terracotta/25">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-terracotta/15 px-3.5 py-1 text-xs font-extrabold uppercase tracking-widest text-terracotta border border-terracotta/25">
                     <Sparkles className="h-3.5 w-3.5" /> Live Market Intelligence
                   </span>
 
@@ -480,8 +507,8 @@ function MarketRealityPage() {
                         <f.icon className="h-4 w-4" />
                       </div>
                       <div>
-                        <p className="text-[11px] font-bold text-white">{f.title}</p>
-                        <p className="text-[10px] text-white/50">{f.sub}</p>
+                        <p className="text-xs font-bold text-white">{f.title}</p>
+                        <p className="text-xs text-white/50">{f.sub}</p>
                       </div>
                     </div>
                   ))}
@@ -494,7 +521,7 @@ function MarketRealityPage() {
                   transition={{ delay: 0.5 }}
                   className="flex flex-wrap items-center gap-2 pt-1"
                 >
-                  <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest mr-1">
+                  <span className="text-xs text-white/40 font-bold uppercase tracking-widest mr-1">
                     Scope:
                   </span>
                   {[
@@ -507,7 +534,7 @@ function MarketRealityPage() {
                       type="button"
                       onClick={() => setMarketScope(scope.id as typeof marketScope)}
                       className={cn(
-                        "flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-[11px] font-bold transition-all border",
+                        "flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all border",
                         marketScope === scope.id
                           ? "border-terracotta bg-terracotta text-white shadow-lg"
                           : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white",
@@ -549,16 +576,24 @@ function MarketRealityPage() {
                         className="stroke-terracotta"
                         strokeWidth="7"
                         strokeDasharray="251.2"
-                        strokeDashoffset={251.2 - (251.2 * localMatchPct) / 100}
+                        strokeDashoffset={
+                          localMatchPct === null ? 251.2 : 251.2 - (251.2 * localMatchPct) / 100
+                        }
                         strokeLinecap="round"
                       />
                     </svg>
-                    <span className="absolute text-sm font-black text-white">{localMatchPct}%</span>
+                    <span className="absolute text-sm font-black text-white">
+                      {localMatchPct === null ? "—" : `${localMatchPct}%`}
+                    </span>
                   </div>
                   <div>
-                    <p className="text-[11px] font-bold text-white">Your Match</p>
-                    <p className="text-[10px] text-white/50">
-                      {localMatchPct >= 70 ? "Competitive" : "Needs work"}
+                    <p className="text-xs font-bold text-white">Your Match</p>
+                    <p className="text-xs text-white/50">
+                      {localMatchPct === null
+                        ? "Not assessed yet"
+                        : localMatchPct >= 70
+                          ? "Competitive"
+                          : "Needs work"}
                     </p>
                   </div>
                 </motion.div>
@@ -574,8 +609,8 @@ function MarketRealityPage() {
                     <ShieldAlert className="h-6 w-6" />
                   </div>
                   <div>
-                    <p className="text-[11px] font-bold text-white">Entry-Level Filter</p>
-                    <p className="text-[10px] text-white/50">{"70-85%"} rejected</p>
+                    <p className="text-xs font-bold text-white">Entry-Level Filter</p>
+                    <p className="text-xs text-white/50">{"70-85%"} rejected</p>
                   </div>
                 </motion.div>
 
@@ -590,8 +625,8 @@ function MarketRealityPage() {
                     <DollarSign className="h-6 w-6" />
                   </div>
                   <div>
-                    <p className="text-[11px] font-bold text-white">Pakistan Salary</p>
-                    <p className="text-[10px] text-white/50">{"PKR 40-80k"}/mo</p>
+                    <p className="text-xs font-bold text-white">Pakistan Salary</p>
+                    <p className="text-xs text-white/50">{"PKR 40-80k"}/mo</p>
                   </div>
                 </motion.div>
 
@@ -606,8 +641,8 @@ function MarketRealityPage() {
                     <Zap className="h-6 w-6" />
                   </div>
                   <div>
-                    <p className="text-[11px] font-bold text-white">Top Skills</p>
-                    <p className="text-[10px] text-white/50 truncate max-w-[120px]">
+                    <p className="text-xs font-bold text-white">Top Skills</p>
+                    <p className="text-xs text-white/50 truncate max-w-[120px]">
                       {highDemandSkills.slice(0, 3).join(", ") || "Loading…"}
                     </p>
                   </div>
@@ -651,7 +686,7 @@ function MarketRealityPage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-bold leading-tight">{s.title}</p>
-                    <p className="text-[10px] leading-tight text-muted-foreground opacity-80">
+                    <p className="text-xs leading-tight text-muted-foreground opacity-80">
                       {s.subtitle}
                     </p>
                   </div>
@@ -694,7 +729,7 @@ function MarketRealityPage() {
                           key={idx}
                           className="flex items-start gap-2.5 rounded-2xl border border-border bg-card p-4 shadow-xs"
                         >
-                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-terracotta/10 text-[10px] font-bold text-terracotta mt-0.5">
+                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-terracotta/10 text-xs font-bold text-terracotta mt-0.5">
                             {idx + 1}
                           </span>
                           <p className="text-xs text-foreground leading-relaxed">{item}</p>
@@ -736,7 +771,7 @@ function MarketRealityPage() {
                             type="button"
                             onClick={() => handleRoleChange(r)}
                             className={cn(
-                              "rounded-full px-3 py-1 text-[11px] font-semibold transition-all border",
+                              "rounded-full px-3 py-1 text-xs font-semibold transition-all border",
                               market.targetRole === r
                                 ? "border-terracotta bg-terracotta text-white shadow-xs"
                                 : "border-border bg-card text-muted-foreground hover:border-terracotta/40 hover:text-foreground",
@@ -800,13 +835,13 @@ function MarketRealityPage() {
                             </h2>
                           </div>
                           {!localDemandIsLong && (
-                            <span className="max-w-full rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-bold leading-tight text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
+                            <span className="max-w-full rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold leading-tight text-emerald-800">
                               {localDemandSummary || "Local market context"}
                             </span>
                           )}
                         </div>
                         {localDemandIsLong && (
-                          <p className="rounded-xl border border-emerald-500/15 bg-emerald-50/70 p-3 text-xs leading-relaxed text-emerald-950 dark:bg-emerald-950/25 dark:text-emerald-100">
+                          <p className="rounded-xl border border-emerald-500/15 bg-emerald-50/70 p-3 text-xs leading-relaxed text-emerald-950">
                             {localDemandSummary}
                           </p>
                         )}
@@ -881,21 +916,21 @@ function MarketRealityPage() {
                             </h2>
                           </div>
                           {!globalDemandIsLong && (
-                            <span className="max-w-full rounded-full bg-blue-100 px-2.5 py-1 text-[10px] font-bold leading-tight text-blue-800 dark:bg-blue-950/40 dark:text-blue-300">
+                            <span className="max-w-full rounded-full bg-blue-100 px-2.5 py-1 text-xs font-bold leading-tight text-blue-800">
                               {globalDemandSummary || "Global market context"}
                             </span>
                           )}
                         </div>
                         {globalDemandIsLong && (
-                          <p className="rounded-xl border border-blue-500/15 bg-blue-50/70 p-3 text-xs leading-relaxed text-blue-950 dark:bg-blue-950/25 dark:text-blue-100">
+                          <p className="rounded-xl border border-blue-500/15 bg-blue-50/70 p-3 text-xs leading-relaxed text-blue-950">
                             {globalDemandSummary}
                           </p>
                         )}
                       </div>
 
-                      <div className="rounded-xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/40 p-4 text-xs text-blue-900 dark:text-blue-200 space-y-1">
+                      <div className="rounded-xl bg-blue-50/60 border border-blue-100 p-4 text-xs text-blue-900 space-y-1">
                         <p className="font-bold">The Global Compensation Advantage:</p>
-                        <p className="text-[11px] leading-relaxed">
+                        <p className="text-xs leading-relaxed">
                           International startups pay{" "}
                           <strong>$1,500 – $4,500/month (~400k–1.2M PKR)</strong> for junior-to-mid
                           roles, but reject 90%+ of applicants who cannot demonstrate autonomous
@@ -995,7 +1030,7 @@ function MarketRealityPage() {
                           className="rounded-xl border border-border bg-card p-4"
                         >
                           <p className="text-xs font-bold text-foreground">{category.label}</p>
-                          <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                             Companies look for this because it helps you ship reliable work,
                             collaborate clearly, and solve problems beyond a tutorial.
                           </p>
@@ -1003,7 +1038,7 @@ function MarketRealityPage() {
                             {category.items.slice(0, 4).map((item) => (
                               <span
                                 key={item}
-                                className="rounded-lg bg-secondary px-2 py-1 text-[11px] font-semibold text-foreground"
+                                className="rounded-lg bg-secondary px-2 py-1 text-xs font-semibold text-foreground"
                               >
                                 {item}
                               </span>
@@ -1039,7 +1074,7 @@ function MarketRealityPage() {
                               </span>
                               <span className="min-w-0 flex-1 text-xs font-bold text-foreground">
                                 {skill}
-                                <span className="ml-2 text-[10px] font-medium text-muted-foreground">
+                                <span className="ml-2 text-xs font-medium text-muted-foreground">
                                   {index < 2 ? "Critical" : "High"}
                                 </span>
                               </span>
@@ -1047,7 +1082,7 @@ function MarketRealityPage() {
                                 type="button"
                                 onClick={() => addToRoadmap(skill)}
                                 className={cn(
-                                  "shrink-0 rounded-lg border px-2.5 py-1.5 text-[10px] font-bold transition-colors",
+                                  "shrink-0 rounded-lg border px-2.5 py-1.5 text-xs font-bold transition-colors",
                                   added
                                     ? "border-emerald-200 bg-emerald-50 text-emerald-700"
                                     : "border-terracotta/30 text-terracotta hover:bg-terracotta/10",
@@ -1063,21 +1098,21 @@ function MarketRealityPage() {
 
                   <div className="grid gap-4 md:grid-cols-3">
                     {/* High Demand / Crucial */}
-                    <div className="rounded-2xl border border-rose-200 bg-rose-50/30 dark:bg-rose-950/20 dark:border-rose-900/40 p-5">
-                      <div className="flex items-center gap-2 text-rose-700 dark:text-rose-300">
+                    <div className="rounded-2xl border border-rose-200 bg-rose-50/30 p-5">
+                      <div className="flex items-center gap-2 text-rose-700">
                         <Flame className="h-4 w-4" />
                         <h3 className="text-xs font-bold uppercase tracking-wider">
                           Crucial / Non-Negotiable
                         </h3>
                       </div>
-                      <p className="mt-1 text-[11px] text-muted-foreground">
+                      <p className="mt-1 text-xs text-muted-foreground">
                         Missing one causes immediate screen-out:
                       </p>
                       <div className="mt-3 flex flex-wrap gap-1.5">
                         {market.skillDemand.high.map((skill) => (
                           <span
                             key={skill}
-                            className="rounded-lg bg-card border border-rose-200 dark:border-rose-900/50 px-2.5 py-1 text-xs font-bold text-rose-800 dark:text-rose-300 shadow-xs"
+                            className="rounded-lg bg-card border border-rose-200 px-2.5 py-1 text-xs font-bold text-rose-800 shadow-xs"
                           >
                             {skill}
                           </span>
@@ -1086,21 +1121,21 @@ function MarketRealityPage() {
                     </div>
 
                     {/* Common Demand */}
-                    <div className="rounded-2xl border border-amber-200 bg-amber-50/30 dark:bg-amber-950/20 dark:border-amber-900/40 p-5">
-                      <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300">
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50/30 p-5">
+                      <div className="flex items-center gap-2 text-amber-700">
                         <Layers className="h-4 w-4" />
                         <h3 className="text-xs font-bold uppercase tracking-wider">
                           Commonly Expected
                         </h3>
                       </div>
-                      <p className="mt-1 text-[11px] text-muted-foreground">
+                      <p className="mt-1 text-xs text-muted-foreground">
                         Expected in 60%+ of entry-to-mid postings:
                       </p>
                       <div className="mt-3 flex flex-wrap gap-1.5">
                         {market.skillDemand.common.map((skill) => (
                           <span
                             key={skill}
-                            className="rounded-lg bg-card border border-amber-200 dark:border-amber-900/50 px-2.5 py-1 text-xs font-semibold text-amber-900 dark:text-amber-300 shadow-xs"
+                            className="rounded-lg bg-card border border-amber-200 px-2.5 py-1 text-xs font-semibold text-amber-900 shadow-xs"
                           >
                             {skill}
                           </span>
@@ -1109,21 +1144,21 @@ function MarketRealityPage() {
                     </div>
 
                     {/* Differentiators */}
-                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/30 dark:bg-emerald-950/20 dark:border-emerald-900/40 p-5">
-                      <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
+                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/30 p-5">
+                      <div className="flex items-center gap-2 text-emerald-700">
                         <Sparkles className="h-4 w-4" />
                         <h3 className="text-xs font-bold uppercase tracking-wider">
                           Standout Differentiators
                         </h3>
                       </div>
-                      <p className="mt-1 text-[11px] text-muted-foreground">
+                      <p className="mt-1 text-xs text-muted-foreground">
                         Puts you in the top 5% of candidates:
                       </p>
                       <div className="mt-3 flex flex-wrap gap-1.5">
                         {market.skillDemand.roleSpecific.map((skill) => (
                           <span
                             key={skill}
-                            className="rounded-lg bg-card border border-emerald-200 dark:border-emerald-900/50 px-2.5 py-1 text-xs font-semibold text-emerald-900 dark:text-emerald-300 shadow-xs"
+                            className="rounded-lg bg-card border border-emerald-200 px-2.5 py-1 text-xs font-semibold text-emerald-900 shadow-xs"
                           >
                             {skill}
                           </span>
@@ -1152,15 +1187,15 @@ function MarketRealityPage() {
 
                     <div className="grid gap-6 md:grid-cols-2 relative z-10">
                       {/* Rising / Emerging in Pakistan */}
-                      <div className="rounded-3xl border border-emerald-500/20 bg-gradient-to-b from-emerald-50/50 to-transparent dark:from-emerald-950/20 p-6 shadow-lg shadow-emerald-500/5">
+                      <div className="rounded-3xl border border-emerald-500/20 bg-gradient-to-b from-emerald-50/50 to-transparent p-6 shadow-lg shadow-emerald-500/5">
                         <div className="flex items-center justify-between mb-5">
-                          <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/50">
+                          <div className="flex items-center gap-2 text-emerald-700">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100">
                               <TrendingUp className="h-4 w-4" />
                             </div>
                             <h3 className="text-sm font-bold tracking-tight">High-Growth Tech</h3>
                           </div>
-                          <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-600/60">
+                          <span className="text-xs font-extrabold uppercase tracking-widest text-emerald-600/60">
                             Adoption Velocity
                           </span>
                         </div>
@@ -1197,22 +1232,22 @@ function MarketRealityPage() {
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: 0.1 * i, duration: 0.4 }}
                               key={item.name}
-                              className="group relative overflow-hidden rounded-2xl bg-white/60 dark:bg-card/60 p-3.5 border border-emerald-500/10 hover:border-emerald-500/30 hover:shadow-md transition-all duration-300"
+                              className="group relative overflow-hidden rounded-2xl bg-white/60 p-3.5 border border-emerald-500/10 hover:border-emerald-500/30 hover:shadow-md transition-all duration-300"
                             >
                               <div className="flex justify-between items-start mb-2">
                                 <div>
-                                  <p className="text-xs font-bold text-emerald-950 dark:text-emerald-100 group-hover:text-emerald-700 transition-colors">
+                                  <p className="text-xs font-bold text-emerald-950 group-hover:text-emerald-700 transition-colors">
                                     {item.name}
                                   </p>
-                                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                                  <p className="text-xs text-muted-foreground mt-0.5">
                                     {item.desc}
                                   </p>
                                 </div>
-                                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-100 dark:bg-emerald-900/40 px-1.5 py-0.5 rounded">
+                                <span className="text-xs font-bold text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded">
                                   +{item.score}%
                                 </span>
                               </div>
-                              <div className="h-1.5 w-full rounded-full bg-emerald-100 dark:bg-emerald-950 overflow-hidden">
+                              <div className="h-1.5 w-full rounded-full bg-emerald-100 overflow-hidden">
                                 <motion.div
                                   initial={{ width: 0 }}
                                   animate={{ width: `${item.score}%` }}
@@ -1226,9 +1261,9 @@ function MarketRealityPage() {
                       </div>
 
                       {/* Declining / Outdated Stacks */}
-                      <div className="rounded-3xl border border-rose-500/20 bg-gradient-to-b from-rose-50/50 to-transparent dark:from-rose-950/20 p-6 shadow-lg shadow-rose-500/5">
-                        <div className="flex items-center gap-2 text-rose-700 dark:text-rose-400 mb-5">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-900/50">
+                      <div className="rounded-3xl border border-rose-500/20 bg-gradient-to-b from-rose-50/50 to-transparent p-6 shadow-lg shadow-rose-500/5">
+                        <div className="flex items-center gap-2 text-rose-700 mb-5">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-rose-100">
                             <TrendingDown className="h-4 w-4" />
                           </div>
                           <h3 className="text-sm font-bold tracking-tight">
@@ -1259,16 +1294,16 @@ function MarketRealityPage() {
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: 0.1 * i, duration: 0.4 }}
                               key={item.name}
-                              className="group flex items-start gap-3 rounded-2xl bg-white/60 dark:bg-card/60 p-3.5 border border-rose-500/10 hover:border-rose-500/30 transition-all"
+                              className="group flex items-start gap-3 rounded-2xl bg-white/60 p-3.5 border border-rose-500/10 hover:border-rose-500/30 transition-all"
                             >
-                              <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-900/40 text-rose-600">
+                              <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600">
                                 <AlertCircle className="h-3 w-3" />
                               </div>
                               <div>
-                                <p className="text-xs font-bold text-rose-950 dark:text-rose-100">
+                                <p className="text-xs font-bold text-rose-950">
                                   {item.name}
                                 </p>
-                                <p className="text-[10px] text-muted-foreground mt-0.5">
+                                <p className="text-xs text-muted-foreground mt-0.5">
                                   {item.desc}
                                 </p>
                               </div>
@@ -1352,19 +1387,21 @@ function MarketRealityPage() {
                         <div className="flex items-center justify-between">
                           <p className="text-xs font-bold text-foreground">Local Market Standing</p>
                           <span className="text-sm font-black text-terracotta">
-                            {localMatchPct}%
+                            {localMatchPct === null ? "Not assessed" : `${localMatchPct}%`}
                           </span>
                         </div>
                         <div className="h-2.5 w-full rounded-full bg-secondary overflow-hidden">
                           <div
                             className="h-2.5 rounded-full bg-terracotta transition-all"
-                            style={{ width: `${localMatchPct}%` }}
+                            style={{ width: localMatchPct === null ? "0%" : `${localMatchPct}%` }}
                           />
                         </div>
-                        <p className="text-[11px] text-muted-foreground leading-relaxed">
-                          {localMatchPct >= 70
-                            ? "Competitive for technical screening rounds at mid-to-top tier software houses."
-                            : "High risk of screening rejection due to unverified project proof."}
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {localMatchPct === null
+                            ? "No high-demand skills listed for this role yet, so there is nothing to measure your skills against."
+                            : localMatchPct >= 70
+                              ? "Competitive for technical screening rounds at mid-to-top tier software houses."
+                              : "High risk of screening rejection due to unverified project proof."}
                         </p>
                       </div>
                     )}
@@ -1372,27 +1409,26 @@ function MarketRealityPage() {
                     <div className="rounded-2xl border border-border bg-card p-5 space-y-3 shadow-xs">
                       <div className="flex items-center justify-between">
                         <p className="text-xs font-bold text-foreground">Global Market Standing</p>
-                        <span className="text-sm font-black text-emerald-700">
-                          {globalMatchPct}%
+                        <span className="text-sm font-black text-muted-foreground">
+                          Not measured
                         </span>
                       </div>
                       <div className="h-2.5 w-full rounded-full bg-secondary overflow-hidden">
-                        <div
-                          className="h-2.5 rounded-full bg-emerald-600 transition-all"
-                          style={{ width: `${globalMatchPct}%` }}
-                        />
+                        <div className="h-2.5 rounded-full bg-muted transition-all" style={{ width: "0%" }} />
                       </div>
-                      <p className="text-[11px] text-muted-foreground leading-relaxed">
-                        Worldwide employers require demonstrated autonomous deployment, testing, and
-                        public code walkthroughs.
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Global standing is not scored separately. The local match above is computed
+                        from this role&apos;s demand signals; worldwide employers additionally
+                        require demonstrated autonomous deployment, testing, and public code
+                        walkthroughs.
                       </p>
                     </div>
                   </div>
 
                   {/* Skill Match Breakdown */}
                   <div className="grid gap-4 md:grid-cols-2 pt-2">
-                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/30 dark:bg-emerald-950/20 dark:border-emerald-900/40 p-5 space-y-2">
-                      <p className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/30 p-5 space-y-2">
+                      <p className="text-xs font-bold uppercase tracking-wider text-emerald-800">
                         Skills You Have Matched ({matchedHighSkills.length})
                       </p>
                       <div className="flex flex-wrap gap-1.5">
@@ -1400,7 +1436,7 @@ function MarketRealityPage() {
                           matchedHighSkills.map((s) => (
                             <span
                               key={s}
-                              className="rounded-lg bg-card border border-emerald-200 dark:border-emerald-900/50 px-2.5 py-1 text-xs font-semibold text-emerald-900 dark:text-emerald-300 shadow-xs"
+                              className="rounded-lg bg-card border border-emerald-200 px-2.5 py-1 text-xs font-semibold text-emerald-900 shadow-xs"
                             >
                               ✓ {s}
                             </span>
@@ -1413,8 +1449,8 @@ function MarketRealityPage() {
                       </div>
                     </div>
 
-                    <div className="rounded-2xl border border-rose-200 bg-rose-50/30 dark:bg-rose-950/20 dark:border-rose-900/40 p-5 space-y-2">
-                      <p className="text-xs font-bold uppercase tracking-wider text-rose-800 dark:text-rose-300">
+                    <div className="rounded-2xl border border-rose-200 bg-rose-50/30 p-5 space-y-2">
+                      <p className="text-xs font-bold uppercase tracking-wider text-rose-800">
                         Critical Skills You Need to Build (
                         {highDemandSkills.filter((s) => !matchedHighSkills.includes(s)).length})
                       </p>
@@ -1424,7 +1460,7 @@ function MarketRealityPage() {
                           .map((s) => (
                             <span
                               key={s}
-                              className="rounded-lg bg-card border border-rose-200 dark:border-rose-900/50 px-2.5 py-1 text-xs font-semibold text-rose-800 dark:text-rose-300 shadow-xs"
+                              className="rounded-lg bg-card border border-rose-200 px-2.5 py-1 text-xs font-semibold text-rose-800 shadow-xs"
                             >
                               ! {s}
                             </span>
@@ -1435,12 +1471,12 @@ function MarketRealityPage() {
 
                   {/* Outdated Tech Alert (if any) */}
                   {outdatedData && outdatedData.outdatedItems.length > 0 && (
-                    <div className="rounded-2xl border border-amber-300 bg-amber-50/70 dark:bg-amber-950/30 dark:border-amber-900/50 p-4 text-xs text-amber-900 dark:text-amber-200">
+                    <div className="rounded-2xl border border-amber-300 bg-amber-50/70 p-4 text-xs text-amber-900">
                       <div className="flex items-center gap-2 font-bold">
                         <AlertTriangle className="h-4 w-4 text-amber-600" />
                         <span>Outdated / Declining Market Reality</span>
                       </div>
-                      <p className="mt-1 text-[11px] text-amber-800 dark:text-amber-300">
+                      <p className="mt-1 text-xs text-amber-800">
                         Live market research found signals worth reviewing for {market.targetRole}.
                         A flagged skill is not automatically dead; use the replacement and evidence
                         to decide where to invest your time.
@@ -1453,11 +1489,11 @@ function MarketRealityPage() {
                           >
                             <div className="flex items-center justify-between gap-2">
                               <span className="font-bold">{item.skill}</span>
-                              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-bold uppercase">
+                              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold uppercase">
                                 {item.status === "at_risk" ? "At risk" : item.status}
                               </span>
                             </div>
-                            <p className="mt-1 text-[11px] leading-relaxed">
+                            <p className="mt-1 text-xs leading-relaxed">
                               {item.reason || item.evidence}
                             </p>
                             {item.replacement && (
@@ -1506,7 +1542,7 @@ function MarketRealityPage() {
                   <div className="flex items-start gap-3">
                     <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-terracotta" />
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-terracotta">
+                      <p className="text-xs font-bold uppercase tracking-[0.16em] text-terracotta">
                         Reality check
                       </p>
                       <h2 className="mt-2 font-display text-2xl font-black tracking-tight sm:text-3xl">
@@ -1537,15 +1573,15 @@ function MarketRealityPage() {
                   <div className="grid gap-6 md:grid-cols-2">
                     {/* Optional localized salaries */}
                     {(marketScope === "both" || marketScope === "pakistan") && (
-                      <div className="rounded-2xl border border-emerald-200 bg-emerald-50/40 dark:bg-emerald-950/20 dark:border-emerald-900/40 p-5 space-y-3">
+                      <div className="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-5 space-y-3">
                         <div className="flex items-center justify-between">
-                          <p className="text-xs font-bold text-emerald-950 dark:text-emerald-200 uppercase tracking-wider">
+                          <p className="text-xs font-bold text-emerald-950 uppercase tracking-wider">
                             Localized market benchmark
                           </p>
                           <Building2 className="h-4 w-4 text-emerald-700" />
                         </div>
                         <div className="space-y-2 text-xs">
-                          <div className="flex justify-between rounded-xl bg-card p-3 border border-emerald-100 dark:border-emerald-900/40 shadow-xs">
+                          <div className="flex justify-between rounded-xl bg-card p-3 border border-emerald-100 shadow-xs">
                             <span className="text-muted-foreground">
                               Entry-Level Trainee / Associate:
                             </span>
@@ -1553,7 +1589,7 @@ function MarketRealityPage() {
                               {market.salaryInsights?.entryLevel || "65,000 – 120,000 PKR"}
                             </span>
                           </div>
-                          <div className="flex justify-between rounded-xl bg-card p-3 border border-emerald-100 dark:border-emerald-900/40 shadow-xs">
+                          <div className="flex justify-between rounded-xl bg-card p-3 border border-emerald-100 shadow-xs">
                             <span className="text-muted-foreground">
                               Mid-Level Software Engineer (2-4 yrs):
                             </span>
@@ -1561,7 +1597,7 @@ function MarketRealityPage() {
                               {market.salaryInsights?.midLevel || "160,000 – 320,000 PKR"}
                             </span>
                           </div>
-                          <div className="flex justify-between rounded-xl bg-card p-3 border border-emerald-100 dark:border-emerald-900/40 shadow-xs">
+                          <div className="flex justify-between rounded-xl bg-card p-3 border border-emerald-100 shadow-xs">
                             <span className="text-muted-foreground">Top-Tier / Senior / Lead:</span>
                             <span className="font-bold text-foreground">
                               {market.salaryInsights?.seniorLevel || "400,000 – 750,000+ PKR"}
@@ -1572,27 +1608,27 @@ function MarketRealityPage() {
                     )}
 
                     {/* Global Remote Salaries */}
-                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/40 dark:bg-emerald-950/20 dark:border-emerald-900/40 p-5 space-y-3">
+                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-5 space-y-3">
                       <div className="flex items-center justify-between">
-                        <p className="text-xs font-bold text-emerald-950 dark:text-emerald-200 uppercase tracking-wider">
+                        <p className="text-xs font-bold text-emerald-950 uppercase tracking-wider">
                           Global compensation (USD/mo)
                         </p>
                         <Globe className="h-4 w-4 text-emerald-700" />
                       </div>
                       <div className="space-y-2 text-xs">
-                        <div className="flex justify-between rounded-xl bg-card p-3 border border-emerald-100 dark:border-emerald-900/40 shadow-xs">
+                        <div className="flex justify-between rounded-xl bg-card p-3 border border-emerald-100 shadow-xs">
                           <span className="text-muted-foreground">Junior Remote Engineer:</span>
                           <span className="font-bold text-foreground">
                             {"$1,200 – $2,200/mo (~350k–650k PKR)"}
                           </span>
                         </div>
-                        <div className="flex justify-between rounded-xl bg-card p-3 border border-emerald-100 dark:border-emerald-900/40 shadow-xs">
+                        <div className="flex justify-between rounded-xl bg-card p-3 border border-emerald-100 shadow-xs">
                           <span className="text-muted-foreground">Mid-Level Remote Engineer:</span>
                           <span className="font-bold text-foreground">
                             {"$2,500 – $4,500/mo (~700k–1.3M PKR)"}
                           </span>
                         </div>
-                        <div className="flex justify-between rounded-xl bg-card p-3 border border-emerald-100 dark:border-emerald-900/40 shadow-xs">
+                        <div className="flex justify-between rounded-xl bg-card p-3 border border-emerald-100 shadow-xs">
                           <span className="text-muted-foreground">
                             Senior / Staff Remote Engineer:
                           </span>
@@ -1647,11 +1683,11 @@ function MarketRealityPage() {
                         key={s.stage}
                         className="rounded-2xl border border-border bg-card p-4 space-y-2 shadow-xs"
                       >
-                        <span className="rounded-md bg-terracotta/10 px-2 py-0.5 text-[10px] font-bold text-terracotta">
+                        <span className="rounded-md bg-terracotta/10 px-2 py-0.5 text-xs font-bold text-terracotta">
                           {s.stage}
                         </span>
                         <h3 className="text-xs font-bold text-foreground">{s.title}</h3>
-                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                        <p className="text-xs text-muted-foreground leading-relaxed">
                           {s.desc}
                         </p>
                       </div>
@@ -1699,7 +1735,7 @@ function MarketRealityPage() {
                 </div>
 
                 {/* Individual expert synthesis: the final answer to "what does this mean for me?" */}
-                <div className="relative overflow-hidden rounded-3xl border border-terracotta/25 bg-gradient-to-br from-[#fffaf5] via-card to-terracotta/5 p-6 shadow-lift sm:p-8">
+                <div className="relative overflow-hidden rounded-3xl border border-terracotta/25 bg-gradient-to-br from-background via-card to-terracotta/5 p-6 shadow-lift sm:p-8">
                   <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-terracotta/10 blur-3xl" />
                   <div className="relative">
                     <div className="flex flex-wrap items-start justify-between gap-4">
@@ -1708,7 +1744,7 @@ function MarketRealityPage() {
                           <Sparkles className="h-5 w-5 text-terracotta" />
                         </div>
                         <div>
-                          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-terracotta">
+                          <p className="text-xs font-bold uppercase tracking-[0.16em] text-terracotta">
                             Expert market opinion
                           </p>
                           <h2 className="mt-1 font-display text-2xl font-black tracking-tight text-foreground sm:text-3xl">
@@ -1721,7 +1757,7 @@ function MarketRealityPage() {
                         </div>
                       </div>
                       <div className="rounded-2xl border border-terracotta/20 bg-card px-4 py-3 text-right">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                           Current position
                         </p>
                         <p className="mt-1 text-sm font-black text-terracotta">{positionLabel}</p>
@@ -1790,30 +1826,32 @@ function MarketRealityPage() {
 
                     <div className="mt-5 grid gap-4 border-t border-border pt-5 md:grid-cols-[1fr_auto_1fr] md:items-center">
                       <div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                           If you apply today
                         </p>
                         <p className="mt-1 text-sm font-bold text-foreground">
-                          {localMatchPct < 60
-                            ? "Expect a high screening risk until your critical gaps have evidence."
-                            : "You can compete for selected junior opportunities, especially where your proof is strongest."}
+                          {localMatchPct === null
+                            ? "No demand signals for this role yet, so screening risk can't be assessed."
+                            : localMatchPct < 60
+                              ? "Expect a high screening risk until your critical gaps have evidence."
+                              : "You can compete for selected junior opportunities, especially where your proof is strongest."}
                         </p>
                       </div>
                       <ArrowRight className="hidden h-5 w-5 text-terracotta md:block" />
                       <div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                           After closing the critical gaps
                         </p>
                         <p className="mt-1 text-sm font-bold text-foreground">
-                          {globalMatchPct >= 65
-                            ? "Competitive junior locally, with a credible path toward remote work."
-                            : "A stronger competitive junior profile with better access to local and remote interviews."}
+                          {criticalGaps.length === 0
+                            ? "With the core demand covered, stronger project proof is your path to a competitive junior profile."
+                            : "Closing the critical gaps above moves you toward a competitive junior profile, locally and remotely."}
                         </p>
                       </div>
                     </div>
 
                     <div className="mt-5 rounded-2xl border border-border bg-card p-5 sm:p-6">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-terracotta">
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-terracotta">
                         Your recommended path
                       </p>
                       <h3 className="mt-1 text-lg font-bold text-foreground">
@@ -1840,12 +1878,12 @@ function MarketRealityPage() {
                                 key={action}
                                 className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-secondary/35 p-3"
                               >
-                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-terracotta text-[10px] font-black text-white">
+                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-terracotta text-xs font-black text-white">
                                   {index + 1}
                                 </span>
                                 <div className="min-w-[180px] flex-1">
                                   <p className="text-xs font-bold text-foreground">{action}</p>
-                                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                                  <p className="mt-0.5 text-xs text-muted-foreground">
                                     Learn from official documentation plus a project-based course,
                                     then prove it in a real {market.targetRole} project.
                                   </p>
@@ -1854,7 +1892,7 @@ function MarketRealityPage() {
                                   type="button"
                                   onClick={() => addToRoadmap(action)}
                                   className={cn(
-                                    "rounded-lg border px-3 py-1.5 text-[10px] font-bold",
+                                    "rounded-lg border px-3 py-1.5 text-xs font-bold",
                                     added
                                       ? "border-emerald-200 bg-emerald-50 text-emerald-700"
                                       : "border-terracotta/30 text-terracotta hover:bg-terracotta/10",
@@ -1887,13 +1925,16 @@ function MarketRealityPage() {
                     </div>
 
                     <div className="mt-5 rounded-2xl bg-ink p-5 text-white sm:p-6">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-terracotta">
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-terracotta">
                         Bottom line
                       </p>
                       <p className="mt-3 text-sm leading-7 text-white/80">
                         You are currently a <strong className="text-white">{positionLabel}</strong>{" "}
-                        for {market.targetRole}. Your market fit is {localMatchPct}% locally and{" "}
-                        {globalMatchPct}% against the higher global bar; the biggest risk is{" "}
+                        for {market.targetRole}.{" "}
+                        {localMatchPct === null
+                          ? "Your skill coverage against this role has not been assessed yet"
+                          : `Your recorded skills cover ${localMatchPct}% of this role's high-demand skills`}
+                        ; the biggest risk is{" "}
                         {criticalGaps[0] || "not yet having enough production proof"}. Prioritize
                         one focused learning sequence and show it through a deployed, documented
                         project. Your next priority:{" "}
@@ -1947,7 +1988,7 @@ function MarketRealityPage() {
                         <Sparkles className="h-5 w-5" />
                       </div>
                       <div>
-                        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-terracotta">
+                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-terracotta">
                           Step 6 · Expert Opinion
                         </p>
                         <h2 className="mt-2 font-display text-2xl font-black tracking-tight sm:text-3xl">
@@ -1960,17 +2001,25 @@ function MarketRealityPage() {
                       </div>
                     </div>
                     <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-right">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-white/45">
+                      <p className="text-xs font-bold uppercase tracking-wider text-white/45">
                         Market fit
                       </p>
-                      <p className="mt-1 text-2xl font-black text-terracotta">{localMatchPct}%</p>
+                      <p
+                        className={
+                          localMatchPct === null
+                            ? "mt-1 text-lg font-black text-terracotta"
+                            : "mt-1 text-2xl font-black text-terracotta"
+                        }
+                      >
+                        {localMatchPct === null ? "Not assessed" : `${localMatchPct}%`}
+                      </p>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-5 p-5 sm:p-8">
                   <div className="rounded-2xl border border-terracotta/20 bg-terracotta/5 p-5">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-terracotta">
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-terracotta">
                       Expert verdict
                     </p>
                     <p className="mt-3 text-base font-semibold leading-7 text-foreground">
@@ -2015,7 +2064,7 @@ function MarketRealityPage() {
                   <div className="border-t border-border pt-5">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-terracotta">
+                        <p className="text-xs font-bold uppercase tracking-[0.14em] text-terracotta">
                           Recommended path
                         </p>
                         <h3 className="mt-1 text-lg font-bold text-foreground">
@@ -2046,12 +2095,12 @@ function MarketRealityPage() {
                             className="rounded-xl border border-border bg-secondary/35 p-4"
                           >
                             <div className="flex items-center gap-2">
-                              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-terracotta text-[10px] font-black text-white">
+                              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-terracotta text-xs font-black text-white">
                                 {index + 1}
                               </span>
                               <p className="text-xs font-bold text-foreground">{action}</p>
                             </div>
-                            <p className="mt-2 text-[11px] leading-5 text-muted-foreground">
+                            <p className="mt-2 text-xs leading-5 text-muted-foreground">
                               Learn from official documentation and a practical project-based
                               course. Reach the point where you can demonstrate it in a real{" "}
                               {market.targetRole} project.
@@ -2121,7 +2170,7 @@ function MarketRealityPage() {
                     key={r}
                     type="button"
                     onClick={() => setCustomRoleInput(r)}
-                    className="rounded-full bg-secondary px-2.5 py-1 text-[11px] font-semibold text-muted-foreground hover:bg-terracotta/10 hover:text-terracotta border border-border/50"
+                    className="rounded-full bg-secondary px-2.5 py-1 text-xs font-semibold text-muted-foreground hover:bg-terracotta/10 hover:text-terracotta border border-border/50"
                   >
                     {r}
                   </button>
@@ -2185,7 +2234,7 @@ function OpinionBlock({
     <div className={cn("min-h-[154px] rounded-2xl border p-4", toneClass)}>
       <p
         className={cn(
-          "text-[10px] font-bold uppercase tracking-[0.14em]",
+          "text-xs font-bold uppercase tracking-[0.14em]",
           tone === "dark" ? "text-terracotta" : "text-muted-foreground",
         )}
       >
@@ -2220,8 +2269,8 @@ function EvidenceNote({
 
   return (
     <div className={cn("rounded-xl border p-3", toneClass)}>
-      <p className="text-[10px] font-bold uppercase tracking-wider text-foreground">{label}</p>
-      <p className="mt-1 text-[11px] leading-5 text-muted-foreground">{text}</p>
+      <p className="text-xs font-bold uppercase tracking-wider text-foreground">{label}</p>
+      <p className="mt-1 text-xs leading-5 text-muted-foreground">{text}</p>
     </div>
   );
 }

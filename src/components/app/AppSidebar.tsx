@@ -2,7 +2,6 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   BarChart3,
   BrainCircuit,
-  ChevronDown,
   FileText,
   Flame,
   LayoutGrid,
@@ -74,7 +73,7 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
       <nav className="mt-8 flex-1 space-y-5 overflow-y-auto pr-1">
         {NAV_GROUPS.map((group) => (
           <div key={group.label}>
-            <p className="mb-2 px-3 text-[9px] font-bold uppercase tracking-[0.18em] text-sidebar-foreground/35">
+            <p className="mb-2 px-3 text-xs font-bold uppercase tracking-[0.18em] text-sidebar-foreground/35">
               {group.label}
             </p>
             <div className="space-y-0.5">
@@ -120,9 +119,8 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
         )}
         <div className="min-w-0 flex-1">
           <p className="truncate text-[13px] font-semibold text-foreground">{user?.fullName}</p>
-          <p className="truncate text-[11.5px] text-muted-foreground">{user?.role}</p>
+          <p className="truncate text-xs text-muted-foreground">{user?.role}</p>
         </div>
-        <ChevronDown className="h-4 w-4 text-muted-foreground" />
       </div>
     </div>
   );

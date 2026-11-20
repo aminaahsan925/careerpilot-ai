@@ -102,7 +102,19 @@ function FutureTechPage() {
         <FutureTechRadar targetRole={user?.goal || user?.role || "your target career"} />
 
         {/* Technology Pulse */}
-        {trends && <PulseSection pulse={trends.pulse} fromCache={trends.fromCache} />}
+        {trends?.source === "sample" && (
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-5 py-4">
+            <p className="text-[13px] font-semibold text-foreground">
+              Showing sample trends — live refresh failed
+            </p>
+            <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
+              These are curated examples, not live research. Try refreshing again shortly.
+            </p>
+          </div>
+        )}
+        {trends && (
+          <PulseSection pulse={trends.pulse} fromCache={trends.fromCache} source={trends.source} />
+        )}
 
         {/* Loading state */}
         {isLoading && (
@@ -279,7 +291,7 @@ function HeroSection() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className="text-[11px] font-semibold uppercase tracking-[0.22em] text-terracotta"
+            className="text-xs font-semibold uppercase tracking-[0.22em] text-terracotta"
           >
             Future Tech Trends
           </motion.p>
@@ -324,7 +336,7 @@ function HeroSection() {
             {["AI", "Cloud", "Cybersecurity", "Quantum"].map((tag) => (
               <span
                 key={tag}
-                className="rounded-full border border-border bg-card/80 px-3 py-1 text-[11px] font-medium text-muted-foreground backdrop-blur-sm"
+                className="rounded-full border border-border bg-card/80 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur-sm"
               >
                 {tag}
               </span>
@@ -348,11 +360,11 @@ function HeroSection() {
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                 </span>
-                <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-white/70">
+                <span className="text-xs font-extrabold uppercase tracking-[0.2em] text-white/70">
                   LIVE TECH VELOCITY RADAR
                 </span>
               </div>
-              <span className="rounded border border-terracotta/40 bg-terracotta/10 px-2 py-0.5 text-[10px] font-bold text-terracotta">
+              <span className="rounded border border-terracotta/40 bg-terracotta/10 px-2 py-0.5 text-xs font-bold text-terracotta">
                 Q3 2026
               </span>
             </div>
@@ -375,9 +387,9 @@ function HeroSection() {
                     <stop offset="100%" stopColor="var(--color-terracotta)" stopOpacity="0.0" />
                   </linearGradient>
                   <linearGradient id="stroke-gradient" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#34d399" />
+                    <stop offset="0%" stopColor="var(--color-emerald-400)" />
                     <stop offset="50%" stopColor="var(--color-terracotta)" />
-                    <stop offset="100%" stopColor="#f59e0b" />
+                    <stop offset="100%" stopColor="var(--color-amber-400)" />
                   </linearGradient>
                 </defs>
 
@@ -404,12 +416,12 @@ function HeroSection() {
 
               {/* Glowing Data Nodes */}
               <div className="relative z-10 flex justify-between pt-1">
-                <span className="text-[9.5px] font-semibold text-emerald-400">Agentic AI</span>
-                <span className="text-[9.5px] font-semibold text-terracotta">Reasoning</span>
-                <span className="text-[9.5px] font-semibold text-amber-400">MCP Standard</span>
+                <span className="text-xs font-semibold text-emerald-400">Agentic AI</span>
+                <span className="text-xs font-semibold text-terracotta">Reasoning</span>
+                <span className="text-xs font-semibold text-amber-400">MCP Standard</span>
               </div>
 
-              <div className="relative z-10 flex items-center justify-between text-[11px] font-bold text-white">
+              <div className="relative z-10 flex items-center justify-between text-xs font-bold text-white">
                 <div className="flex items-center gap-1">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                   <span>+94% Demand</span>
@@ -422,13 +434,13 @@ function HeroSection() {
             </div>
 
             {/* Micro Metrics Grid */}
-            <div className="mt-3.5 grid grid-cols-2 gap-2 text-[10.5px]">
+            <div className="mt-3.5 grid grid-cols-2 gap-2 text-xs">
               <div className="rounded-xl border border-white/10 bg-white/5 p-2.5">
-                <span className="block text-[10px] text-white/50">Top Emerging Paradigm</span>
+                <span className="block text-xs text-white/50">Top Emerging Paradigm</span>
                 <span className="font-bold text-white">Agent Swarms</span>
               </div>
               <div className="rounded-xl border border-white/10 bg-white/5 p-2.5">
-                <span className="block text-[10px] text-white/50">Obsolete Tech</span>
+                <span className="block text-xs text-white/50">Obsolete Tech</span>
                 <span className="font-bold text-rose-400">-42% Declining</span>
               </div>
             </div>
@@ -526,7 +538,7 @@ function ControlsBar({
         <button
           type="submit"
           disabled={!searchValue.trim()}
-          className="rounded-lg bg-terracotta px-3 py-2 text-[11px] font-semibold text-primary-foreground transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-lg bg-terracotta px-3 py-2 text-xs font-semibold text-primary-foreground transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Search
         </button>
@@ -564,7 +576,7 @@ function FrontierRadar({ targetRole }: { targetRole: string }) {
     <section className="rounded-2xl border border-terracotta/20 bg-card p-5 shadow-card sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-terracotta">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-terracotta">
             Global frontier radar
           </p>
           <h2 className="mt-1 text-xl font-bold tracking-tight text-foreground">
@@ -575,7 +587,7 @@ function FrontierRadar({ targetRole }: { targetRole: string }) {
             career impact, not just a list of tools.
           </p>
         </div>
-        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[10px] font-bold text-emerald-700">
+        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">
           Research lenses · 2026 → 2030
         </span>
       </div>
@@ -590,14 +602,14 @@ function FrontierRadar({ targetRole }: { targetRole: string }) {
             </div>
             <div>
               <p className="text-xs font-bold text-foreground">{name}</p>
-              <p className="mt-1 text-[11px] leading-5 text-muted-foreground">{focus}</p>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">{focus}</p>
             </div>
           </div>
         ))}
       </div>
       <div className="mt-4 grid gap-4 border-t border-border pt-4 md:grid-cols-[1fr_1fr]">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
             The 2030 shift
           </p>
           <p className="mt-1 text-sm font-semibold text-foreground">
@@ -605,7 +617,7 @@ function FrontierRadar({ targetRole }: { targetRole: string }) {
           </p>
         </div>
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
             For {targetRole}
           </p>
           <p className="mt-1 text-sm font-semibold text-foreground">{targetAction}</p>
@@ -618,9 +630,11 @@ function FrontierRadar({ targetRole }: { targetRole: string }) {
 function PulseSection({
   pulse,
   fromCache,
+  source,
 }: {
   pulse: { gainingAttention: number; worthWatching: number; newDevelopments: number };
   fromCache?: boolean;
+  source?: "live" | "sample";
 }) {
   return (
     <motion.div
@@ -630,11 +644,11 @@ function PulseSection({
       className="card-surface px-5 py-4"
     >
       <div className="flex items-center justify-between">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
           Technology Pulse
         </p>
-        <PulseBadge variant={fromCache ? "amber" : "emerald"}>
-          {fromCache ? "Cached" : "Live"}
+        <PulseBadge variant={source === "sample" || fromCache ? "amber" : "emerald"}>
+          {source === "sample" ? "Sample" : fromCache ? "Cached" : "Live"}
         </PulseBadge>
       </div>
       <Stagger className="mt-3 flex flex-wrap gap-4" delay={0.06}>
@@ -710,12 +724,12 @@ function FeaturedSection({
       <div className="border-b border-border/50 px-5 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1.5 rounded-full bg-terracotta/10 px-2.5 py-1 text-[11px] font-semibold text-terracotta">
+            <span className="flex items-center gap-1.5 rounded-full bg-terracotta/10 px-2.5 py-1 text-xs font-semibold text-terracotta">
               <Flame className="h-3 w-3" />
               {formatStatus(trend.status)}
             </span>
             <TrendArrow direction={trendDirection[trend.status] ?? "flat"} />
-            <span className="text-[11px] text-muted-foreground">{trend.category}</span>
+            <span className="text-xs text-muted-foreground">{trend.category}</span>
           </div>
           <ConfidenceBadge confidence={trend.confidence} />
         </div>
@@ -732,7 +746,7 @@ function FeaturedSection({
             transition={{ duration: 0.3, delay: 0.2 }}
             className="mt-4 rounded-lg bg-muted/50 px-4 py-3"
           >
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
               Why it's appearing
             </p>
             <p className="mt-1 text-[12.5px] leading-relaxed text-foreground">
@@ -743,7 +757,7 @@ function FeaturedSection({
 
         {trend.sources.length > 0 && (
           <div className="mt-4 border-t border-border/60 pt-4">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
               Fresh web sources
             </p>
             <div className="mt-2 grid gap-2 sm:grid-cols-2">
@@ -755,13 +769,13 @@ function FeaturedSection({
                   rel="noopener noreferrer"
                   className="rounded-lg border border-border bg-muted/20 p-2.5 transition hover:border-terracotta/40"
                 >
-                  <span className="block truncate text-[11px] font-semibold text-foreground">
+                  <span className="block truncate text-xs font-semibold text-foreground">
                     {source.title}
                   </span>
-                  <span className="mt-1 block line-clamp-2 text-[10px] leading-4 text-muted-foreground">
+                  <span className="mt-1 block line-clamp-2 text-xs leading-4 text-muted-foreground">
                     {source.summary}
                   </span>
-                  <span className="mt-1 block text-[10px] text-terracotta">
+                  <span className="mt-1 block text-xs text-terracotta">
                     {source.date ? formatSourceDate(source.date) : "Live research"}
                   </span>
                 </a>
@@ -854,7 +868,7 @@ function AlsoWatchingSection({
                   <span className="text-[13.5px] font-semibold text-foreground">{trend.name}</span>
                   <TrendArrow direction={trendDirection[trend.status] ?? "flat"} />
                 </div>
-                <span className="text-[11px] text-muted-foreground">{trend.category}</span>
+                <span className="text-xs text-muted-foreground">{trend.category}</span>
               </div>
               <p className="line-clamp-2 text-[12px] leading-relaxed text-muted-foreground">
                 {trend.whatItIs}
@@ -862,7 +876,7 @@ function AlsoWatchingSection({
               <div className="flex items-center gap-2">
                 <span
                   className={cn(
-                    "rounded-full px-2 py-0.5 text-[10.5px] font-medium",
+                    "rounded-full px-2 py-0.5 text-xs font-medium",
                     trend.status === "emerging" || trend.status === "rapid_growth"
                       ? "bg-terracotta/10 text-terracotta"
                       : trend.status === "growing"
@@ -873,7 +887,7 @@ function AlsoWatchingSection({
                   {formatStatus(trend.status)}
                 </span>
                 {tracking.find((t) => t.technology_name === trend.name) && (
-                  <span className="text-[10.5px] text-terracotta">Tracking</span>
+                  <span className="text-xs text-terracotta">Tracking</span>
                 )}
               </div>
             </motion.button>
@@ -940,7 +954,7 @@ function ExploreModal({
             <button
               key={label}
               onClick={() => onStepChange(i)}
-              className={`relative px-3 py-2.5 text-[11.5px] font-medium transition ${
+              className={`relative px-3 py-2.5 text-xs font-medium transition ${
                 i === step ? "text-terracotta" : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -1044,14 +1058,14 @@ function StepWhatIsIt({ detail }: { detail: TechTrend }) {
       <p className="text-[14px] leading-relaxed text-foreground">{detail.whatItIs}</p>
       {detail.prerequisites.length > 0 && (
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
             Before you start
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             {detail.prerequisites.map((p) => (
               <span
                 key={p}
-                className="rounded-lg border border-border bg-muted/50 px-2.5 py-1 text-[11.5px] text-foreground"
+                className="rounded-lg border border-border bg-muted/50 px-2.5 py-1 text-xs text-foreground"
               >
                 {p}
               </span>
@@ -1069,7 +1083,7 @@ function StepWhyItMatters({ detail }: { detail: TechTrend }) {
       <p className="text-[14px] leading-relaxed text-foreground">{detail.whyItMatters}</p>
       {detail.useCases.length > 0 && (
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
             Where it's being used
           </p>
           <ul className="mt-2 space-y-1.5">
@@ -1084,7 +1098,7 @@ function StepWhyItMatters({ detail }: { detail: TechTrend }) {
       )}
       {detail.careerRelevance && (
         <div className="rounded-lg bg-muted/50 px-4 py-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
             Career relevance
           </p>
           <p className="mt-1 text-[12.5px] text-foreground">{detail.careerRelevance}</p>
@@ -1136,14 +1150,14 @@ function StepHowToLearn({
       {/* Learning path */}
       {detail.learningPath.length > 0 && (
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
             How to learn it
           </p>
           <div className="mt-3 space-y-0">
             {detail.learningPath.map((step, i) => (
               <div key={i} className="flex items-start gap-3">
                 <div className="flex flex-col items-center">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-terracotta/10 text-[11px] font-bold text-terracotta">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-terracotta/10 text-xs font-bold text-terracotta">
                     {i + 1}
                   </span>
                   {i < detail.learningPath.length - 1 && <div className="h-6 w-px bg-border" />}
@@ -1158,7 +1172,7 @@ function StepHowToLearn({
       {/* First project */}
       {detail.firstProject && (
         <div className="rounded-lg border border-border bg-muted/30 px-4 py-3.5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
             Your first project
           </p>
           <p className="mt-1.5 text-[13px] leading-relaxed text-foreground">
@@ -1170,7 +1184,7 @@ function StepHowToLearn({
       {/* Sources */}
       {detail.sources.length > 0 && (
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
             Sources
           </p>
           <div className="mt-2 space-y-1.5">
@@ -1185,11 +1199,11 @@ function StepHowToLearn({
                 <ExternalLink className="h-3 w-3" />
                 <span className="min-w-0">
                   <span className="block truncate">{source.title}</span>
-                  <span className="mt-0.5 block text-[10px] text-muted-foreground">
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
                     {source.date ? `Published ${formatSourceDate(source.date)}` : "Live source"}
                   </span>
                   {source.summary && (
-                    <span className="mt-1 block line-clamp-2 text-[11px] leading-4 text-muted-foreground">
+                    <span className="mt-1 block line-clamp-2 text-xs leading-4 text-muted-foreground">
                       {source.summary}
                     </span>
                   )}
@@ -1241,7 +1255,7 @@ function ConfidenceBadge({ confidence }: { confidence: string }) {
   };
   return (
     <span
-      className={`rounded-full border px-2 py-0.5 text-[10.5px] font-medium ${colors[confidence] ?? colors["low"]}`}
+      className={`rounded-full border px-2 py-0.5 text-xs font-medium ${colors[confidence] ?? colors["low"]}`}
     >
       {confidence} confidence
     </span>

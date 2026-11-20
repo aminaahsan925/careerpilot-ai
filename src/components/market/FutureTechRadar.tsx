@@ -74,7 +74,7 @@ const GLOBAL_REGIONS: CountryRegion[] = [
     ],
     opportunityForStudents:
       "Learn open-model self-hosting (vLLM, Ollama), quantization (GGUF), and LoRA fine-tuning to deliver cost-effective enterprise AI.",
-    badgeColor: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+    badgeColor: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
   },
   {
     id: "eu",
@@ -88,7 +88,7 @@ const GLOBAL_REGIONS: CountryRegion[] = [
     ],
     opportunityForStudents:
       "Build expertise in AI Safety, Model Auditability, and Data Privacy Architecture required by multinational enterprises.",
-    badgeColor: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+    badgeColor: "bg-blue-500/10 text-blue-600 border-blue-500/20",
   },
   {
     id: "pakistan_asia",
@@ -102,7 +102,7 @@ const GLOBAL_REGIONS: CountryRegion[] = [
     ],
     opportunityForStudents:
       "Bridge local development with global AI APIs. Students who master building functional AI agents will replace traditional web agency freelancers.",
-    badgeColor: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+    badgeColor: "bg-amber-500/10 text-amber-600 border-amber-500/20",
   },
 ];
 
@@ -305,7 +305,7 @@ export function FutureTechRadar({
                       </p>
 
                       <div className="mt-4 space-y-2 border-t border-border/60 pt-4">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-terracotta">
+                        <span className="text-xs font-bold uppercase tracking-wider text-terracotta">
                           Key Regional Initiatives:
                         </span>
                         <ul className="space-y-1.5">
@@ -353,7 +353,7 @@ export function FutureTechRadar({
                   <div key={model.title} className="card-surface p-6 transition-all hover:border-terracotta/40 hover:shadow-lift flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-terracotta">
+                        <span className="text-xs font-bold uppercase tracking-wider text-terracotta">
                           Pioneers: {model.pioneerCompanies}
                         </span>
                       </div>
@@ -373,7 +373,7 @@ export function FutureTechRadar({
                     </div>
 
                     <div className="mt-5 pt-4 border-t border-border">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Skills to Master:</span>
+                      <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Skills to Master:</span>
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         {model.skillsToMaster.map((sk) => {
                           const isSaved = roadmapItems.includes(sk);
@@ -385,7 +385,7 @@ export function FutureTechRadar({
                               className={cn(
                                 "flex items-center gap-1 rounded-md px-2.5 py-1 text-[11.5px] font-medium transition",
                                 isSaved
-                                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                  ? "bg-emerald-500/10 text-emerald-600"
                                   : "bg-terracotta/10 text-terracotta hover:bg-terracotta hover:text-white"
                               )}
                             >
@@ -432,11 +432,11 @@ export function FutureTechRadar({
                           <h4 className="text-[16px] font-bold text-foreground">{shift.title}</h4>
                           <div className="grid gap-3 sm:grid-cols-2 text-[13px]">
                             <div className="rounded-lg bg-rose-500/5 border border-rose-500/10 p-3">
-                              <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase">Current Era</span>
+                              <span className="text-xs font-bold text-rose-600 uppercase">Current Era</span>
                               <p className="mt-1 text-muted-foreground">{shift.currentEra}</p>
                             </div>
                             <div className="rounded-lg bg-emerald-500/5 border border-emerald-500/10 p-3">
-                              <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">2030 Standard</span>
+                              <span className="text-xs font-bold text-emerald-600 uppercase">2030 Standard</span>
                               <p className="mt-1 text-muted-foreground">{shift.era2030}</p>
                             </div>
                           </div>
@@ -476,7 +476,7 @@ export function FutureTechRadar({
 
               <div className="grid gap-6 md:grid-cols-3">
                 <div className="card-surface p-5 space-y-3">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-terracotta">Rule 1: Don't Just Write Code</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-terracotta">Rule 1: Don't Just Write Code</span>
                   <h4 className="text-[15px] font-bold text-foreground">Master System Architecture</h4>
                   <p className="text-[13px] text-muted-foreground leading-relaxed">
                     AI models generate basic code syntax instantly. Your superpower as an engineer will be system decomposition, state validation, and edge-case contracts.
@@ -484,7 +484,7 @@ export function FutureTechRadar({
                 </div>
 
                 <div className="card-surface p-5 space-y-3">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-terracotta">Rule 2: Embrace MCP & Tooling</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-terracotta">Rule 2: Embrace MCP & Tooling</span>
                   <h4 className="text-[15px] font-bold text-foreground">Connect AI to Real Systems</h4>
                   <p className="text-[13px] text-muted-foreground leading-relaxed">
                     Learn to build Model Context Protocol (MCP) servers that connect AI agents to databases, git repositories, and production APIs safely.
@@ -492,7 +492,7 @@ export function FutureTechRadar({
                 </div>
 
                 <div className="card-surface p-5 space-y-3">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-terracotta">Rule 3: Build Proven Portfolio Projects</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-terracotta">Rule 3: Build Proven Portfolio Projects</span>
                   <h4 className="text-[15px] font-bold text-foreground">Ship Agentic Workflows</h4>
                   <p className="text-[13px] text-muted-foreground leading-relaxed">
                     Instead of another generic weather app, build a self-healing agentic workflow or an open-model serving pipeline that recruiters can inspect.

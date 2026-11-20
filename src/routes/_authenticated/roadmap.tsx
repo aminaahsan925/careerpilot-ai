@@ -196,7 +196,7 @@ function LearningPathCard({ path }: { path: LearningPath }) {
             </p>
             <span
               className={cn(
-                "rounded-full border px-2 py-0.5 text-[10.5px] font-semibold uppercase",
+                "rounded-full border px-2 py-0.5 text-xs font-semibold uppercase",
                 levelColor(path.level),
               )}
             >
@@ -207,7 +207,7 @@ function LearningPathCard({ path }: { path: LearningPath }) {
             {path.description}
           </p>
           {path.outdated_warning && (
-            <div className="mt-2 flex items-center gap-1.5 text-[11px] font-medium text-amber-700">
+            <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-amber-700">
               <AlertTriangle className="h-3.5 w-3.5" />
               {path.outdated_warning}
             </div>
@@ -221,7 +221,7 @@ function LearningPathCard({ path }: { path: LearningPath }) {
                 }}
               />
             </div>
-            <span className="text-[11px] font-medium text-muted-foreground">
+            <span className="text-xs font-medium text-muted-foreground">
               {completedDays}/{totalDays || "?"} days
             </span>
           </div>
@@ -235,7 +235,7 @@ function LearningPathCard({ path }: { path: LearningPath }) {
 
       {expanded && dayList.length > 0 && (
         <div className="border-t border-border px-5 pb-4 pt-3">
-          <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
             Must Know
           </p>
           {path.must_know.length > 0 && (
@@ -243,35 +243,32 @@ function LearningPathCard({ path }: { path: LearningPath }) {
               {path.must_know.map((skill) => (
                 <span
                   key={skill}
-                  className="rounded-full border border-border px-2.5 py-0.5 text-[11px] text-foreground"
+                  className="rounded-full border border-border px-2.5 py-0.5 text-xs text-foreground"
                 >
                   {skill}
                 </span>
               ))}
             </div>
           )}
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
             Daily Tasks
           </p>
           <div className="space-y-1.5">
             {dayList.map((day) => (
-              <div
+              <button
                 key={day.id}
-                role="button"
-                tabIndex={0}
+                type="button"
+                aria-expanded={selectedDayId === day.id}
                 onClick={() => openDay(day)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") openDay(day);
-                }}
                 className={cn(
-                  "flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-[12.5px] transition-colors hover:bg-muted/50",
+                  "flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left text-[12.5px] transition-colors hover:bg-muted/50",
                   selectedDayId === day.id && "ring-1 ring-terracotta/40",
                   day.completed ? "bg-muted/40 text-muted-foreground" : "bg-card text-foreground",
                 )}
               >
                 <span
                   className={cn(
-                    "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold",
+                    "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold",
                     day.completed
                       ? "bg-terracotta text-white"
                       : "border border-border text-muted-foreground",
@@ -280,10 +277,10 @@ function LearningPathCard({ path }: { path: LearningPath }) {
                   {day.completed ? <Check className="h-3 w-3" /> : day.day_number}
                 </span>
                 <span className="min-w-0 flex-1 truncate">{day.title}</span>
-                <span className="shrink-0 text-[10.5px] text-muted-foreground">
+                <span className="shrink-0 text-xs text-muted-foreground">
                   {day.estimated_minutes}m
                 </span>
-              </div>
+              </button>
             ))}
           </div>
 
@@ -291,14 +288,14 @@ function LearningPathCard({ path }: { path: LearningPath }) {
             <div className="mt-4 rounded-xl border border-border bg-card p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-terracotta">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-terracotta">
                     Day {selectedDay.day_number} · Topic brief
                   </p>
                   <h4 className="mt-1 text-[14px] font-bold text-foreground">
                     {selectedDay.title}
                   </h4>
                 </div>
-                <span className="text-[11px] text-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                   {selectedDay.estimated_minutes} minutes
                 </span>
               </div>
@@ -309,7 +306,7 @@ function LearningPathCard({ path }: { path: LearningPath }) {
                 {selectedDay.explanation}
               </p>
               <div className="mt-3 rounded-lg bg-secondary/60 p-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                   How to learn it
                 </p>
                 <p className="mt-1 whitespace-pre-line text-[12px] leading-relaxed text-foreground">
@@ -333,7 +330,7 @@ function LearningPathCard({ path }: { path: LearningPath }) {
                       target="_blank"
                       rel="noreferrer"
                       onClick={(event) => event.stopPropagation()}
-                      className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-[11px] font-medium text-terracotta transition-colors hover:bg-terracotta/10"
+                      className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-xs font-medium text-terracotta transition-colors hover:bg-terracotta/10"
                     >
                       {link.label}
                       <ExternalLink className="h-3 w-3" />
@@ -361,7 +358,7 @@ function LearningPathCard({ path }: { path: LearningPath }) {
                 <div className="mt-4 border-t border-border pt-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-terracotta">
+                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-terracotta">
                         Role-specific checkpoint
                       </p>
                       <p className="mt-1 text-[12px] text-muted-foreground">
@@ -371,7 +368,7 @@ function LearningPathCard({ path }: { path: LearningPath }) {
                     <button
                       type="button"
                       onClick={() => setQuizDayId("")}
-                      className="text-[11px] font-medium text-muted-foreground hover:text-foreground"
+                      className="text-xs font-medium text-muted-foreground hover:text-foreground"
                     >
                       Close
                     </button>
@@ -407,7 +404,7 @@ function LearningPathCard({ path }: { path: LearningPath }) {
                                       setAnswers((current) => ({ ...current, [question.id]: key }));
                                   }}
                                   className={cn(
-                                    "rounded-lg border px-3 py-2 text-left text-[11.5px] transition-colors",
+                                    "rounded-lg border px-3 py-2 text-left text-xs transition-colors",
                                     quizResult?.results.find(
                                       (result) => result.questionId === question.id,
                                     )?.correctOption === key
@@ -434,7 +431,7 @@ function LearningPathCard({ path }: { path: LearningPath }) {
                                 return (
                                   <div
                                     className={cn(
-                                      "mt-3 rounded-lg p-3 text-[11px] leading-relaxed",
+                                      "mt-3 rounded-lg p-3 text-xs leading-relaxed",
                                       result.correct
                                         ? "bg-emerald-50 text-emerald-800"
                                         : "bg-rose-50 text-rose-800",
@@ -449,7 +446,7 @@ function LearningPathCard({ path }: { path: LearningPath }) {
                                   </div>
                                 );
                               })()}
-                            <p className="mt-2 text-[10.5px] text-muted-foreground">
+                            <p className="mt-2 text-xs text-muted-foreground">
                               {question.company_relevance}
                             </p>
                           </div>
@@ -474,7 +471,7 @@ function LearningPathCard({ path }: { path: LearningPath }) {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="ml-2 rounded-lg text-[11px]"
+                          className="ml-2 rounded-lg text-xs"
                           onClick={() => {
                             setQuizResult(null);
                             setAnswers({});
@@ -520,7 +517,7 @@ function LearningPathCard({ path }: { path: LearningPath }) {
 
 function RoadmapPage() {
   const { data: user } = useCurrentUser();
-  const { data: paths, isLoading } = useLearningPaths();
+  const { data: paths, isLoading, error: pathsError, refetch: refetchPaths } = useLearningPaths();
   const { data: progress } = useRoadmapProgress();
   const generateRoadmap = useGenerateRoadmapV2();
   const [pinnedEvents, setPinnedEvents] = useState<PinnedEvent[]>([]);
@@ -551,7 +548,7 @@ function RoadmapPage() {
         <div className="space-y-4">
           {/* Hero */}
           <div className="card-surface overflow-hidden bg-ink p-8 text-white">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-terracotta">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-terracotta">
               Current Goal
             </p>
             <h2 className="editorial-title mt-3 text-[clamp(1.8rem,4vw,2.8rem)]">
@@ -587,7 +584,7 @@ function RoadmapPage() {
                     <h3 className="text-sm font-bold text-foreground">
                       Target Hackathons & Event Milestones
                     </h3>
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       Competitions and hackathons pinned to your active Career Roadmap.
                     </p>
                   </div>
@@ -610,17 +607,17 @@ function RoadmapPage() {
                     >
                       <div className="min-w-0 flex-1 space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="rounded-md bg-terracotta/10 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider text-terracotta">
+                          <span className="rounded-md bg-terracotta/10 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-terracotta">
                             {evt.eventType}
                           </span>
-                          <span className="text-[10.5px] font-medium text-muted-foreground">
+                          <span className="text-xs font-medium text-muted-foreground">
                             {daysLeft > 0 ? `in ${daysLeft} days` : "Event active"}
                           </span>
                         </div>
                         <h4 className="truncate text-xs font-bold text-foreground">
                           {evt.title}
                         </h4>
-                        <p className="flex items-center gap-1 text-[11px] text-muted-foreground truncate">
+                        <p className="flex items-center gap-1 text-xs text-muted-foreground truncate">
                           <MapPin className="h-3 w-3 text-terracotta shrink-0" />
                           <span className="truncate">{evt.city}</span> · <span className="truncate">{evt.organizer}</span>
                         </p>
@@ -676,6 +673,27 @@ function RoadmapPage() {
                   <div key={i} className="card-surface h-28 animate-pulse" />
                 ))}
               </div>
+            ) : pathsError ? (
+              <div className="card-surface p-6 text-center sm:p-8">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
+                  <AlertTriangle className="h-6 w-6" />
+                </div>
+                <h4 className="mt-4 font-display text-lg font-bold text-foreground">
+                  Your learning paths couldn&apos;t be loaded
+                </h4>
+                <p className="mx-auto mt-2 max-w-md text-[13px] leading-relaxed text-muted-foreground">
+                  {pathsError instanceof Error
+                    ? pathsError.message
+                    : "Something went wrong while loading your roadmap."}
+                </p>
+                <Button
+                  variant="outline"
+                  className="mt-5 rounded-xl font-bold"
+                  onClick={() => void refetchPaths()}
+                >
+                  <RotateCcw className="mr-2 h-4 w-4" /> Try again
+                </Button>
+              </div>
             ) : pathList.length > 0 ? (
               pathList.map((path) => <LearningPathCard key={path.id} path={path} />)
             ) : (
@@ -683,7 +701,7 @@ function RoadmapPage() {
                 <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-terracotta/10 blur-3xl" />
                 <div className="relative grid items-center gap-6 md:grid-cols-[minmax(0,1fr)_minmax(220px,0.85fr)] md:gap-8">
                   <div className="text-center md:text-left">
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-terracotta/20 bg-terracotta/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-terracotta">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-terracotta/20 bg-terracotta/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-terracotta">
                       <Sparkles className="h-3 w-3" /> Your next chapter
                     </span>
                     <h4 className="mt-3 font-display text-xl font-bold tracking-tight text-foreground sm:text-2xl">
@@ -793,7 +811,7 @@ function RoadmapPage() {
                   <span className="text-muted-foreground">Current Level</span>
                   <span
                     className={cn(
-                      "rounded-full border px-2 py-0.5 text-[11px] font-semibold capitalize",
+                      "rounded-full border px-2 py-0.5 text-xs font-semibold capitalize",
                       levelColor(progress.currentLevel),
                     )}
                   >
@@ -814,23 +832,23 @@ function RoadmapPage() {
           <div className="card-surface p-5">
             <div className="flex items-center justify-between gap-3">
               <h3 className="text-[14.5px] font-bold">Proof of progress</h3>
-              <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-terracotta">
+              <span className="text-xs font-semibold uppercase tracking-[0.12em] text-terracotta">
                 Evidence
               </span>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-3">
               <div className="rounded-lg bg-secondary p-3">
-                <p className="text-[10px] text-muted-foreground">Completion rate</p>
+                <p className="text-xs text-muted-foreground">Completion rate</p>
                 <p className="mt-1 text-lg font-bold">{progress?.completionRate ?? 0}%</p>
               </div>
               <div className="rounded-lg bg-secondary p-3">
-                <p className="text-[10px] text-muted-foreground">Avg. checkpoint</p>
+                <p className="text-xs text-muted-foreground">Avg. checkpoint</p>
                 <p className="mt-1 text-lg font-bold">
                   {progress?.averageMcqScore != null ? `${progress.averageMcqScore}%` : "—"}
                 </p>
               </div>
               <div className="rounded-lg bg-secondary p-3">
-                <p className="text-[10px] text-muted-foreground">Learning time</p>
+                <p className="text-xs text-muted-foreground">Learning time</p>
                 <p className="mt-1 text-lg font-bold">
                   {progress?.estimatedMinutesCompleted
                     ? `${Math.round(progress.estimatedMinutesCompleted / 60)}h`
@@ -838,13 +856,13 @@ function RoadmapPage() {
                 </p>
               </div>
               <div className="rounded-lg bg-secondary p-3">
-                <p className="text-[10px] text-muted-foreground">Checkpoints</p>
+                <p className="text-xs text-muted-foreground">Checkpoints</p>
                 <p className="mt-1 text-lg font-bold">
                   {progress?.mcqsPassed ?? 0}/{progress?.mcqsAttempted ?? 0}
                 </p>
               </div>
             </div>
-            <p className="mt-3 text-[10.5px] leading-relaxed text-muted-foreground">
+            <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
               Based on completed roadmap days, estimated work time, checkpoint scores, and recorded
               assessment attempts.
             </p>
@@ -852,7 +870,7 @@ function RoadmapPage() {
 
           {/* Next Action */}
           <div className="card-surface bg-ink p-5 text-white">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-terracotta">Next Action</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-terracotta">Next Action</p>
             <p className="mt-2 text-[14px] font-semibold leading-snug">
               {pathList.length > 0
                 ? (pathList.find((p) => !p.completed)?.title ?? "All paths complete!")

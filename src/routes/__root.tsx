@@ -7,6 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { MotionConfig } from "motion/react";
 import { Toaster } from "@/components/ui/sonner";
 import appCss from "../styles.css?url";
 import { useEffect, type ReactNode } from "react";
@@ -128,9 +129,13 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
-      <Toaster position="bottom-right" />
+      {/* reducedMotion="user": every Motion entrance animation in the app
+          honours the OS prefers-reduced-motion setting. */}
+      <MotionConfig reducedMotion="user">
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+        <Toaster position="bottom-right" />
+      </MotionConfig>
     </QueryClientProvider>
   );
 }
