@@ -1,3 +1,12 @@
+/**
+ * Onboarding (Know Me flow), Round 3 (Cursor as Flashlight / Lens).
+ *
+ * Signature moments, presentation only: a kinetic step reveal (the step
+ * title's words rise in on every step change), a real glass lens over the
+ * big step counter, spotlight borders on the step card, and a magnetic
+ * Continue button. The form logic, validation, progressive save and
+ * final save are unchanged; motion never blocks input or navigation.
+ */
 import { useCallback, useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { motion } from "motion/react";
@@ -15,12 +24,16 @@ import {
 import { useProjects, useSaveProjects } from "@/data/projects";
 import { supabase } from "@/integrations/supabase/client";
 import { UniversitySearch } from "@/components/app/UniversitySearch";
+import { MagneticButton } from "@/components/lens/MagneticButton";
+import { SpotlightCard } from "@/components/lens/SpotlightCard";
+import { OnboardingHeader } from "@/components/onboarding/OnboardingHeader";
+import "@/components/onboarding/onboarding.css";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
     meta: [
-      { title: "Know Me — CareerPilot AI" },
+      { title: "Know Me - CareerPilot AI" },
       {
         name: "description",
         content:
@@ -132,15 +145,15 @@ const STEPS = [
   { label: "About You", hint: "The basics we'll use across your workspace." },
   { label: "Education", hint: "Where you're studying and what stage you're at." },
   { label: "Experience", hint: "What you've worked on so far." },
-  { label: "Your Projects", hint: "Show what you've built — this counts as real evidence." },
-  { label: "Skills", hint: "What you can do today — your perception, not a test." },
+  { label: "Your Projects", hint: "Show what you've built. This counts as real evidence." },
+  { label: "Skills", hint: "What you can do today, your perception, not a test." },
   { label: "Career Direction", hint: "Where you're headed and how you're learning." },
   { label: "Your Situation", hint: "Your time, your concerns, your starting point." },
   { label: "Target", hint: "The role you're working towards." },
   { label: "Final Setup", hint: "Your starting profile is ready." },
 ];
 
-const OTHER_LABEL = "Other — I'll write my own";
+const OTHER_LABEL = "Other, I'll write my own";
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
@@ -177,7 +190,7 @@ function parseMultiSelect(v: string | null): { values: string[]; other: string }
 /* Component                                                           */
 /* ------------------------------------------------------------------ */
 
-function OnboardingPage() {
+export function OnboardingPage() {
   const navigate = useNavigate();
   const save = useSaveProfile();
   const { data: catalog = [] } = useSkillCatalog();
@@ -501,7 +514,7 @@ function OnboardingPage() {
   if (userLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <Loader2 className="h-5 w-5 animate-spin text-terracotta" />
+        <Loader2 className="h-5 w-5 animate-spin text-cp-lime" />
       </div>
     );
   }
@@ -555,38 +568,26 @@ function OnboardingPage() {
   /* ================================================================ */
 
   return (
-    <div className="min-h-screen bg-background px-5 py-10 sm:px-8 sm:py-14">
+    <div className="cp-onb-page min-h-screen px-5 py-10 sm:px-8 sm:py-14">
       <div className="mx-auto w-full max-w-[720px]">
-        {/* Phase label */}
-        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-terracotta">
-          Know Me — Step {step + 1} of {STEPS.length}
-        </p>
-        <h1 className="editorial-title mt-3 text-[clamp(1.8rem,4vw,2.6rem)]">
-          {STEPS[step]!.label}
-        </h1>
-        <p className="mt-2 text-[13.5px] text-muted-foreground">{STEPS[step]!.hint}</p>
+        <OnboardingHeader
+          step={step}
+          total={STEPS.length}
+          label={STEPS[step]!.label}
+          hint={STEPS[step]!.hint}
+        />
 
-        {/* Progress bar */}
-        <div className="mt-6 flex gap-2">
-          {STEPS.map((s, i) => (
-            <span
-              key={s.label}
-              className={cn(
-                "h-1 flex-1 rounded-full transition-colors",
-                i <= step ? "bg-terracotta" : "bg-border",
-              )}
-            />
-          ))}
-        </div>
-
-        {/* Step content */}
+        {/* Step content: kinetic entrance per step, spotlight border
+            following the cursor (and showing at centre on keyboard focus,
+            so the form stays fully usable without a mouse). */}
         <motion.div
           key={step}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
-          className="card-surface mt-8 p-6 sm:p-8"
+          className="mt-8"
         >
+          <SpotlightCard className="card-surface p-6 sm:p-8">
           {/* ── Step 0: About You ──────────────────────────── */}
           {step === 0 && (
             <div className="grid gap-5 sm:grid-cols-2">
@@ -597,8 +598,8 @@ function OnboardingPage() {
                 <Input value={lastName} onChange={setLastName} placeholder="Lovelace" />
               </Field>
               {isLegacyUser && (
-                <div className="sm:col-span-2 rounded-xl border border-terracotta/20 bg-terracotta/5 px-4 py-3">
-                  <p className="text-[13px] font-semibold text-terracotta">
+                <div className="sm:col-span-2 rounded-xl border border-cp-lime/20 bg-cp-lime/5 px-4 py-3">
+                  <p className="text-[13px] font-semibold text-cp-lime">
                     Let's update your CareerPilot profile.
                   </p>
                   <p className="mt-1 text-[12px] text-muted-foreground">
@@ -619,7 +620,7 @@ function OnboardingPage() {
                       value={statusOther}
                       onChange={(e) => setStatusOther(e.target.value)}
                       placeholder="Tell us in your own words..."
-                      className="mt-3 w-full rounded-xl border border-border bg-card px-4 py-2.5 text-[13.5px] outline-none focus:border-terracotta"
+                      className="mt-3 w-full rounded-xl border border-border bg-card px-4 py-2.5 text-[13.5px] outline-none focus:border-cp-lime"
                     />
                   )}
                 </Field>
@@ -679,7 +680,7 @@ function OnboardingPage() {
                     value={experienceOther}
                     onChange={(e) => setExperienceOther(e.target.value)}
                     placeholder="Tell us in your own words..."
-                    className="mt-3 w-full rounded-xl border border-border bg-card px-4 py-2.5 text-[13.5px] outline-none focus:border-terracotta"
+                    className="mt-3 w-full rounded-xl border border-border bg-card px-4 py-2.5 text-[13.5px] outline-none focus:border-cp-lime"
                   />
                 )}
               </Field>
@@ -697,9 +698,9 @@ function OnboardingPage() {
           {step === 3 && (
             <div className="space-y-6">
               <p className="text-[12.5px] text-muted-foreground">
-                Add projects you've built — even small ones. Each project turns your skills from
+                Add projects you've built, even small ones. Each project turns your skills from
                 "claims" into real evidence that CareerPilot can use for diagnosis and gap analysis.
-                <span className="font-semibold text-foreground"> This step is optional</span> — you
+                <span className="font-semibold text-foreground"> This step is optional</span>. You
                 can always add projects later.
               </p>
 
@@ -708,7 +709,7 @@ function OnboardingPage() {
                   key={idx}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="rounded-xl border border-border p-4 sm:p-5"
+                  className="rounded-xl border border-border bg-white/[0.02] p-4 sm:p-5"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <p className="text-[12px] font-semibold text-muted-foreground">
@@ -717,7 +718,7 @@ function OnboardingPage() {
                     <button
                       type="button"
                       onClick={() => removeProject(idx)}
-                      className="rounded-lg p-1 text-muted-foreground transition-colors hover:bg-terracotta/8 hover:text-terracotta"
+                      className="rounded-lg p-1 text-muted-foreground transition-colors hover:bg-cp-lime/8 hover:text-cp-lime"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -730,7 +731,7 @@ function OnboardingPage() {
                         value={project.name}
                         onChange={(e) => updateProject(idx, "name", e.target.value)}
                         placeholder="e.g. E-commerce website"
-                        className="mt-1 w-full rounded-xl border border-border bg-card px-3.5 py-2 text-[13px] outline-none focus:border-terracotta"
+                        className="mt-1 w-full rounded-xl border border-border bg-card px-3.5 py-2 text-[13px] outline-none focus:border-cp-lime"
                       />
                     </div>
 
@@ -741,7 +742,7 @@ function OnboardingPage() {
                         onChange={(e) => updateProject(idx, "description", e.target.value)}
                         placeholder="A short description of what the project does..."
                         rows={2}
-                        className="mt-1 w-full resize-none rounded-xl border border-border bg-card px-3.5 py-2 text-[13px] outline-none focus:border-terracotta"
+                        className="mt-1 w-full resize-none rounded-xl border border-border bg-card px-3.5 py-2 text-[13px] outline-none focus:border-cp-lime"
                       />
                     </div>
 
@@ -756,8 +757,8 @@ function OnboardingPage() {
                             className={cn(
                               "rounded-full border px-2.5 py-1 text-[11.5px] font-medium transition-colors",
                               project.projectType === opt.value
-                                ? "border-terracotta bg-terracotta text-primary-foreground"
-                                : "border-border text-muted-foreground hover:border-terracotta hover:text-terracotta",
+                                ? "border-cp-lime bg-cp-lime text-primary-foreground"
+                                : "border-border text-muted-foreground hover:border-cp-lime hover:text-cp-lime",
                             )}
                           >
                             {opt.label}
@@ -784,12 +785,12 @@ function OnboardingPage() {
                             }
                           }}
                           placeholder="e.g. React, Node.js, PostgreSQL"
-                          className="flex-1 rounded-xl border border-border bg-card px-3.5 py-2 text-[13px] outline-none focus:border-terracotta"
+                          className="flex-1 rounded-xl border border-border bg-card px-3.5 py-2 text-[13px] outline-none focus:border-cp-lime"
                         />
                         <button
                           type="button"
                           onClick={() => addTechToProject(idx)}
-                          className="flex items-center gap-1 rounded-xl border border-border px-2.5 py-2 text-[12px] font-semibold hover:border-terracotta hover:text-terracotta"
+                          className="flex items-center gap-1 rounded-xl border border-border px-2.5 py-2 text-[12px] font-semibold hover:border-cp-lime hover:text-cp-lime"
                         >
                           <Plus className="h-3.5 w-3.5" /> Add
                         </button>
@@ -799,13 +800,13 @@ function OnboardingPage() {
                           {project.technologies.map((tech) => (
                             <span
                               key={tech}
-                              className="inline-flex items-center gap-1 rounded-full bg-terracotta/8 px-2 py-0.5 text-[11px] font-medium text-terracotta"
+                              className="inline-flex items-center gap-1 rounded-full bg-cp-lime/8 px-2 py-0.5 text-[11px] font-medium text-cp-lime"
                             >
                               {tech}
                               <button
                                 type="button"
                                 onClick={() => removeTechFromProject(idx, tech)}
-                                className="rounded-full hover:bg-terracotta/15"
+                                className="rounded-full hover:bg-cp-lime/15"
                               >
                                 <X className="h-3 w-3" />
                               </button>
@@ -823,7 +824,7 @@ function OnboardingPage() {
                         value={project.projectUrl}
                         onChange={(e) => updateProject(idx, "projectUrl", e.target.value)}
                         placeholder="https://github.com/you/project"
-                        className="mt-1 w-full rounded-xl border border-border bg-card px-3.5 py-2 text-[13px] outline-none focus:border-terracotta"
+                        className="mt-1 w-full rounded-xl border border-border bg-card px-3.5 py-2 text-[13px] outline-none focus:border-cp-lime"
                       />
                     </div>
                   </div>
@@ -834,16 +835,16 @@ function OnboardingPage() {
                 <button
                   type="button"
                   onClick={addProject}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border px-4 py-3 text-[13px] font-semibold text-muted-foreground transition-colors hover:border-terracotta hover:text-terracotta"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border px-4 py-3 text-[13px] font-semibold text-muted-foreground transition-colors hover:border-cp-lime hover:text-cp-lime"
                 >
                   <Plus className="h-4 w-4" /> Add a project
                 </button>
               )}
 
               {projects.length === 0 && (
-                <div className="rounded-xl bg-muted/20 p-4 text-center">
+                <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-center">
                   <p className="text-[12.5px] text-muted-foreground">
-                    No projects added yet. That's fine — you can skip this step and add projects
+                    No projects added yet. That's fine. You can skip this step and add projects
                     later from your dashboard.
                   </p>
                 </div>
@@ -884,12 +885,12 @@ function OnboardingPage() {
                       }
                     }}
                     placeholder="e.g. Data Storytelling"
-                    className="flex-1 rounded-xl border border-border bg-card px-4 py-2.5 text-[13.5px] outline-none focus:border-terracotta"
+                    className="flex-1 rounded-xl border border-border bg-card px-4 py-2.5 text-[13.5px] outline-none focus:border-cp-lime"
                   />
                   <button
                     type="button"
                     onClick={addCustomSkill}
-                    className="flex items-center gap-1.5 rounded-xl border border-border px-3 py-2.5 text-[13px] font-semibold hover:border-terracotta hover:text-terracotta"
+                    className="flex items-center gap-1.5 rounded-xl border border-border px-3 py-2.5 text-[13px] font-semibold hover:border-cp-lime hover:text-cp-lime"
                   >
                     <Plus className="h-4 w-4" /> Add
                   </button>
@@ -919,8 +920,8 @@ function OnboardingPage() {
                               className={cn(
                                 "rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
                                 confidence[s] === level
-                                  ? "border-terracotta bg-terracotta text-primary-foreground"
-                                  : "border-border text-muted-foreground hover:border-terracotta hover:text-terracotta",
+                                  ? "border-cp-lime bg-cp-lime text-primary-foreground"
+                                  : "border-border text-muted-foreground hover:border-cp-lime hover:text-cp-lime",
                               )}
                             >
                               {level}
@@ -935,7 +936,7 @@ function OnboardingPage() {
 
               {skills.length === 0 && (
                 <p className="text-[12.5px] text-muted-foreground">
-                  No skills selected yet — you can always add them later.
+                  No skills selected yet. You can always add them later.
                 </p>
               )}
             </div>
@@ -957,7 +958,7 @@ function OnboardingPage() {
                     value={learningOther}
                     onChange={(e) => setLearningOther(e.target.value)}
                     placeholder="Tell us in your own words..."
-                    className="mt-3 w-full rounded-xl border border-border bg-card px-4 py-2.5 text-[13.5px] outline-none focus:border-terracotta"
+                    className="mt-3 w-full rounded-xl border border-border bg-card px-4 py-2.5 text-[13.5px] outline-none focus:border-cp-lime"
                   />
                 )}
               </Field>
@@ -980,8 +981,8 @@ function OnboardingPage() {
                       className={cn(
                         "rounded-full border px-4 py-1.5 text-[12.5px] font-medium transition-colors",
                         certifications === opt
-                          ? "border-terracotta bg-terracotta text-primary-foreground"
-                          : "border-border text-muted-foreground hover:border-terracotta hover:text-terracotta",
+                          ? "border-cp-lime bg-cp-lime text-primary-foreground"
+                          : "border-border text-muted-foreground hover:border-cp-lime hover:text-cp-lime",
                       )}
                     >
                       {opt === "yes" ? "Yes" : "No"}
@@ -1009,7 +1010,7 @@ function OnboardingPage() {
                     value={problemOther}
                     onChange={(e) => setProblemOther(e.target.value)}
                     placeholder="Tell us in your own words..."
-                    className="mt-3 w-full rounded-xl border border-border bg-card px-4 py-2.5 text-[13.5px] outline-none focus:border-terracotta"
+                    className="mt-3 w-full rounded-xl border border-border bg-card px-4 py-2.5 text-[13.5px] outline-none focus:border-cp-lime"
                   />
                 )}
               </Field>
@@ -1025,7 +1026,7 @@ function OnboardingPage() {
                     value={educationPrepNote}
                     onChange={(e) => setEducationPrepNote(e.target.value)}
                     placeholder="What do you wish your university taught you? (optional)"
-                    className="mt-3 w-full rounded-xl border border-border bg-card px-4 py-2.5 text-[13.5px] outline-none focus:border-terracotta"
+                    className="mt-3 w-full rounded-xl border border-border bg-card px-4 py-2.5 text-[13.5px] outline-none focus:border-cp-lime"
                   />
                 )}
               </Field>
@@ -1109,7 +1110,10 @@ function OnboardingPage() {
                 .map((group, gi, arr) => (
                   <div
                     key={group.title}
-                    className={gi < arr.length - 1 ? "border-b border-border pb-5 mb-5" : ""}
+                    className={cn(
+                      "cp-onb-review-group",
+                      gi < arr.length - 1 ? "border-b border-border pb-5 mb-5" : "",
+                    )}
                   >
                     <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                       {group.title}
@@ -1128,14 +1132,14 @@ function OnboardingPage() {
                 ))}
 
               {/* CareerPilot Now Knows */}
-              <div className="mt-6 rounded-xl bg-muted/30 p-5">
+              <div className="mt-6 rounded-xl border border-white/10 bg-white/[0.03] p-5">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                   CareerPilot now knows
                 </p>
                 <div className="mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-2">
                   {knowMeChecklist.map((item) => (
                     <div key={item} className="flex items-center gap-2 text-[12.5px]">
-                      <Check className="h-3.5 w-3.5 shrink-0 text-terracotta" />
+                      <Check className="h-3.5 w-3.5 shrink-0 text-cp-lime" />
                       <span>{item}</span>
                     </div>
                   ))}
@@ -1143,8 +1147,8 @@ function OnboardingPage() {
               </div>
 
               {/* Completion message */}
-              <div className="mt-6 rounded-xl border border-terracotta/20 bg-terracotta/5 px-4 py-3.5">
-                <p className="text-[13px] font-semibold text-terracotta">
+              <div className="mt-6 rounded-xl border border-cp-lime/20 bg-cp-lime/5 px-4 py-3.5">
+                <p className="text-[13px] font-semibold text-cp-lime">
                   {isReturningUser ? "Your profile has been updated." : "Your foundation is set."}
                 </p>
                 <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
@@ -1158,10 +1162,11 @@ function OnboardingPage() {
 
           {/* Error */}
           {error ? (
-            <p className="mt-5 rounded-xl border border-terracotta/30 bg-terracotta/8 px-4 py-3 text-[12.5px] text-terracotta">
+            <p className="mt-5 rounded-xl border border-cp-ember/30 bg-cp-ember/10 px-4 py-3 text-[12.5px] text-cp-ember">
               {error}
             </p>
           ) : null}
+          </SpotlightCard>
         </motion.div>
 
         {/* Navigation */}
@@ -1175,40 +1180,49 @@ function OnboardingPage() {
             <ArrowLeft className="h-4 w-4" /> Back
           </button>
 
+          {/* MagneticButton has no disabled state, so the disabled and
+              saving states render a plain button with the same look.
+              The magnetic CTA only ever appears when it can be used. */}
           {step < STEPS.length - 1 ? (
+            canContinue && !save.isPending ? (
+              <MagneticButton
+                onClick={goNext}
+                className="flex items-center gap-2 rounded-xl bg-cp-lime px-5 py-2.5 text-[13.5px] font-semibold text-cp-ink shadow-[0_0_24px_rgba(225,241,13,0.25)]"
+              >
+                Continue <ArrowRight className="h-4 w-4" />
+              </MagneticButton>
+            ) : (
+              <button
+                type="button"
+                disabled
+                className="flex cursor-not-allowed items-center gap-2 rounded-xl bg-cp-lime px-5 py-2.5 text-[13.5px] font-semibold text-cp-ink opacity-50"
+              >
+                {save.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Saving...
+                  </>
+                ) : (
+                  <>
+                    Continue <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
+              </button>
+            )
+          ) : save.isPending ? (
             <button
               type="button"
-              onClick={goNext}
-              disabled={!canContinue || save.isPending}
-              className="flex items-center gap-2 rounded-xl bg-terracotta px-5 py-2.5 text-[13.5px] font-semibold text-primary-foreground transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+              disabled
+              className="flex cursor-not-allowed items-center gap-2 rounded-xl bg-cp-lime px-5 py-2.5 text-[13.5px] font-semibold text-cp-ink opacity-60"
             >
-              {save.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Saving...
-                </>
-              ) : (
-                <>
-                  Continue <ArrowRight className="h-4 w-4" />
-                </>
-              )}
+              <Loader2 className="h-4 w-4 animate-spin" /> Saving...
             </button>
           ) : (
-            <button
-              type="button"
+            <MagneticButton
               onClick={finish}
-              disabled={save.isPending}
-              className="flex items-center gap-2 rounded-xl bg-terracotta px-5 py-2.5 text-[13.5px] font-semibold text-primary-foreground transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex items-center gap-2 rounded-xl bg-cp-lime px-5 py-2.5 text-[13.5px] font-semibold text-cp-ink shadow-[0_0_24px_rgba(225,241,13,0.25)]"
             >
-              {save.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Saving...
-                </>
-              ) : (
-                <>
-                  Continue <Check className="h-4 w-4" />
-                </>
-              )}
-            </button>
+              Continue <Check className="h-4 w-4" />
+            </MagneticButton>
           )}
         </div>
       </div>
@@ -1233,7 +1247,7 @@ function Field({
     <div>
       <label className="text-[12.5px] font-semibold">
         {label}
-        {required ? <span className="text-terracotta"> *</span> : null}
+        {required ? <span className="text-cp-lime"> *</span> : null}
       </label>
       <div className="mt-1.5">{children}</div>
     </div>
@@ -1257,7 +1271,7 @@ function Input({
       inputMode={inputMode}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-[13.5px] outline-none transition-colors focus:border-terracotta"
+      className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-[13.5px] outline-none transition-colors focus:border-cp-lime"
     />
   );
 }
@@ -1270,8 +1284,8 @@ function Chip({ label, active, onClick }: { label: string; active: boolean; onCl
       className={cn(
         "rounded-full border px-3 py-1.5 text-[12.5px] font-medium transition-colors",
         active
-          ? "border-terracotta bg-terracotta text-primary-foreground"
-          : "border-border text-muted-foreground hover:border-terracotta hover:text-terracotta",
+          ? "border-cp-lime bg-cp-lime text-primary-foreground"
+          : "border-border text-muted-foreground hover:border-cp-lime hover:text-cp-lime",
       )}
     >
       {label}
@@ -1304,8 +1318,8 @@ function OptionGrid({
           className={cn(
             "rounded-xl border px-3.5 py-2 text-[12.5px] font-medium transition-all",
             isActive(opt)
-              ? "border-terracotta bg-terracotta/10 text-terracotta"
-              : "border-border text-muted-foreground hover:border-terracotta/50 hover:text-foreground",
+              ? "border-cp-lime bg-cp-lime/10 text-cp-lime"
+              : "border-border text-muted-foreground hover:border-cp-lime/50 hover:text-foreground",
           )}
         >
           {opt}

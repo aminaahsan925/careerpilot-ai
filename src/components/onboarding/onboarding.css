@@ -1,0 +1,53 @@
+/* Round 3 per-feature styles: onboarding (Know Me flow).
+ * Direction 2, Cursor as Flashlight / Lens. Near-black ground, neon lime
+ * accent, warm stone text. No new colours, no mascot, no generic SaaS look.
+ * Presentation only: nothing here touches data, queries or form behaviour.
+ */
+
+/* Page ground: the ink base with one faint lime bloom at the top, so the
+ * flow opens on light rather than flat black. */
+.cp-onb-page {
+  background:
+    radial-gradient(720px 340px at 18% -80px, rgb(225 241 13 / 0.07), transparent 70%),
+    var(--cp-ink, #040403);
+}
+
+/* Progress segments: quiet stone track, lime for done, glowing lime for
+ * the current step. The pulse is transform-free (box-shadow only) and the
+ * global reduced-motion rule collapses it to a still glow. */
+.cp-onb-seg {
+  height: 4px;
+  flex: 1 1 0%;
+  border-radius: 9999px;
+  background: rgb(244 241 234 / 0.1);
+  transition:
+    background-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.cp-onb-seg-done {
+  background: rgb(225 241 13 / 0.45);
+}
+
+.cp-onb-seg-now {
+  background: var(--cp-lime, #e1f10d);
+  box-shadow: 0 0 12px rgb(225 241 13 / 0.55);
+  animation: cp-onb-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes cp-onb-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 8px rgb(225 241 13 / 0.35);
+  }
+  50% {
+    box-shadow: 0 0 18px rgb(225 241 13 / 0.7);
+  }
+}
+
+/* Review step: a lime rule marks each summary group, so the final step
+ * reads as a document, not a settings form. */
+.cp-onb-review-group {
+  border-left: 2px solid rgb(225 241 13 / 0.35);
+  padding-left: 1rem;
+}

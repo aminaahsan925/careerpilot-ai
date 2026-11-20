@@ -1,3 +1,13 @@
+/**
+ * Profile page, Round 3 (Cursor as Flashlight / Lens).
+ *
+ * Signature moments, presentation only: a flashlight over the "What
+ * CareerPilot knows" summary reveals the evidence behind each claim
+ * (where the fact came from, what it is or is not); a real glass lens
+ * magnifies the name in the identity header; every section card carries
+ * a spotlight border that follows the cursor; Save Changes is magnetic.
+ * All data, editing, photo upload and logout logic is unchanged.
+ */
 import { useEffect, useState, useRef } from "react";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -14,6 +24,11 @@ import {
 import { toast } from "sonner";
 
 import { AppLayout } from "@/components/app/AppLayout";
+import { Lens } from "@/components/lens/Lens";
+import { MagneticButton } from "@/components/lens/MagneticButton";
+import { SpotlightCard } from "@/components/lens/SpotlightCard";
+import { ProfileEvidence } from "@/components/profile/ProfileEvidence";
+import "@/components/profile/profile.css";
 import {
   useCurrentUser,
   useSaveProfile,
@@ -25,7 +40,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
     meta: [
-      { title: "Profile — CareerPilot AI" },
+      { title: "Profile - CareerPilot AI" },
       { name: "description", content: "Manage your profile and knowledge." },
     ],
   }),
@@ -158,7 +173,7 @@ const EDUCATION_LEVELS = ["High School", "Diploma", "Bachelor's", "Master's", "P
 /* Page                                                                */
 /* ------------------------------------------------------------------ */
 
-function ProfilePage() {
+export function ProfilePage() {
   const { data: user, isLoading, error } = useCurrentUser();
   const saveMutation = useSaveProfile();
   const queryClient = useQueryClient();
@@ -383,16 +398,17 @@ function ProfilePage() {
   return (
     <AppLayout title="Profile" subtitle="Manage your profile and knowledge">
       <div className="mx-auto w-full max-w-[720px] space-y-8">
-        {/* Profile Photo Section */}
+        {/* Identity header: the name sits under a real glass lens. The
+            photo and camera button stay outside the lens (interactive). */}
         <motion.section
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="card-surface p-6"
         >
-          <div className="flex items-center gap-6">
+          <SpotlightCard className="card-surface p-6">
+          <div className="flex flex-wrap items-center gap-6">
             <div className="relative">
-              <div className="h-24 w-24 overflow-hidden rounded-full bg-muted">
+              <div className="cp-profile-avatar h-24 w-24 overflow-hidden rounded-full bg-muted">
                 {avatarUrl ? (
                   <img src={avatarUrl} alt="Profile photo" className="h-full w-full object-cover" />
                 ) : (
@@ -405,32 +421,52 @@ function ProfilePage() {
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-terracotta text-white shadow-md transition hover:bg-terracotta/90 disabled:opacity-50"
+                className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-cp-lime text-cp-ink shadow-md transition hover:bg-cp-lime2 disabled:opacity-50"
                 aria-label="Upload profile photo"
               >
                 {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
               </button>
               <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
             </div>
-            <div className="flex-1">
-              <h2 className="text-[18px] font-bold text-foreground">{user.fullName}</h2>
-              <p className="text-[13px] text-muted-foreground">{user.email}</p>
-              {user.role && <p className="mt-1 text-[12.5px] font-medium text-terracotta">{user.role}</p>}
-            </div>
+            <Lens magnify={1.3} className="min-w-[220px] flex-1">
+              <div className="min-w-0">
+                <p className="cp-eyebrow">Your profile</p>
+                <h2 className="mt-2 font-display text-[clamp(1.6rem,4vw,2.2rem)] font-extrabold uppercase leading-[0.95] tracking-[-0.02em] text-cp-paper">
+                  {user.fullName}
+                </h2>
+                <p className="mt-2 truncate font-mono text-[12px] text-cp-stone">{user.email}</p>
+                {user.role && (
+                  <p className="mt-1 font-serif text-[15px] italic text-cp-lime">{user.role}</p>
+                )}
+              </div>
+            </Lens>
           </div>
+          </SpotlightCard>
+        </motion.section>
+
+        {/* Evidence panel: flashlight over the summary reveals the
+            evidence behind each claim. */}
+        <motion.section
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.05 }}
+        >
+          <SpotlightCard className="card-surface p-6">
+            <ProfileEvidence user={user} />
+          </SpotlightCard>
         </motion.section>
 
         {/* Basic Info Section */}
         <motion.section
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.05 }}
-          className="card-surface p-6"
+          transition={{ duration: 0.4, delay: 0.1 }}
         >
+          <SpotlightCard className="card-surface p-6">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-[14px] font-bold uppercase tracking-[0.12em] text-foreground">Basic Information</h3>
             {!editing && (
-              <button type="button" onClick={() => setEditing(true)} className="text-[12px] font-semibold text-terracotta hover:underline">
+              <button type="button" onClick={() => setEditing(true)} className="text-[12px] font-semibold text-cp-lime hover:underline">
                 Edit
               </button>
             )}
@@ -444,15 +480,16 @@ function ProfilePage() {
             <ProfileField label="University" value={university} onChange={setUniversity} editing={editing} />
             <ProfileField label="Graduation Year" value={graduationYear} onChange={setGraduationYear} editing={editing} placeholder="e.g. 2026" />
           </div>
+          </SpotlightCard>
         </motion.section>
 
         {/* Know Me Section */}
         <motion.section
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className="card-surface p-6"
+          transition={{ duration: 0.4, delay: 0.15 }}
         >
+          <SpotlightCard className="card-surface p-6">
           <h3 className="mb-4 text-[14px] font-bold uppercase tracking-[0.12em] text-foreground">Know Me</h3>
           <div className="grid gap-4 sm:grid-cols-2">
             <ProfileField label="Current Status" value={currentStatus} onChange={setCurrentStatus} editing={editing} type="select" options={CURRENT_STATUS_OPTIONS} />
@@ -471,19 +508,20 @@ function ProfilePage() {
               <ProfileField label="Education Prep Note" value={educationPrepNote} onChange={setEducationPrepNote} editing={editing} placeholder="Additional notes about your education..." />
             </div>
           </div>
+          </SpotlightCard>
         </motion.section>
 
         {/* Skills Section */}
         <motion.section
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.15 }}
-          className="card-surface p-6"
+          transition={{ duration: 0.4, delay: 0.2 }}
         >
+          <SpotlightCard className="card-surface p-6">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-[14px] font-bold uppercase tracking-[0.12em] text-foreground">Skills & Knowledge</h3>
             {editing && (
-              <button type="button" onClick={() => setShowSkillInput(true)} className="flex items-center gap-1.5 text-[12px] font-semibold text-terracotta hover:underline">
+              <button type="button" onClick={() => setShowSkillInput(true)} className="flex items-center gap-1.5 text-[12px] font-semibold text-cp-lime hover:underline">
                 <Plus className="h-3.5 w-3.5" />
                 Add Skill
               </button>
@@ -502,10 +540,10 @@ function ProfilePage() {
                     if (e.key === "Escape") { setShowSkillInput(false); setNewSkillName(""); }
                   }}
                   placeholder="Enter skill name..."
-                  className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-[13px] outline-none focus:border-terracotta"
+                  className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-[13px] outline-none focus:border-cp-lime"
                   autoFocus
                 />
-                <button type="button" onClick={addSkill} className="rounded-lg bg-terracotta px-3 py-2 text-[12px] font-semibold text-white">Add</button>
+                <button type="button" onClick={addSkill} className="rounded-lg bg-cp-lime px-3 py-2 text-[12px] font-semibold text-cp-ink">Add</button>
                 <button type="button" onClick={() => { setShowSkillInput(false); setNewSkillName(""); }} className="rounded-lg border border-border px-3 py-2 text-[12px] text-muted-foreground">
                   <X className="h-4 w-4" />
                 </button>
@@ -525,7 +563,7 @@ function ProfilePage() {
                   </div>
                   {editing ? (
                     <>
-                      <input type="range" min="0" max="100" value={skill.level} onChange={(e) => updateSkillLevel(skill.id, parseInt(e.target.value))} className="w-24 accent-terracotta" />
+                      <input type="range" min="0" max="100" value={skill.level} onChange={(e) => updateSkillLevel(skill.id, parseInt(e.target.value))} className="w-24 accent-cp-lime" />
                       <span className="w-8 text-right text-[11px] font-medium text-muted-foreground">{skill.level}%</span>
                       <button type="button" onClick={() => removeSkill(skill.id)} className="rounded p-1 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive" aria-label={`Remove ${skill.name}`}>
                         <Trash2 className="h-4 w-4" />
@@ -533,22 +571,23 @@ function ProfilePage() {
                     </>
                   ) : (
                     <div className="h-1.5 w-24 overflow-hidden rounded-full bg-muted">
-                      <div className="h-full rounded-full bg-terracotta" style={{ width: `${skill.level}%` }} />
+                      <div className="cp-profile-skillbar h-full rounded-full" style={{ width: `${skill.level}%` }} />
                     </div>
                   )}
                 </motion.div>
               ))}
             </div>
           )}
+          </SpotlightCard>
         </motion.section>
 
         {/* Logout Section */}
         <motion.section
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-          className="card-surface p-6"
+          transition={{ duration: 0.4, delay: 0.25 }}
         >
+          <SpotlightCard className="card-surface p-6">
           <h3 className="mb-4 text-[14px] font-bold uppercase tracking-[0.12em] text-foreground">Account</h3>
           <button
             type="button"
@@ -558,16 +597,24 @@ function ProfilePage() {
             <LogOut className="h-4 w-4" />
             Sign Out
           </button>
+          </SpotlightCard>
         </motion.section>
 
-        {/* Save Button */}
+        {/* Save Button: magnetic when usable, plain disabled while saving
+            (MagneticButton has no disabled state). */}
         <AnimatePresence>
           {editing && (
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 12 }} className="flex items-center justify-end gap-3">
               <button type="button" onClick={() => setEditing(false)} className="rounded-xl border border-border px-5 py-2.5 text-[13px] font-semibold text-muted-foreground transition hover:text-foreground">Cancel</button>
-              <motion.button type="button" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleSave} disabled={saving} className="flex items-center gap-2 rounded-xl bg-terracotta px-5 py-2.5 text-[13px] font-semibold text-primary-foreground shadow-sm disabled:opacity-50">
-                {saving ? <><Loader2 className="h-4 w-4 animate-spin" />Saving...</> : <><Save className="h-4 w-4" />Save Changes</>}
-              </motion.button>
+              {saving ? (
+                <button type="button" disabled className="flex cursor-not-allowed items-center gap-2 rounded-xl bg-cp-lime px-5 py-2.5 text-[13px] font-semibold text-cp-ink opacity-50">
+                  <Loader2 className="h-4 w-4 animate-spin" />Saving...
+                </button>
+              ) : (
+                <MagneticButton onClick={handleSave} className="flex items-center gap-2 rounded-xl bg-cp-lime px-5 py-2.5 text-[13px] font-semibold text-cp-ink shadow-[0_0_24px_rgba(225,241,13,0.25)]">
+                  <Save className="h-4 w-4" /> Save Changes
+                </MagneticButton>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -602,7 +649,7 @@ function ProfileField({
       <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{label}</label>
       {editing ? (
         type === "select" ? (
-          <select value={value} onChange={(e) => onChange(e.target.value)} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-[13px] outline-none focus:border-terracotta">
+          <select value={value} onChange={(e) => onChange(e.target.value)} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-[13px] outline-none focus:border-cp-lime">
             <option value="">Select...</option>
             {/* Keep a saved value visible even if it is not in the option list,
                 instead of silently falling back to "Select...". */}
@@ -610,10 +657,10 @@ function ProfileField({
             {options.map((opt) => (<option key={opt} value={opt}>{opt}</option>))}
           </select>
         ) : (
-          <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-[13px] outline-none focus:border-terracotta" />
+          <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-[13px] outline-none focus:border-cp-lime" />
         )
       ) : (
-        <div className="min-h-[40px] rounded-lg border border-border/50 bg-muted/30 px-3 py-2 text-[13px] text-foreground">
+        <div className="min-h-[40px] rounded-lg border border-border/50 bg-white/[0.03] px-3 py-2 text-[13px] text-foreground">
           {displayStoredValue(value) || <span className="text-muted-foreground">Not set</span>}
         </div>
       )}
