@@ -14,6 +14,13 @@ export const getLiveTechEvents = createServerFn({ method: "POST" })
       userId: context.userId,
       city: data.city,
     });
+    // Quota first: the live search ends in an AI call, so one AI call is
+    // consumed before the search runs. The check lives here (not inside
+    // tech-events.server.ts) because that module has no user context and
+    // its fallback swallows errors — a quota refusal must reach the user
+    // as an error, never as a stale fallback list.
+    const { consumeAiCall } = await import("./billing.server");
+    await consumeAiCall(context.supabase, context.userId, "tech-events");
     const events = await searchEvents(data.city, data.targetRole);
     console.info("[CareerPilot][getLiveTechEvents] success", {
       userId: context.userId,

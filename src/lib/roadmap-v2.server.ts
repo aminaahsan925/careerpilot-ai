@@ -1,4 +1,5 @@
 import { groqChat, parseJsonObject } from "./ai.server";
+import { consumeAiCall } from "./billing.server";
 import { buildCareerContext } from "./mentor.server";
 import { generateMarketReality, type MarketReality } from "./market.server";
 import { loadLatestDiagnosis, type CareerDiagnosis } from "./diagnosis.server";
@@ -158,7 +159,7 @@ async function loadRoadmapIntelligence(userId: string): Promise<{
   const [marketResult, diagnosisResult, trendsResult] = await Promise.allSettled([
     generateMarketReality(supabaseAdmin, userId),
     loadLatestDiagnosis(supabaseAdmin, userId),
-    getTechTrends(supabaseAdmin),
+    getTechTrends(supabaseAdmin, userId),
   ]);
 
   const market = marketResult.status === "fulfilled" ? marketResult.value : null;
@@ -261,6 +262,13 @@ export async function generateRoadmapV2(
         error: "Set a career goal first so the roadmap can be tailored to it.",
       };
     }
+
+    // Quota first: one AI call is consumed before the provider is called.
+    // Throws QuotaError at the limit, QuotaUnavailableError when the quota
+    // check itself fails; the catch below surfaces either as { success: false }.
+    // (The market/trends intelligence loaded in step 6 consumes its own
+    // quota unit each when its cache is cold, because each is a real AI call.)
+    await consumeAiCall(supabaseAdmin, userId, "roadmap-v2");
 
     // 2. Resolve the role profile from Market Truth
     const roleProfile = resolveRoleProfile(goal.target_role);

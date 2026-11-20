@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/integrations/supabase/types";
 import { groqChat, parseJsonObject, stringList } from "./ai.server";
+import { consumeAiCall } from "./billing.server";
 import {
   buildCareerState,
   careerStateToPrompt,
@@ -52,6 +53,8 @@ export async function runCareerDiscovery(
   userId: string,
   answers: DiscoveryAnswers,
 ) {
+  // Quota first: one AI call is consumed before the provider is called.
+  await consumeAiCall(supabase, userId, "career-discovery");
   const state = await buildCareerState(supabase, userId);
 
   const raw = await groqChat(
@@ -174,6 +177,8 @@ export async function analyzeTargetJob(
   if (description.length < 80)
     throw new Error("Paste the full job description (at least a few sentences).");
 
+  // Quota first: one AI call is consumed before the provider is called.
+  await consumeAiCall(supabase, userId, "target-job");
   const state = await buildCareerState(supabase, userId);
 
   const raw = await groqChat(
@@ -394,6 +399,8 @@ export async function generateWeeklyGoals(supabase: Client, userId: string) {
   if (!state.targetRole)
     throw new Error("Set a target career first so weekly goals can be tailored to it.");
 
+  // Quota first: one AI call is consumed before the provider is called.
+  await consumeAiCall(supabase, userId, "weekly-goals");
   const raw = await groqChat(
     [
       { role: "system", content: GOALS_SYSTEM },

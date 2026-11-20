@@ -148,9 +148,15 @@ function PricingPage() {
           <PayWithSafepayButton />
           <p className="mt-6 text-[13.5px] leading-relaxed text-muted-foreground">
             Until Safepay approves the account, beta payment is manual: pay Rs 499/month by
-            JazzCash or Easypaisa, send your payment screenshot, and your Proof Plan is
-            activated by the founder. Once Safepay is live, the Pay button above activates
-            it automatically — no screenshot, no waiting.
+            JazzCash or Easypaisa, email your payment screenshot to{" "}
+            <a
+              href="mailto:ah.systemsss@gmail.com"
+              className="font-semibold text-terracotta hover:underline"
+            >
+              ah.systemsss@gmail.com
+            </a>
+            , and your Proof Plan is activated by the founder. Once Safepay is live, the Pay
+            button above activates it automatically — no screenshot, no waiting.
           </p>
           <Link
             to="/diagnosis"

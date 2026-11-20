@@ -1,8 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { matchCompanyTruth } from "@/data/company-truth";
 import type { Database } from "@/integrations/supabase/types";
 import { clampScore, groqChat, parseJsonObject, stringList } from "./ai.server";
+import { consumeAiCall, QuotaError, QuotaUnavailableError } from "./billing.server";
 import { syncResumeEvidence } from "./career.server";
 import { buildCareerState, careerStateToPrompt } from "./career-state.server";
 import { formatEvidenceContext, retrieveGroundedEvidence } from "./intelligence.server";
@@ -622,6 +622,11 @@ export async function analyzeStoredResume(
   userId: string,
   resumeId: string,
 ): Promise<AnalysisResult & { id: string }> {
+  // NOTE: the quota check lives with the optional AI enhancement below, not
+  // here. The deterministic ATS scan is the source of truth and must run
+  // even when the user is out of AI quota; only the AI enhancement is
+  // quota-gated, and a refusal degrades to the labelled deterministic
+  // result instead of failing the whole analysis.
   const { data: resume, error: resumeError } = await supabase
     .from("resumes")
     .select("id, file_name, file_path")
@@ -674,8 +679,13 @@ export async function analyzeStoredResume(
     "\n</grounded_evidence>";
   let parsed: Record<string, unknown> = {};
   let aiFailed = false;
+  let quotaRefused = false;
   for (let attempt = 0; attempt < 1; attempt++) {
     try {
+      // Quota-gated: one AI call is consumed before the provider is called.
+      // A refusal (limit reached, or the quota check itself failing) is
+      // caught below and degrades to the deterministic result.
+      await consumeAiCall(supabase, userId, "resume");
       const raw = await groqChat(
         [
           { role: "system", content: system },
@@ -700,6 +710,9 @@ export async function analyzeStoredResume(
         error: error instanceof Error ? error.message : String(error),
         attempt: attempt + 1,
       });
+      if (error instanceof QuotaError || error instanceof QuotaUnavailableError) {
+        quotaRefused = true;
+      }
       aiFailed = true;
     }
   }
@@ -796,15 +809,19 @@ export async function analyzeStoredResume(
     verdict:
       typeof parsed["verdict"] === "string"
         ? parsed["verdict"]
-        : aiFailed
-          ? "AI analysis unavailable — showing ATS formatting checks only."
-          : "Your resume has been checked for ATS readability and recruiter proof.",
+        : quotaRefused
+          ? "AI limit reached — showing ATS formatting checks only."
+          : aiFailed
+            ? "AI analysis unavailable — showing ATS formatting checks only."
+            : "Your resume has been checked for ATS readability and recruiter proof.",
     summary:
       typeof parsed["summary"] === "string"
         ? parsed["summary"]
-        : aiFailed
-          ? `ATS format score: ${formatScore}/100. AI skill extraction and recommendations were generated from deterministic analysis because the AI service was unavailable.`
-          : "Your resume was analyzed with deterministic ATS formatting checks.",
+        : quotaRefused
+          ? `ATS format score: ${formatScore}/100. AI skill extraction and recommendations were skipped because your AI limit for today is reached; the checks above are deterministic.`
+          : aiFailed
+            ? `ATS format score: ${formatScore}/100. AI skill extraction and recommendations were generated from deterministic analysis because the AI service was unavailable.`
+            : "Your resume was analyzed with deterministic ATS formatting checks.",
     strengths,
     weaknesses,
     detected_skills: detectedSkills,

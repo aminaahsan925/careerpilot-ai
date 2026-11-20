@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/integrations/supabase/types";
 import { groqChat, parseJsonObject } from "./ai.server";
+import { consumeAiCall } from "./billing.server";
 import { buildCareerState, careerStateToPrompt, type CareerState } from "./career-state.server";
 import { formatEvidenceContext, retrieveGroundedEvidence } from "./intelligence.server";
 import { tavilySearch, type TavilyResult } from "./tavily.server";
@@ -281,6 +282,11 @@ export async function assessFlightPlan(
   if (!state.resume.hasResume && !input.selfDescription) {
     throw new Error("Upload a CV first, or confirm that you have no CV and describe yourself.");
   }
+
+  // Quota first: one AI call is consumed before the provider is called.
+  // Throws QuotaError at the limit, QuotaUnavailableError when the quota
+  // check itself fails — either way the AI call must not run.
+  await consumeAiCall(supabase, userId, "flightplan");
 
   const marketQuery = `${input.company ? `${input.company} ` : ""}${input.role} hiring requirements skills engineering job description 2026`;
   const marketPromise = (async (): Promise<FlightPlanAssessment["market"]> => {

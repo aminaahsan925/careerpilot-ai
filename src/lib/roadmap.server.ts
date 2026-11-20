@@ -1,8 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/integrations/supabase/types";
-import { buildCareerContext } from "./mentor.server";
 import { groqChat, parseJsonObject, stringList } from "./ai.server";
+import { consumeAiCall } from "./billing.server";
+import { buildCareerContext } from "./mentor.server";
 
 type Client = SupabaseClient<Database>;
 
@@ -32,6 +33,8 @@ export async function generateRoadmapFor(supabase: Client, userId: string) {
     throw new Error("Set a career goal first so the roadmap can be tailored to it.");
   }
 
+  // Quota first: one AI call is consumed before the provider is called.
+  await consumeAiCall(supabase, userId, "roadmap");
   const context = await buildCareerContext(supabase, userId);
 
   const raw = await groqChat(

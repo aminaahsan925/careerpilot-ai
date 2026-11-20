@@ -80,7 +80,7 @@ export async function createProofPlanCheckout(
     tracker,
     source: "hosted",
     order_id: orderId,
-    redirect_url: `${origin}/pricing?paid=1`,
+    redirect_url: `${origin}/pricing?paid=1&tracker=${encodeURIComponent(tracker)}`,
     cancel_url: `${origin}/pricing?cancelled=1`,
   });
   return { url, tracker, orderId };

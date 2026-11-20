@@ -42,8 +42,14 @@ function PrivacyPage() {
         <h2 className="text-xl font-bold">Your choices</h2>
         <p>
           You can edit your profile and skills from the Profile page at any time. If you want your
-          account data removed, sign out of shared devices first and contact us through the LinkedIn
-          profile linked on the homepage, stating the email address on your account.
+          account data removed, sign out of shared devices first and email us at{" "}
+          <a
+            href="mailto:ah.systemsss@gmail.com"
+            className="font-semibold text-terracotta hover:underline"
+          >
+            ah.systemsss@gmail.com
+          </a>
+          , stating the email address on your account.
         </p>
         <p className="text-sm text-muted-foreground">
           <Link to="/" className="font-semibold text-terracotta hover:underline">

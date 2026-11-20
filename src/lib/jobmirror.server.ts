@@ -37,6 +37,11 @@ import {
 } from "@/data/market-truth";
 import type { Database } from "@/integrations/supabase/types";
 import { groqChat, parseJsonObject } from "./ai.server";
+import {
+  consumeAiCall,
+  QuotaError,
+  QuotaUnavailableError,
+} from "./billing.server";
 import { buildCareerState, type CareerState } from "./career-state.server";
 import {
   coverageOf,
@@ -540,7 +545,21 @@ export async function generateJobMirror(
   });
 
   // Personalization is optional; never hold the complete market report hostage
-  // to a slow or exhausted AI provider.
-  report.personalized = await personalizeWithinBudget(report, state);
+  // to a slow or exhausted AI provider. The quota check is fail-closed for
+  // the AI call only: at the limit (or when the quota check fails) the
+  // deterministic report still ships, without the AI narration.
+  try {
+    await consumeAiCall(supabase, userId, "jobmirror");
+    report.personalized = await personalizeWithinBudget(report, state);
+  } catch (error) {
+    if (error instanceof QuotaError || error instanceof QuotaUnavailableError) {
+      console.warn("[CareerPilot][jobmirror] personalization skipped (quota):", {
+        userId,
+        error: error.message,
+      });
+    } else {
+      throw error;
+    }
+  }
   return report;
 }

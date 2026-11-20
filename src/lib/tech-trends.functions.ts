@@ -10,7 +10,7 @@ export const getTechTrendsReport = createServerFn({ method: "GET" })
     console.info("[CareerPilot][getTechTrendsReport] start", { userId: context.userId });
     const { getTechTrends } = await import("./tech-trends.server");
     try {
-      const result = await getTechTrends(context.supabase);
+      const result = await getTechTrends(context.supabase, context.userId);
       console.info("[CareerPilot][getTechTrendsReport] success", {
         userId: context.userId,
         fromCache: result.fromCache,
@@ -33,7 +33,7 @@ export const getTechTrendsFresh = createServerFn({ method: "GET" })
     console.info("[CareerPilot][getTechTrendsFresh] start", { userId: context.userId });
     const { getTechTrends } = await import("./tech-trends.server");
     try {
-      const result = await getTechTrends(context.supabase, { forceRefresh: true });
+      const result = await getTechTrends(context.supabase, context.userId, { forceRefresh: true });
       console.info("[CareerPilot][getTechTrendsFresh] success", {
         userId: context.userId,
         featured: result.featured.name,
@@ -64,7 +64,7 @@ export const getTechTrendDetail = createServerFn({ method: "GET" })
     });
     const { getTechTrendDetail: getDetail } = await import("./tech-trends.server");
     try {
-      const result = await getDetail(context.supabase, data.technologyName);
+      const result = await getDetail(context.supabase, context.userId, data.technologyName);
       console.info("[CareerPilot][getTechTrendDetail] success", {
         userId: context.userId,
         technology: data.technologyName,

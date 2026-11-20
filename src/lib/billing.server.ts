@@ -43,9 +43,20 @@ export class QuotaError extends Error {
   }
 }
 
+/** Thrown when the quota system itself cannot answer (RPC missing, DB
+ * error, no verdict). Fail-closed: the AI call must NOT run when the
+ * plan cannot be verified, so this is a refusal, not a warning. */
+export class QuotaUnavailableError extends Error {
+  constructor() {
+    super("We could not verify your AI plan right now. Please try again in a moment.");
+    this.name = "QuotaUnavailableError";
+  }
+}
+
 export async function getUserPlan(supabase: Client, userId: string): Promise<PlanId> {
-  // user_subscriptions is created by the Section 8 migration, so it is not
-  // in the generated Database types yet; cast only this table access.
+  // user_subscriptions is created by the billing migration
+  // (supabase/migrations/20261120000000_billing.sql), so it is not in the
+  // generated Database types yet; cast only this table access.
   const { data, error } = await (
     supabase as unknown as {
       from: (table: string) => {
@@ -79,9 +90,13 @@ export async function getUserPlan(supabase: Client, userId: string): Promise<Pla
 /**
  * Consume one AI call for this user, BEFORE the AI call is made.
  * Throws QuotaError when the daily limit is reached.
- * If the quota tables/functions do not exist yet (migrations not run),
- * it logs a warning and lets the call through, so the live app does not
- * break for existing users before the owner runs the SQL.
+ *
+ * FAIL-CLOSED: if the quota check itself errors (RPC missing, DB down,
+ * no verdict returned), this throws QuotaUnavailableError and the AI
+ * call must not run. It never lets a call through unverified. That
+ * means the billing migration must be applied before AI features work;
+ * until then every AI feature refuses with a clear user-facing error
+ * instead of silently spending AI cost with no quota.
  */
 export async function consumeAiCall(
   supabase: Client,
@@ -103,12 +118,16 @@ export async function consumeAiCall(
     p_endpoint: endpoint,
   });
   if (error) {
-    console.warn("[CareerPilot][billing] quota check unavailable, allowing call:", error.message);
-    return { plan, calls: 0, limit };
+    console.error("[CareerPilot][billing] quota check failed, refusing AI call:", error.message);
+    throw new QuotaUnavailableError();
   }
   const calls = data?.calls ?? 0;
   if (data && data.allowed === false) {
     throw new QuotaError(calls, limit);
+  }
+  if (!data || typeof data.allowed !== "boolean") {
+    console.error("[CareerPilot][billing] quota check returned no verdict, refusing AI call");
+    throw new QuotaUnavailableError();
   }
   return { plan, calls, limit };
 }
