@@ -9,8 +9,12 @@ import {
   type RoleTruthProfile,
   type SalaryBand,
 } from "@/data/market-truth";
-import { groqChat, parseJsonObject, type ChatMsg } from "./ai.server";
 import type { Database } from "@/integrations/supabase/types";
+import {
+  formatLocationFilter,
+  type JobLocationFilter,
+} from "./jobs/providers";
+import { refreshJobMarket, type LiveJobMarket } from "./jobs/research";
 
 type Client = SupabaseClient<Database>;
 
@@ -24,12 +28,19 @@ type Client = SupabaseClient<Database>;
  *
  * The default provider reads `@/data/market-truth` — researched, cited
  * data with a known collection date. It makes no network calls and costs
- * nothing to run.
+ * nothing to run. It is a FALLBACK ONLY: a static snapshot from
+ * 2026-08-31 (see LAST_RESEARCHED), never "live" — the UI must label it
+ * as a snapshot with its date, never as current market research.
  *
  * Fields the dataset does not cover are returned EMPTY on purpose. An
  * empty list is honest; a model-generated list presented as research is
- * not. `GroqResearchProvider` is retained below for comparison and is
- * explicitly NOT research — see its doc comment.
+ * not.
+ *
+ * The live job layer (src/lib/jobs) is the live path: Tavily-backed
+ * search over real postings (`refreshJobMarket`), aggregated into skill
+ * frequencies and merged into the dataset evidence with provenance.
+ * When the live layer is unavailable, the dataset snapshot stands
+ * alone — labelled as a snapshot, never as live.
  *
  * Server-only file (.server.ts) — never imported from client code.
  * ------------------------------------------------------------------ */
@@ -37,8 +48,8 @@ type Client = SupabaseClient<Database>;
 export type MarketResearchQuery = {
   targetRole: string;
   targetIndustry: string | null;
-  /** Optional localization filter. Global is the default view. */
-  location?: string;
+  /** Geographic scope. Null = global view. */
+  location: JobLocationFilter | null;
   education: string | null;
   experience: string | null;
 };
@@ -49,11 +60,15 @@ export type MarketResearchInputs = {
   targetIndustry: string | null;
   education: string | null;
   experience: string | null;
+  location: JobLocationFilter | null;
 };
 
 export type MarketEvidence = {
   collectedAt: string; // ISO timestamp
-  provider: string; // "market-truth-dataset" | "groq-llm" | "web-search" | etc.
+  // "market-truth-dataset" = static snapshot fallback (2026-08-31, never
+  // live) · "market-truth-dataset+live-jobs" = snapshot enriched with live
+  // Tavily job postings (see the "live-job-postings" source for the date).
+  provider: string;
   /**
    * When the underlying facts were actually researched (YYYY-MM-DD).
    * Distinct from `collectedAt`, which is only when this object was built.
@@ -117,7 +132,7 @@ export interface MarketResearchProvider {
 }
 
 /* ------------------------------------------------------------------ */
-/* Default provider — the researched dataset                           */
+/* Fallback provider — the researched dataset snapshot (2026-08-31)    */
 /* ------------------------------------------------------------------ */
 
 function bandText(band: SalaryBand, label: string): string {
@@ -141,6 +156,12 @@ function requirementText(entry: { skill: string; note: string | null }): string 
 
 /**
  * Builds market evidence from the researched, cited dataset.
+ *
+ * FALLBACK ONLY. This is a static snapshot from 2026-08-31
+ * (LAST_RESEARCHED) — it must never be labelled "live" in the UI. The
+ * live path is `refreshJobMarket` (Tavily-backed, src/lib/jobs), merged
+ * in by `mergeLiveJobEvidence`; this provider stands alone only when
+ * the live layer is unavailable.
  *
  * No network calls, no model, no cost. Deterministic for a given role, so
  * the Market Reality screen and the Flight Plan cannot disagree.
@@ -276,7 +297,16 @@ function datasetSources(profile: RoleTruthProfile): MarketEvidence["sources"] {
   ];
 
   const seen = new Set<string>();
-  const sources: MarketEvidence["sources"] = [];
+  const sources: MarketEvidence["sources"] = [
+    // First source names the fallback for what it is: a static snapshot,
+    // dated, never live. The live path appends a "live-job-postings"
+    // source with its own research date (see mergeLiveJobEvidence).
+    {
+      type: "dataset-snapshot",
+      description: `Market-truth dataset snapshot from ${LAST_RESEARCHED} — static fallback, not live research`,
+      date: LAST_RESEARCHED,
+    },
+  ];
   for (const citation of citations) {
     if (!citation || seen.has(citation.label)) continue;
     seen.add(citation.label);
@@ -288,37 +318,6 @@ function datasetSources(profile: RoleTruthProfile): MarketEvidence["sources"] {
     });
   }
   return sources.slice(0, 24);
-}
-
-/* ------------------------------------------------------------------ */
-/* Groq-based provider — not research                                  */
-/* ------------------------------------------------------------------ */
-
-/**
- * Asks the model what it remembers about a role's market.
- *
- * This is model recall, NOT research: there is no live fetch, no source
- * that can be checked, and no meaningful "as of" date. It is kept behind
- * the provider seam so a real search provider can slot in later, but it
- * is no longer the default and its output must never be labelled
- * researched or cited in the UI.
- */
-export class GroqResearchProvider implements MarketResearchProvider {
-  async collectEvidence(query: MarketResearchQuery): Promise<MarketEvidence> {
-    const messages: ChatMsg[] = [
-      { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: buildResearchPrompt(query) },
-    ];
-
-    const raw = await groqChat(messages, {
-      json: true,
-      maxTokens: 4000,
-      temperature: 0.3,
-    });
-
-    const data = parseJsonObject<Record<string, unknown>>(raw);
-    return shapeEvidence(data);
-  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -359,11 +358,16 @@ export async function collectMarketEvidence(
       throw new Error("No target role found. Please complete Phase 1 (Know Me) first.");
     }
 
+    // `location` is added by the Phase 3 migration; the generated DB
+    // types do not know it yet, so read it defensively.
+    const locationRaw =
+      (goal as { location?: string | null } | null)?.location ?? null;
     inputs = {
       targetRole,
       targetIndustry: goal?.target_industry ?? null,
       education: profile?.education_level ?? null,
       experience: profile?.experience ?? null,
+      location: parseLocationFilter(locationRaw),
     };
   }
 
@@ -371,221 +375,88 @@ export async function collectMarketEvidence(
   const query: MarketResearchQuery = {
     targetRole: inputs.targetRole,
     targetIndustry: inputs.targetIndustry,
-    location: "Global",
+    location: inputs.location,
     education: inputs.education,
     experience: inputs.experience,
   };
 
   /* Collect evidence --------------------------------------------- *
-   * The researched dataset is the default source: cited, dated, free to
-   * run and identical for every student with the same target role. Swap
-   * in a real search provider here once one is available. */
+   * The researched dataset is the base source: cited, dated, free to
+   * run and identical for every student with the same target role.
+   * The live job layer optionally enriches it with real skill
+   * frequencies from stored postings; when unavailable, the dataset
+   * stands alone (never invented data). */
   const provider: MarketResearchProvider = new MarketTruthProvider();
-  return provider.collectEvidence(query);
-}
-
-/* ------------------------------------------------------------------ */
-/* Prompt construction                                                 */
-/* ------------------------------------------------------------------ */
-
-function buildResearchPrompt(query: MarketResearchQuery): string {
-  const lines: string[] = [];
-  lines.push("Collect market evidence for this career role:");
-  lines.push("");
-  lines.push(`Target role: ${query.targetRole}`);
-  if (query.targetIndustry) lines.push(`Target industry: ${query.targetIndustry}`);
-  lines.push(`Location focus: ${query.location ?? "Global"}`);
-  if (query.education) lines.push(`Candidate education level: ${query.education}`);
-  if (query.experience) lines.push(`Candidate experience: ${query.experience}`);
-  lines.push("");
-  lines.push("Return ONLY the JSON object described in the system instructions.");
-  return lines.join("\n");
-}
-
-const SYSTEM_PROMPT = `You are a market research data collector. Your job is to collect structured market evidence about a specific career role.
-
-CRITICAL RULES:
-- Global market evidence is the primary output. Do not assume a country, city, currency, or region.
-- Only provide localized market evidence when the user explicitly supplies a location filter.
-- Do NOT fabricate statistics, company names, URLs, or job-posting counts.
-- Do NOT fabricate percentages or exact numbers.
-- Report what you reliably know about current market conditions from your training data.
-- Be honest about uncertainty. If data is limited, say so.
-- Focus on: current demand, employer requirements, technology landscape, hiring patterns.
-- Separate global market, optional localized market, and employer evidence.
-- For technology signals, classify as current/stable/growing/emerging/declining WITH a brief evidence note for each.
-- Do NOT label a technology 'declining' just because it's old — only if market evidence supports that.
-- For AI impact, separate what companies currently ask for vs. expected future evolution.
-- Use neutral, evidence-based language.
-
-Return a JSON object with EXACTLY this structure:
-{
-  "pakistanMarket": {
-    "demand": "one paragraph on current demand for this role in Pakistan",
-    "hiringCities": ["city1", "city2", ...],                  // 3-6 Pakistani cities where hiring concentrates
-    "commonRequirements": ["requirement1", ...],              // 4-8 requirements common in Pakistani postings
-    "frequentTechnologies": ["technology1", ...],             // 4-8 technologies most requested in Pakistan
-    "entryLevelExpectations": ["expectation1", ...],          // 4-6 realistic entry-level expectations in Pakistan
-    "experienceRequirements": ["requirement1", ...],          // 3-6 experience expectations employers state
-    "remoteOpportunities": "one paragraph on remote work availability for this role from Pakistan",
-    "patterns": ["pattern1", ...]                             // 3-6 hiring patterns observed in Pakistan
-  },
-  "globalMarket": {
-    "demand": "one paragraph on global demand for this role",
-    "commonTechnologies": ["technology1", ...],               // 4-8 technologies common globally
-    "commonResponsibilities": ["responsibility1", ...],       // 4-8 responsibilities common globally
-    "experienceExpectations": ["expectation1", ...],          // 3-6 global experience expectations
-    "remotePatterns": ["pattern1", ...],                      // 3-5 remote/hybrid patterns globally
-    "pakistanVsInternational": ["comparison1", ...]           // 3-5 concrete Pakistan vs international comparisons
-  },
-  "employerEvidence": {
-    "recurringSkills": ["skill1", ...],                       // 5-8 skills recurring across postings
-    "recurringTechnologies": ["technology1", ...],            // 5-8 technologies recurring across postings
-    "recurringResponsibilities": ["responsibility1", ...],    // 4-8 responsibilities recurring across postings
-    "experiencePatterns": ["pattern1", ...],                  // 3-6 patterns in how employers frame experience
-    "toolsAndPlatforms": ["tool1", ...],                      // 4-8 tools/platforms (IDEs, CI/CD, trackers, etc.)
-    "cloudRequirements": ["requirement1", ...],               // 3-6 cloud/platform requirements mentioned by employers
-    "aiRequirements": ["requirement1", ...]                   // 3-6 AI-related requirements employers mention
-  },
-  "technologySignals": {
-    "current": [ { "name": "React", "evidence": "brief evidence note" }, ... ],  // 4-8 dominant technologies right now
-    "stable":   [ { "name": "...", "evidence": "..." }, ... ],  // 3-6 established, still-demanded technologies
-    "growing":  [ { "name": "...", "evidence": "..." }, ... ],  // 3-6 technologies with rising adoption
-    "emerging": [ { "name": "...", "evidence": "..." }, ... ],  // 2-5 early-stage technologies
-    "declining":[ { "name": "...", "evidence": "..." }, ... ]   // 0-5 technologies with genuinely shrinking demand; may be empty
-  },
-  "aiImpact": {
-    "currentEvidence": ["what employers currently ask for regarding AI tools/skills", ...],   // 3-6 items
-    "expectedEvolution": ["how the role is expected to evolve because of AI", ...]            // 3-6 items
-  },
-  "salaryInsights": {
-    "entryLevel": "typical entry-level compensation description (include PKR range if known)",
-    "midLevel": "typical mid-level compensation description",
-    "seniorLevel": "typical senior-level compensation description",
-    "currency": "PKR",
-    "notes": ["note about compensation trends, benefits, equity, etc."]  // 2-4 notes
-  },
-  "sources": [
-    { "type": "job-boards", "description": "patterns common across general job boards", "date": "recent" },
-    ...  // 2-5 source categories relied on; type is a CATEGORY (e.g. "job-boards", "tech-community", "industry-reports"), never a URL
-  ]
-}`;
-
-/* ------------------------------------------------------------------ */
-/* Defensive shaping                                                   */
-/* ------------------------------------------------------------------ */
-
-function str(v: unknown): string {
-  return typeof v === "string" ? v.trim() : "";
-}
-
-function strArray(v: unknown, max = 10): string[] {
-  if (!Array.isArray(v)) return [];
-  return v
-    .map((x) => (typeof x === "string" ? x.trim() : ""))
-    .filter(Boolean)
-    .slice(0, max);
-}
-
-function obj(v: unknown): Record<string, unknown> {
-  return v !== null && typeof v === "object" && !Array.isArray(v)
-    ? (v as Record<string, unknown>)
-    : {};
-}
-
-function signalArray(v: unknown, max = 8): { name: string; evidence: string }[] {
-  if (!Array.isArray(v)) return [];
-  return v
-    .map((item) => {
-      const rec = obj(item);
-      return { name: str(rec["name"]), evidence: str(rec["evidence"]) };
-    })
-    .filter((s) => s.name.length > 0)
-    .slice(0, max);
-}
-
-function sourceArray(v: unknown, max = 6): { type: string; description: string; date: string }[] {
-  if (!Array.isArray(v)) return [];
-  return v
-    .map((item) => {
-      const rec = obj(item);
-      return {
-        type: str(rec["type"]),
-        description: str(rec["description"]),
-        date: str(rec["date"]),
-      };
-    })
-    .filter((s) => s.type.length > 0 || s.description.length > 0)
-    .slice(0, max);
-}
-
-function shapeSalaryInsights(v: unknown): MarketEvidence["salaryInsights"] {
-  const sal = obj(v);
-  return {
-    entryLevel: str(sal["entryLevel"]),
-    midLevel: str(sal["midLevel"]),
-    seniorLevel: str(sal["seniorLevel"]),
-    currency: str(sal["currency"]) || "PKR",
-    notes: strArray(sal["notes"], 4),
-  };
+  const evidence = await provider.collectEvidence(query);
+  return mergeLiveJobEvidence(supabase, userId, query, evidence);
 }
 
 /**
- * Coerce an arbitrary parsed LLM payload into a fully-formed
- * MarketEvidence. Every field gets a safe default so the analysis
- * layer never sees undefined.
+ * Parse the free-text location stored on career_goals into a filter.
+ * Stored as "City, Country", "Country", or "Remote" (case-insensitive).
  */
-function shapeEvidence(data: Record<string, unknown>): MarketEvidence {
-  const pk = obj(data["pakistanMarket"]);
-  const global = obj(data["globalMarket"]);
-  const employer = obj(data["employerEvidence"]);
-  const tech = obj(data["technologySignals"]);
-  const ai = obj(data["aiImpact"]);
+export function parseLocationFilter(
+  raw: string | null,
+): JobLocationFilter | null {
+  const text = (raw ?? "").trim();
+  if (!text) return null;
+  if (/^remote$/i.test(text)) return { country: null, city: null, workMode: "remote" };
+  const parts = text.split(",").map((part) => part.trim()).filter(Boolean);
+  if (parts.length === 0) return null;
+  if (parts.length === 1) return { country: parts[0]!, city: null, workMode: null };
+  return { country: parts[parts.length - 1]!, city: parts.slice(0, -1).join(", "), workMode: null };
+}
 
+/**
+ * Best-effort live enrichment: aggregate real skill frequencies from
+ * stored job postings and fold them into the dataset evidence with
+ * provenance. Returns the base evidence unchanged on any failure.
+ */
+async function mergeLiveJobEvidence(
+  supabase: Client,
+  userId: string,
+  query: MarketResearchQuery,
+  base: MarketEvidence,
+): Promise<MarketEvidence> {
+  const location: JobLocationFilter = query.location ?? {
+    country: null,
+    city: null,
+    workMode: null,
+  };
+  let live: LiveJobMarket | null = null;
+  try {
+    live = await refreshJobMarket(supabase, userId, query.targetRole, location);
+  } catch (error) {
+    console.warn(
+      "[MarketResearch] live job layer failed, using dataset only:",
+      error instanceof Error ? error.message : String(error),
+    );
+    return base;
+  }
+  if (!live || live.aggregation.skills.length === 0) return base;
+
+  const locationStr = formatLocationFilter(location);
+  const top = live.aggregation.skills.slice(0, 8).map(
+    (s) =>
+      `${s.skill} — mentioned in ${s.total} of ${live!.aggregation.jobsAnalysed} live postings` +
+      (s.mustHave > 0 ? ` (${s.mustHave} as required)` : ""),
+  );
   return {
-    collectedAt: new Date().toISOString(),
-    provider: "groq-llm",
-    /* Model recall has no research date. Null keeps the UI from claiming one. */
-    researchedOn: null,
-    pakistanMarket: {
-      demand: str(pk["demand"]),
-      hiringCities: strArray(pk["hiringCities"], 6),
-      commonRequirements: strArray(pk["commonRequirements"], 8),
-      frequentTechnologies: strArray(pk["frequentTechnologies"], 8),
-      entryLevelExpectations: strArray(pk["entryLevelExpectations"], 6),
-      experienceRequirements: strArray(pk["experienceRequirements"], 6),
-      remoteOpportunities: str(pk["remoteOpportunities"]),
-      patterns: strArray(pk["patterns"], 6),
-    },
-    globalMarket: {
-      demand: str(global["demand"]),
-      commonTechnologies: strArray(global["commonTechnologies"], 8),
-      commonResponsibilities: strArray(global["commonResponsibilities"], 8),
-      experienceExpectations: strArray(global["experienceExpectations"], 6),
-      remotePatterns: strArray(global["remotePatterns"], 5),
-      pakistanVsInternational: strArray(global["pakistanVsInternational"], 5),
-    },
+    ...base,
+    provider: "market-truth-dataset+live-jobs",
     employerEvidence: {
-      recurringSkills: strArray(employer["recurringSkills"], 8),
-      recurringTechnologies: strArray(employer["recurringTechnologies"], 8),
-      recurringResponsibilities: strArray(employer["recurringResponsibilities"], 8),
-      experiencePatterns: strArray(employer["experiencePatterns"], 6),
-      toolsAndPlatforms: strArray(employer["toolsAndPlatforms"], 8),
-      cloudRequirements: strArray(employer["cloudRequirements"], 6),
-      aiRequirements: strArray(employer["aiRequirements"], 6),
+      ...base.employerEvidence,
+      recurringSkills: top,
     },
-    technologySignals: {
-      current: signalArray(tech["current"], 8),
-      stable: signalArray(tech["stable"], 6),
-      growing: signalArray(tech["growing"], 6),
-      emerging: signalArray(tech["emerging"], 5),
-      declining: signalArray(tech["declining"], 5),
-    },
-    aiImpact: {
-      currentEvidence: strArray(ai["currentEvidence"], 6),
-      expectedEvolution: strArray(ai["expectedEvolution"], 6),
-    },
-    salaryInsights: shapeSalaryInsights(data["salaryInsights"]),
-    sources: sourceArray(data["sources"], 6),
+    sources: [
+      ...base.sources,
+      {
+        type: "live-job-postings",
+        description:
+          `Skill frequencies aggregated from ${live.aggregation.jobsAnalysed} live job ` +
+          `postings${locationStr ? ` (${locationStr})` : ""} via ${live.providerName}`,
+        date: live.researchedOn,
+      },
+    ],
   };
 }

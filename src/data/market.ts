@@ -83,7 +83,10 @@ export const OUTDATED_TECH_QUERY_KEY = ["outdated-tech"] as const;
 
 /**
  * Detect outdated technologies in the student's skill set relative
- * to their target role. Uses Tavily for fresh market signals.
+ * to their target role. The outdated-tech check runs a Tavily-backed
+ * trend lookup server-side; it is separate from the Market Reality
+ * report, which is built from the researched dataset snapshot
+ * (2026-08-31) enriched with live job postings where available.
  */
 export function useOutdatedTech() {
   return useQuery({
