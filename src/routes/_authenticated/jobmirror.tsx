@@ -16,7 +16,7 @@ import {
   Target,
   XCircle,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { AppLayout } from "@/components/app/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,12 @@ import {
   type InterviewMcq,
   type InterviewQuestion,
 } from "@/data/interview-intel";
+import {
+  useInterviewPrep,
+  useMcqAttempts,
+  useRecordMcqAttempt,
+  useSaveInterviewPrep,
+} from "@/data/interview-prep";
 import { useCurrentUser } from "@/data/user";
 import { cn } from "@/lib/utils";
 
@@ -133,10 +139,40 @@ function QuestionCard({
   );
 }
 
-function McqCheckpoint({ questions }: { questions: InterviewMcq[] }) {
+function McqCheckpoint({
+  questions,
+  company,
+  role,
+  initialAnswers,
+  totalAttempts,
+  onAnswer,
+}: {
+  questions: InterviewMcq[];
+  company: string;
+  role: string;
+  /** Latest saved answer per MCQ (loaded async); undefined while loading. */
+  initialAnswers: Record<string, string> | undefined;
+  totalAttempts: number;
+  onAnswer: (mcqId: string, selectedOption: string, correct: boolean) => void;
+}) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [submitted, setSubmitted] = useState(false);
+  const hydratedRef = useRef("");
+
+  // Restore the latest saved answers once they load (per company + role).
+  useEffect(() => {
+    const key = `${company}|||${role}`;
+    if (hydratedRef.current === key) return;
+    if (initialAnswers === undefined) return;
+    hydratedRef.current = key;
+    setAnswers(initialAnswers);
+  }, [initialAnswers, company, role]);
+
+  function handleSelect(question: InterviewMcq, optionId: string) {
+    setAnswers((current) => ({ ...current, [question.id]: optionId }));
+    onAnswer(question.id, optionId, optionId === question.correctOption);
+  }
   const orderedQuestions = [...questions].sort(
     (a, b) => a.level - b.level || a.id.localeCompare(b.id),
   );
@@ -165,6 +201,9 @@ function McqCheckpoint({ questions }: { questions: InterviewMcq[] }) {
           <p className="mt-1 max-w-2xl text-[12px] text-muted-foreground">
             Start with role fundamentals, then work through employer-specific applied, advanced, and
             production scenarios.
+            {totalAttempts > 0 && (
+              <> Your answers are saved — {totalAttempts} attempt{totalAttempts === 1 ? "" : "s"} recorded for this role and company.</>
+            )}
           </p>
         </div>
         {submitted && (
@@ -230,9 +269,7 @@ function McqCheckpoint({ questions }: { questions: InterviewMcq[] }) {
                     key={option.id}
                     type="button"
                     disabled={Boolean(selectedAnswer)}
-                    onClick={() =>
-                      setAnswers((current) => ({ ...current, [currentQuestion.id]: option.id }))
-                    }
+                    onClick={() => handleSelect(currentQuestion, option.id)}
                     className={cn(
                       "rounded-xl border px-3 py-3 text-left text-[11.5px] transition-colors",
                       correct
@@ -331,13 +368,78 @@ function InterviewPrepPage() {
   const [company, setCompany] = useState(defaultCompany);
   const [customCompany, setCustomCompany] = useState("");
   const [activeTab, setActiveTab] = useState<PrepTab>("overview");
-  const [practiced, setPracticed] = useState<string[]>([]);
-  const [answer, setAnswer] = useState("");
-  const [checklist, setChecklist] = useState<string[]>([]);
   const targetRole = user?.goal || user?.role || "Technology role";
   const selectedCompany = company === "__custom__" ? customCompany.trim() : company.trim();
   const intel = buildInterviewIntel(targetRole, selectedCompany);
   const firstQuestion = intel.questions[0];
+
+  // Persisted prep state (Supabase, per company + role) — no longer
+  // local useState that resets on refresh.
+  const { data: savedPrep } = useInterviewPrep(selectedCompany, intel.role);
+  const savePrep = useSaveInterviewPrep();
+  const [practiced, setPracticed] = useState<string[]>([]);
+  const [checklist, setChecklist] = useState<string[]>([]);
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [answer, setAnswer] = useState("");
+  const hydratedKey = useRef("");
+
+  useEffect(() => {
+    const key = `${selectedCompany}|||${intel.role}`;
+    if (hydratedKey.current === key) return;
+    if (savedPrep === undefined) return;
+    hydratedKey.current = key;
+    setPracticed(savedPrep?.practicedQuestions ?? []);
+    setChecklist(savedPrep?.checklistItems ?? []);
+    const loadedDrafts = savedPrep?.answerDrafts ?? {};
+    setDrafts(loadedDrafts);
+    setAnswer(firstQuestion ? (loadedDrafts[firstQuestion.question] ?? "") : "");
+  }, [savedPrep, selectedCompany, intel.role, firstQuestion]);
+
+  function persist(next: {
+    practiced?: string[];
+    checklist?: string[];
+    drafts?: Record<string, string>;
+  }) {
+    savePrep.mutate({
+      company: selectedCompany,
+      role: intel.role,
+      practicedQuestions: next.practiced ?? practiced,
+      checklistItems: next.checklist ?? checklist,
+      answerDrafts: next.drafts ?? drafts,
+    });
+  }
+
+  function togglePracticed(value: string) {
+    const next = practiced.includes(value)
+      ? practiced.filter((item) => item !== value)
+      : [...practiced, value];
+    setPracticed(next);
+    persist({ practiced: next });
+  }
+
+  function toggleChecklist(value: string) {
+    const next = checklist.includes(value)
+      ? checklist.filter((item) => item !== value)
+      : [...checklist, value];
+    setChecklist(next);
+    persist({ checklist: next });
+  }
+
+  function saveDraft() {
+    if (!firstQuestion) return;
+    const next = { ...drafts, [firstQuestion.question]: answer };
+    setDrafts(next);
+    persist({ drafts: next });
+  }
+
+  // MCQ attempts (persisted; latest answer per question is restored).
+  const { data: mcqData } = useMcqAttempts(selectedCompany, intel.role);
+  const recordMcq = useRecordMcqAttempt();
+  const initialMcqAnswers = useMemo(() => {
+    const out: Record<string, string> = {};
+    for (const attempt of mcqData?.latest ?? []) out[attempt.mcqId] = attempt.selectedOption;
+    return out;
+  }, [mcqData]);
 
   const visibleQuestions = useMemo(
     () =>
@@ -346,10 +448,12 @@ function InterviewPrepPage() {
         : intel.questions.filter((question) => question.category === activeTab),
     [activeTab, intel.questions],
   );
-  const readiness = Math.min(100, 42 + practiced.length * 12 + checklist.length * 4);
-  const toggleItem = (items: string[], value: string, setter: (next: string[]) => void) => {
-    setter(items.includes(value) ? items.filter((item) => item !== value) : [...items, value]);
-  };
+  // Honest progress: a real count of practiced prompts, not a formula
+  // score. The old "42 + practiced*12 + checklist*4" readiness number
+  // was invented and is gone.
+  const totalQuestions = intel.questions.length;
+  const progressPct =
+    totalQuestions > 0 ? Math.round((practiced.length / totalQuestions) * 100) : 0;
 
   return (
     <AppLayout
@@ -367,7 +471,7 @@ function InterviewPrepPage() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-terracotta">
-                    AI interview cockpit
+                    Interview practice plan
                   </p>
                   <h2 className="mt-2 text-2xl font-black sm:text-3xl">{intel.role}</h2>
                   <p className="mt-1 max-w-xl text-[13px] leading-relaxed text-white/65">
@@ -377,17 +481,19 @@ function InterviewPrepPage() {
               </div>
               <div className="w-full rounded-2xl border border-white/10 bg-white/[0.06] p-4 sm:w-auto sm:min-w-[190px]">
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-white/55">Prep readiness</span>
-                  <span className="font-bold text-terracotta">{readiness}%</span>
+                  <span className="text-white/55">Prep progress</span>
+                  <span className="font-bold text-terracotta">
+                    {practiced.length} of {totalQuestions} prompts
+                  </span>
                 </div>
                 <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
                   <div
                     className="h-full rounded-full bg-terracotta transition-all"
-                    style={{ width: `${readiness}%` }}
+                    style={{ width: `${progressPct}%` }}
                   />
                 </div>
                 <p className="mt-2 text-[10px] text-white/45">
-                  Practice questions to raise your score
+                  {checklist.length} of 4 evidence items ready · Progress is saved
                 </p>
               </div>
             </div>
@@ -501,7 +607,23 @@ function InterviewPrepPage() {
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
           <div className="space-y-4">
             {activeTab === "mcq_checkpoint" ? (
-              <McqCheckpoint key={`${intel.role}:${intel.company}`} questions={intel.mcqs} />
+              <McqCheckpoint
+                key={`${intel.role}:${intel.company}`}
+                questions={intel.mcqs}
+                company={selectedCompany}
+                role={intel.role}
+                initialAnswers={mcqData ? initialMcqAnswers : undefined}
+                totalAttempts={mcqData?.totalAttempts ?? 0}
+                onAnswer={(mcqId, selectedOption, correct) =>
+                  recordMcq.mutate({
+                    company: selectedCompany,
+                    role: intel.role,
+                    mcqId,
+                    selectedOption,
+                    correct,
+                  })
+                }
+              />
             ) : activeTab === "answer_lab" ? (
               <div className="card-surface p-5 sm:p-6">
                 <div className="flex items-start gap-3">
@@ -527,18 +649,21 @@ function InterviewPrepPage() {
                 <textarea
                   value={answer}
                   onChange={(event) => setAnswer(event.target.value)}
+                  onBlur={saveDraft}
                   placeholder="Use: context, decision, evidence, result, reflection..."
                   className="mt-4 min-h-40 w-full resize-y rounded-2xl border border-border bg-card p-4 text-[13px] leading-relaxed outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-terracotta"
                 />
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                   <p className="text-[11px] text-muted-foreground">
-                    {answer.trim().length} characters · Aim for 60 to 90 seconds aloud
+                    {answer.trim().length} characters · Aim for 60 to 90 seconds aloud · Drafts
+                    are saved
                   </p>
                   <Button
                     className="rounded-xl bg-ink text-xs font-bold text-white hover:bg-ink/90"
-                    onClick={() =>
-                      firstQuestion && toggleItem(practiced, firstQuestion.question, setPracticed)
-                    }
+                    onClick={() => {
+                      saveDraft();
+                      if (firstQuestion) togglePracticed(firstQuestion.question);
+                    }}
                   >
                     {firstQuestion && practiced.includes(firstQuestion.question)
                       ? "Practice logged"
@@ -580,7 +705,7 @@ function InterviewPrepPage() {
                       key={question.question}
                       question={question}
                       selected={practiced.includes(question.question)}
-                      onPractice={() => toggleItem(practiced, question.question, setPracticed)}
+                      onPractice={() => togglePracticed(question.question)}
                     />
                   ))}
                 </div>
@@ -607,7 +732,7 @@ function InterviewPrepPage() {
                   <button
                     type="button"
                     key={item}
-                    onClick={() => toggleItem(checklist, item, setChecklist)}
+                    onClick={() => toggleChecklist(item)}
                     className="flex w-full items-center gap-2 text-left text-[11.5px]"
                   >
                     <span

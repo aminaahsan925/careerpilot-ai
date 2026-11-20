@@ -5,7 +5,6 @@ import {
   ArrowLeft,
   ArrowRight,
   Award,
-  BarChart3,
   BookOpen,
   Brain,
   BriefcaseBusiness,
@@ -14,22 +13,26 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  CircleHelp,
+  Clock3,
   Code2,
+  ExternalLink,
   FileText,
   Flame,
-  Lightbulb,
+  Link2,
   Loader2,
   MessageCircle,
+  Mic2,
   Search,
   Send,
   ShieldAlert,
   ShieldX,
   Sparkles,
   Target,
+  Timer,
   TrendingUp,
   UserCheck,
-  X,
-  Zap,
+  XCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
@@ -39,14 +42,23 @@ import { RecruiterDashboardWidgets } from "@/components/recruiter/RecruiterDashb
 import { RecruiterHeroCard } from "@/components/recruiter/RecruiterHeroCard";
 import { RecruiterPipelineStepper } from "@/components/recruiter/RecruiterPipelineStepper";
 import { Button } from "@/components/ui/button";
-import { FEATURED_COMPANIES, type CompanyHiringTruth } from "@/data/company-truth";
+import { useCompanyDashboard } from "@/data/company";
+import { FEATURED_COMPANIES } from "@/data/company-truth";
 import {
+  useChatWithRecruiter,
+  useMockAttempts,
   useRecruiterSession,
   useRunRecruiterAudit,
-  useChatWithRecruiter,
+  useSubmitMockAnswer,
+  type BarComparisonStage,
+  type BrutalVerdict,
+  type EvidenceAuditStage,
+  type MockInterviewAttempt,
+  type MockInterviewQuestion,
   type RecruiterAudit,
   type RecruiterSession,
-  type BrutalVerdict,
+  type RecruiterVerdict,
+  type ResumeScreenStage,
 } from "@/data/recruiter";
 import { useGenerateRoadmapV2 } from "@/data/roadmap-v2";
 import { cn } from "@/lib/utils";
@@ -54,31 +66,93 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/recruiter")({
   head: () => ({
     meta: [
-      { title: "Brutal Honest Recruiter — CareerPilot AI" },
+      { title: "Recruiter Audit — CareerPilot AI" },
       {
         name: "description",
         content:
-          "Face the brutal truth: an AI recruiter from your target company audits your profile and tells you exactly why you'd be hired or rejected.",
+          "A staged recruiter screening against real evidence: resume screen, evidence audit, researched company bar, and a mock interview with a deterministic rubric.",
       },
     ],
   }),
   component: RecruiterPage,
 });
 
-const LAYOUT_TITLE = "Recruiter Audit Engine";
+const LAYOUT_TITLE = "Recruiter Audit";
 const LAYOUT_SUBTITLE =
-  "360° Candidate Intelligence — We analyze candidate proof so you can build your readiness and get hired.";
+  "A staged screening against real evidence — resume screen, evidence audit, company bar, mock interview. No scores from the AI, no hiring probabilities.";
+
+/* ------------------------------------------------------------------ */
+/* Shared bits                                                         */
+/* ------------------------------------------------------------------ */
+
+function CheckStatusIcon({ status }: { status: "pass" | "fail" | "warn" | "unknown" }) {
+  if (status === "pass") return <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />;
+  if (status === "fail") return <XCircle className="h-4 w-4 shrink-0 text-rose-600" />;
+  if (status === "warn") return <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />;
+  return <CircleHelp className="h-4 w-4 shrink-0 text-muted-foreground" />;
+}
+
+const STATUS_LABEL: Record<"pass" | "fail" | "warn" | "unknown", string> = {
+  pass: "Pass",
+  fail: "Missing",
+  warn: "Check",
+  unknown: "Unknown",
+};
+
+/** Hostname for display; never throws on a malformed source URL. */
+function hostOf(url: string): string {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return url.slice(0, 40);
+  }
+}
+
+function SectionHeading({
+  icon: Icon,
+  title,
+  note,
+}: {
+  icon: typeof FileText;
+  title: string;
+  note?: string;
+}) {
+  return (
+    <div>
+      <h3 className="font-display text-lg font-semibold flex items-center gap-2">
+        <Icon className="h-5 w-5 text-terracotta" />
+        {title}
+      </h3>
+      {note && <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{note}</p>}
+    </div>
+  );
+}
+
+function LegacyAuditNotice() {
+  return (
+    <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-xs leading-relaxed text-foreground">
+      <p className="font-bold flex items-center gap-2">
+        <AlertTriangle className="h-4 w-4 text-amber-600" />
+        This audit predates the staged screens
+      </p>
+      <p className="mt-1 text-muted-foreground">
+        It was run before the resume screen, evidence audit, bar comparison, and mock interview
+        existed. Run a new audit to see the full staged breakdown.
+      </p>
+    </div>
+  );
+}
 
 /* ------------------------------------------------------------------ */
 /* Scanning Animation Overlay                                          */
 /* ------------------------------------------------------------------ */
 
 const SCAN_STEPS = [
-  "Reading your resume and analyzing ATS keyword density...",
-  "Cross-referencing your project portfolio against company hiring bars...",
-  "Evaluating technical depth in the company's primary tech stack...",
-  "Calculating interview survival probability...",
-  "Synthesizing brutal recruiter scorecard...",
+  "Reading your resume and checking it against the job description...",
+  "Auditing claimed skills against linked project proof...",
+  "Comparing your evidence against the researched company bar...",
+  "Drafting mock interview questions from your gaps...",
+  "Assembling your verdict and next action...",
 ];
 
 function ScanningOverlay({ companyName }: { companyName: string }) {
@@ -115,7 +189,7 @@ function ScanningOverlay({ companyName }: { companyName: string }) {
               className={cn(
                 "flex items-center gap-3 rounded-xl border p-3.5 text-xs font-medium transition-colors",
                 i < step
-                  ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-700 dark:text-emerald-300"
+                  ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-700"
                   : i === step
                     ? "border-terracotta/30 bg-terracotta/10 text-foreground font-semibold"
                     : "border-border bg-secondary/30 text-muted-foreground",
@@ -138,7 +212,414 @@ function ScanningOverlay({ companyName }: { companyName: string }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Verdict Card Component                                             */
+/* Company research state (Step 1)                                     */
+/* ------------------------------------------------------------------ */
+
+function CompanyResearchPanel({ companyName }: { companyName: string }) {
+  const { data, isLoading, isError } = useCompanyDashboard(companyName);
+  const isFeatured = FEATURED_COMPANIES.some((co) => co.name === companyName);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 rounded-2xl border border-border bg-secondary/30 p-4 text-xs text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin text-terracotta" />
+        Checking what CareerPilot knows about {companyName}...
+      </div>
+    );
+  }
+
+  if (isError || !data) {
+    return (
+      <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-xs leading-relaxed">
+        <p className="font-bold text-foreground flex items-center gap-2">
+          <Building2 className="h-4 w-4 text-amber-600" />
+          {companyName} is not researched yet
+        </p>
+        <p className="mt-1 text-muted-foreground">
+          Live research could not verify this company&apos;s hiring profile, so the audit cannot
+          run for it. Pick one of the researched companies below, or open the Company page to
+          research it first.
+        </p>
+      </div>
+    );
+  }
+
+  if (data.status === "not_researched" || data.provenance.origin === "unavailable") {
+    return (
+      <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-xs leading-relaxed">
+        <p className="font-bold text-foreground flex items-center gap-2">
+          <Building2 className="h-4 w-4 text-amber-600" />
+          {companyName} is not researched yet
+        </p>
+        <p className="mt-1 text-muted-foreground">
+          No researched hiring profile exists for this company
+          {data.researchError ? ` — ${data.researchError}` : ""}. Pick one of the researched
+          companies below, or open the Company page to research it first.
+        </p>
+      </div>
+    );
+  }
+
+  const researched = data.provenance.origin === "researched";
+  const retrievedDate = data.provenance.retrievedAt
+    ? new Date(data.provenance.retrievedAt).toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : null;
+
+  return (
+    <div className="rounded-2xl border border-border bg-secondary/30 p-4 text-xs leading-relaxed">
+      <div className="flex flex-wrap items-center gap-2">
+        <span
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold",
+            researched
+              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700"
+              : "border-amber-500/30 bg-amber-500/10 text-amber-700",
+          )}
+        >
+          {researched ? <CheckCircle2 className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />}
+          {researched ? "Researched profile" : "Static dataset (unverified)"}
+        </span>
+        <span className="text-muted-foreground">
+          {researched
+            ? `Researched ${retrievedDate ?? "on an unknown date"}`
+            : data.provenance.sourceLabel}
+        </span>
+      </div>
+      <p className="mt-2 text-muted-foreground">
+        {data.hiringAreas.length > 0
+          ? `${data.hiringAreas.length} hiring areas observed · ${data.commonSkills.length} skills tracked`
+          : "No hiring areas observed yet."}
+        {data.provenance.sources.length > 0 && (
+          <>
+            {" · Sources: "}
+            {data.provenance.sources.slice(0, 2).map((s) => (
+              <a
+                key={s.url}
+                href={s.url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-0.5 font-semibold text-terracotta hover:underline"
+              >
+                {hostOf(s.url)}
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            ))}
+          </>
+        )}
+      </p>
+      {!isFeatured && (
+        <p className="mt-2 font-medium text-foreground">
+          The audit itself runs only for the researched companies below — this company&apos;s
+          hiring profile is not in the audit dataset yet.
+        </p>
+      )}
+      {!researched && isFeatured && (
+        <p className="mt-2 text-muted-foreground">
+          The bar-comparison stage will be skipped for this audit: CareerPilot only compares you
+          against a researched hiring bar, never the unverified static dataset.
+        </p>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Stage 1 — Resume screen                                             */
+/* ------------------------------------------------------------------ */
+
+function ResumeScreenSection({ stage }: { stage: ResumeScreenStage }) {
+  if (!stage.available) {
+    return (
+      <div className="card-surface p-6 sm:p-8 space-y-3">
+        <SectionHeading
+          icon={FileText}
+          title="Stage 1 — Resume Screen"
+          note="The 6-second scan: must-have skills, knockout checks, and formatting gates."
+        />
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-xs leading-relaxed text-muted-foreground">
+          {stage.unavailableReason}
+        </div>
+      </div>
+    );
+  }
+
+  const passed = stage.skillChecks.filter((c) => c.status === "pass").length;
+
+  return (
+    <div className="card-surface p-6 sm:p-8 space-y-6">
+      <SectionHeading
+        icon={FileText}
+        title="Stage 1 — Resume Screen"
+        note={
+          stage.source === "job-description"
+            ? `Checked against the job description you pasted — ${passed} of ${stage.skillChecks.length} must-have skills found in your resume.`
+            : `No job description was pasted, so the must-have list comes from the company bar — ${passed} of ${stage.skillChecks.length} found in your resume.`
+        }
+      />
+
+      <div>
+        <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
+          Must-have skills
+        </h4>
+        <div className="space-y-2">
+          {stage.skillChecks.map((check) => (
+            <div
+              key={check.label}
+              className="flex items-start gap-3 rounded-xl border border-border p-3.5"
+            >
+              <CheckStatusIcon status={check.status} />
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-xs font-bold text-foreground">{check.label}</p>
+                  <span className="text-[10px] font-bold text-muted-foreground">
+                    {STATUS_LABEL[check.status]}
+                  </span>
+                </div>
+                <p className="mt-0.5 text-xs text-muted-foreground">{check.detail}</p>
+                {check.lineRef && (
+                  <p className="mt-1 text-[11px] font-medium text-terracotta">{check.lineRef}</p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
+          Knockout checks
+        </h4>
+        <div className="space-y-2">
+          {stage.knockoutChecks.map((check) => (
+            <div
+              key={check.label}
+              className="flex items-start gap-3 rounded-xl border border-border p-3.5"
+            >
+              <CheckStatusIcon status={check.status} />
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-xs font-bold text-foreground">{check.label}</p>
+                  <span className="text-[10px] font-bold text-muted-foreground">
+                    {STATUS_LABEL[check.status]}
+                  </span>
+                </div>
+                <p className="mt-0.5 text-xs text-muted-foreground">{check.detail}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {stage.formatChecks.length > 0 && (
+        <div>
+          <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
+            Formatting gates (ATS checks)
+          </h4>
+          <div className="space-y-2">
+            {stage.formatChecks.map((check) => (
+              <div
+                key={check.label}
+                className="flex items-start gap-3 rounded-xl border border-border p-3.5"
+              >
+                <CheckStatusIcon status={check.status} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold text-foreground">{check.label}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{check.detail}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Stage 2 — Evidence audit                                            */
+/* ------------------------------------------------------------------ */
+
+const EVIDENCE_LEVEL_LABEL: Record<string, string> = {
+  PROVEN: "Proven",
+  PARTIALLY_PROVEN: "Partially proven",
+  WEAK_EVIDENCE: "Weak evidence",
+  CLAIMED_ONLY: "Claimed only",
+  MISSING: "Missing",
+  UNCLEAR: "Unclear",
+};
+
+function EvidenceAuditSection({ stage }: { stage: EvidenceAuditStage }) {
+  return (
+    <div className="card-surface p-6 sm:p-8 space-y-6">
+      <SectionHeading
+        icon={Search}
+        title="Stage 2 — Evidence Audit"
+        note="Claimed vs demonstrated: for each skill your resume claims, the proof behind it — a project, a repo link, or nothing."
+      />
+
+      <div className="flex flex-wrap items-center gap-4 rounded-2xl bg-terracotta/5 border border-terracotta/20 p-4">
+        <div>
+          <p className="font-display text-3xl font-black text-foreground">
+            {stage.evidenceCoverage}%
+          </p>
+          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+            Evidence coverage
+          </p>
+        </div>
+        <p className="max-w-md text-xs leading-relaxed text-muted-foreground">
+          {stage.skillsWithProof} of {stage.claimedSkills} claimed skills have linked proof. This
+          is a share of your own claims, not a hiring probability.
+        </p>
+      </div>
+
+      {stage.items.length === 0 ? (
+        <p className="text-xs text-muted-foreground">
+          No skills recorded yet. Add skills on the Profile page and projects with live links to
+          build your evidence.
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {stage.items.map((item) => (
+            <div
+              key={item.skill}
+              className="flex items-start gap-3 rounded-xl border border-border p-3.5"
+            >
+              {item.proof ? (
+                <Link2 className="h-4 w-4 shrink-0 text-emerald-600 mt-0.5" />
+              ) : (
+                <CircleHelp className="h-4 w-4 shrink-0 text-muted-foreground mt-0.5" />
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-xs font-bold text-foreground">{item.skill}</p>
+                  <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
+                    {EVIDENCE_LEVEL_LABEL[item.level] ?? item.level}
+                  </span>
+                </div>
+                <p className="mt-0.5 text-xs text-muted-foreground">{item.reason}</p>
+                {item.proof && (
+                  <p className="mt-1 text-xs">
+                    <span className="font-semibold text-foreground">Proof: </span>
+                    {item.proof.url ? (
+                      <a
+                        href={item.proof.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 font-semibold text-terracotta hover:underline"
+                      >
+                        {item.proof.label}
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground">{item.proof.label}</span>
+                    )}
+                  </p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Stage 3 — Bar comparison                                            */
+/* ------------------------------------------------------------------ */
+
+function BarComparisonSection({ stage }: { stage: BarComparisonStage }) {
+  if (stage.state === "unknown") {
+    return (
+      <div className="card-surface p-6 sm:p-8 space-y-3">
+        <SectionHeading
+          icon={Target}
+          title="Stage 3 — Bar Comparison"
+          note="Your evidence profile against the company's researched hiring bar."
+        />
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
+          <p className="text-xs font-bold text-foreground flex items-center gap-2">
+            <CircleHelp className="h-4 w-4 text-amber-600" />
+            Bar unknown — stage skipped
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{stage.reason}</p>
+        </div>
+      </div>
+    );
+  }
+
+  const retrievedDate = new Date(stage.retrievedAt).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+
+  return (
+    <div className="card-surface p-6 sm:p-8 space-y-6">
+      <SectionHeading
+        icon={Target}
+        title={`Stage 3 — Bar Comparison · ${stage.companyName}`}
+        note={`Compared against the researched hiring bar (researched ${retrievedDate}). Every item cites its source.`}
+      />
+      <div className="space-y-2">
+        {stage.items.map((item) => (
+          <div
+            key={item.item}
+            className="flex items-start gap-3 rounded-xl border border-border p-3.5"
+          >
+            {item.status === "meets" ? (
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 mt-0.5" />
+            ) : item.status === "partial" ? (
+              <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
+            ) : (
+              <XCircle className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" />
+            )}
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-xs font-bold text-foreground">{item.item}</p>
+                <span
+                  className={cn(
+                    "rounded-full px-2 py-0.5 text-[10px] font-bold",
+                    item.status === "meets" && "bg-emerald-500/10 text-emerald-700",
+                    item.status === "partial" && "bg-amber-500/10 text-amber-700",
+                    item.status === "missing" && "bg-rose-500/10 text-rose-700",
+                  )}
+                >
+                  {item.status === "meets" ? "Meets" : item.status === "partial" ? "Partial" : "Missing"}
+                </span>
+              </div>
+              <p className="mt-0.5 text-xs text-muted-foreground">{item.evidence}</p>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Source: {item.sourceLabel} · {retrievedDate}
+                {item.sourceUrl && (
+                  <>
+                    {" · "}
+                    <a
+                      href={item.sourceUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-0.5 font-semibold text-terracotta hover:underline"
+                    >
+                      {hostOf(item.sourceUrl)}
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </>
+                )}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Verdict Card Component (deterministic rubric detail)                */
 /* ------------------------------------------------------------------ */
 
 const CATEGORY_ICONS: Record<string, typeof Code2> = {
@@ -150,15 +631,32 @@ const CATEGORY_ICONS: Record<string, typeof Code2> = {
   "Culture Fit": Award,
 };
 
-const SEVERITY_BADGES = {
-  fatal: "🔴 Fatal",
-  critical: "🟡 Critical",
-  strong: "🟢 Strong",
+const SEVERITY_BADGES: Record<
+  BrutalVerdict["severity"],
+  { label: string; icon: typeof ShieldX; className: string }
+> = {
+  fatal: {
+    label: "Fatal",
+    icon: ShieldX,
+    className: "border-rose-500/30 bg-rose-500/10 text-rose-700",
+  },
+  critical: {
+    label: "Critical",
+    icon: ShieldAlert,
+    className: "border-amber-500/30 bg-amber-500/10 text-amber-700",
+  },
+  strong: {
+    label: "Strong",
+    icon: CheckCircle2,
+    className: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700",
+  },
 };
 
 function VerdictCard({ verdict }: { verdict: BrutalVerdict }) {
   const [expanded, setExpanded] = useState(false);
   const Icon = CATEGORY_ICONS[verdict.category] || ShieldAlert;
+  const badge = SEVERITY_BADGES[verdict.severity];
+  const BadgeIcon = badge.icon;
 
   return (
     <div className="card-surface overflow-hidden transition-all hover:border-terracotta/30 shadow-xs">
@@ -173,8 +671,14 @@ function VerdictCard({ verdict }: { verdict: BrutalVerdict }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h4 className="text-sm font-bold text-foreground">{verdict.category}</h4>
-            <span className="rounded-full bg-secondary px-2.5 py-0.5 text-[10px] font-bold text-muted-foreground">
-              {SEVERITY_BADGES[verdict.severity]}
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold",
+                badge.className,
+              )}
+            >
+              <BadgeIcon className="h-3 w-3" />
+              {badge.label}
             </span>
           </div>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground font-medium">{verdict.assessment}</p>
@@ -197,10 +701,291 @@ function VerdictCard({ verdict }: { verdict: BrutalVerdict }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Recruiter Chat Component                                           */
+/* Stage 4 — Mock interview                                            */
 /* ------------------------------------------------------------------ */
 
-function RecruiterChat({ session, companyName }: { session: RecruiterSession; companyName: string }) {
+const MOCK_TARGET_SECONDS = 90;
+
+/**
+ * The scoring rubric, shown next to every answer. These rules are the
+ * deterministic rubric implemented in recruiter.server.ts
+ * (scoreMockAnswer) — the LLM never scores an answer.
+ */
+const MOCK_RUBRIC: Array<{
+  key: "structure" | "specificity" | "evidence";
+  criterion: string;
+  rule: string;
+}> = [
+  {
+    key: "structure",
+    criterion: "Structure",
+    rule: "2 points for 3+ sentences with a clear beginning, middle, and result; 1 for 2 sentences.",
+  },
+  {
+    key: "specificity",
+    criterion: "Specificity",
+    rule: "2 points for naming both a number or metric and a specific technology; 1 for one of the two.",
+  },
+  {
+    key: "evidence",
+    criterion: "Evidence cited",
+    rule: "2 points for naming one of your real projects or linking a repo; 1 for a generic project mention.",
+  },
+];
+
+const QUESTION_SOURCE_LABEL: Record<MockInterviewQuestion["source"], string> = {
+  jd: "From the job description",
+  company: "Company bar",
+  "evidence-gap": "Your evidence gap",
+  general: "General practice",
+};
+
+function formatSeconds(total: number) {
+  const minutes = Math.floor(total / 60);
+  const seconds = total % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+function MockInterviewSection({ session }: { session: RecruiterSession }) {
+  const stage = session.auditResult.mockInterview;
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [answer, setAnswer] = useState("");
+  const [elapsed, setElapsed] = useState(0);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [lastAttempt, setLastAttempt] = useState<MockInterviewAttempt | null>(null);
+
+  const submit = useSubmitMockAnswer();
+  const { data: summary } = useMockAttempts(session.id);
+
+  useEffect(() => {
+    if (!timerRunning) return;
+    const id = setInterval(() => setElapsed((value) => value + 1), 1000);
+    return () => clearInterval(id);
+  }, [timerRunning]);
+
+  if (!stage || stage.questions.length === 0) {
+    return (
+      <div className="card-surface p-6 sm:p-8 space-y-3">
+        <SectionHeading
+          icon={Mic2}
+          title="Stage 4 — Mock Interview"
+          note="Role- and company-specific questions, answered against a timed target and scored on a shown rubric."
+        />
+        <LegacyAuditNotice />
+      </div>
+    );
+  }
+
+  const selected = stage.questions.find((q) => q.id === selectedId) ?? stage.questions[0]!;
+  const remaining = MOCK_TARGET_SECONDS - elapsed;
+  const overTime = elapsed > MOCK_TARGET_SECONDS;
+
+  function selectQuestion(id: string) {
+    setSelectedId(id);
+    setAnswer("");
+    setElapsed(0);
+    setTimerRunning(false);
+    setLastAttempt(null);
+  }
+
+  function handleAnswerChange(value: string) {
+    setAnswer(value);
+    if (!timerRunning && value.trim().length > 0) setTimerRunning(true);
+  }
+
+  function handleSubmit() {
+    if (!answer.trim() || submit.isPending) return;
+    setTimerRunning(false);
+    submit.mutate(
+      {
+        sessionId: session.id,
+        questionId: selected.id,
+        question: selected.question,
+        answer: answer.trim(),
+        timeSpentSeconds: elapsed,
+      },
+      {
+        onSuccess: (data) => setLastAttempt(data.attempt),
+        onError: () => toast.error("Could not save your answer. Please try again."),
+      },
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="card-surface p-6 sm:p-8 space-y-6">
+        <SectionHeading
+          icon={Mic2}
+          title="Stage 4 — Mock Interview"
+          note={
+            stage.generatedBy === "ai"
+              ? "Questions drafted by the coach from your job description, the company bar, and your evidence gaps."
+              : "AI question drafting was unavailable, so these are template questions built from your job description and evidence gaps."
+          }
+        />
+
+        <div className="space-y-2">
+          {stage.questions.map((q) => {
+            const isSelected = q.id === selected.id;
+            const attempted = summary?.attempts.some((a) => a.questionId === q.id) ?? false;
+            return (
+              <button
+                key={q.id}
+                type="button"
+                onClick={() => selectQuestion(q.id)}
+                className={cn(
+                  "w-full rounded-xl border p-3.5 text-left transition-colors",
+                  isSelected
+                    ? "border-terracotta bg-terracotta/5"
+                    : "border-border hover:border-terracotta/30",
+                )}
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className={cn(
+                      "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold",
+                      isSelected ? "bg-terracotta text-white" : "bg-secondary text-muted-foreground",
+                    )}
+                  >
+                    {q.id.replace("q", "")}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold leading-relaxed text-foreground">{q.question}</p>
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      {QUESTION_SOURCE_LABEL[q.source]} · Tests: {q.focus}
+                      {attempted && " · Attempted"}
+                    </p>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="rounded-2xl border border-border bg-secondary/30 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs font-bold text-foreground flex items-center gap-2">
+              <Timer className="h-4 w-4 text-terracotta" />
+              {overTime
+                ? `Over the ${MOCK_TARGET_SECONDS}-second target — you can still submit`
+                : `${formatSeconds(Math.max(0, remaining))} left of the ${MOCK_TARGET_SECONDS}-second target`}
+            </p>
+            <span className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
+              <Clock3 className="h-3.5 w-3.5" />
+              {formatSeconds(elapsed)} elapsed
+            </span>
+          </div>
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-secondary">
+            <div
+              className={cn("h-full rounded-full transition-all", overTime ? "bg-amber-500" : "bg-terracotta")}
+              style={{ width: `${Math.min(100, (elapsed / MOCK_TARGET_SECONDS) * 100)}%` }}
+            />
+          </div>
+          <textarea
+            value={answer}
+            onChange={(e) => handleAnswerChange(e.target.value)}
+            placeholder="Answer out loud first, then write what you said: situation, action, result — with a number and a project name."
+            className="mt-4 min-h-32 w-full resize-y rounded-2xl border border-border bg-card p-4 text-[13px] leading-relaxed outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-terracotta"
+          />
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-[11px] text-muted-foreground">
+              {answer.trim().length} characters · The timer starts when you begin typing.
+            </p>
+            <Button
+              onClick={handleSubmit}
+              disabled={submit.isPending || !answer.trim()}
+              className="rounded-xl px-5 py-2.5 font-bold text-xs bg-terracotta hover:bg-terracotta/90 text-white"
+            >
+              {submit.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  Submit answer
+                  <Send className="ml-2 h-4 w-4" />
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+
+        <div>
+          <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
+            How answers are scored (rubric shown — the AI never scores)
+          </h4>
+          <div className="space-y-2">
+            {MOCK_RUBRIC.map((row) => {
+              const scored = lastAttempt?.rubric.find((r) => r.criterion === row.key);
+              return (
+                <div
+                  key={row.criterion}
+                  className="flex items-start justify-between gap-3 rounded-xl border border-border p-3.5"
+                >
+                  <div>
+                    <p className="text-xs font-bold text-foreground">{row.criterion}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{row.rule}</p>
+                    {scored && (
+                      <p className="mt-1 text-xs font-medium text-terracotta">{scored.reason}</p>
+                    )}
+                  </div>
+                  {scored && (
+                    <span className="shrink-0 rounded-full bg-terracotta/10 px-2.5 py-1 text-[11px] font-bold text-terracotta">
+                      {scored.score}/{scored.max}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          {lastAttempt && (
+            <p className="mt-3 text-xs font-bold text-foreground">
+              Last answer: {lastAttempt.totalScore}/6 · {formatSeconds(lastAttempt.timeSpentSeconds)}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {summary && summary.totalAttempts > 0 && (
+        <div className="card-surface p-6 sm:p-8 space-y-4">
+          <SectionHeading
+            icon={TrendingUp}
+            title="Your progress over time"
+            note={`${summary.totalAttempts} attempt${summary.totalAttempts === 1 ? "" : "s"} on this audit · Average ${summary.averageTotal ?? "—"}/6 · Best ${summary.bestTotal ?? "—"}/6`}
+          />
+          <div className="space-y-2">
+            {[...summary.attempts].reverse().slice(0, 5).map((attempt) => (
+              <div
+                key={attempt.id}
+                className="flex items-start justify-between gap-3 rounded-xl border border-border p-3.5"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold leading-relaxed text-foreground">{attempt.question}</p>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                    {new Date(attempt.createdAt).toLocaleString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}{" "}
+                    · {formatSeconds(attempt.timeSpentSeconds)}
+                  </p>
+                </div>
+                <span className="shrink-0 rounded-full bg-secondary px-2.5 py-1 text-[11px] font-bold text-foreground">
+                  {attempt.totalScore}/6
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Coach Chat (reframed — never "Head of Talent at {real company}")    */
+/* ------------------------------------------------------------------ */
+
+function CoachChat({ session, companyName }: { session: RecruiterSession; companyName: string }) {
   const [input, setInput] = useState("");
   const chat = useChatWithRecruiter();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -231,10 +1016,10 @@ function RecruiterChat({ session, companyName }: { session: RecruiterSession; co
   }
 
   const QUICK_QUESTIONS = [
-    "What specific project should I build to impress you?",
-    "How do I prepare for your technical interview?",
+    "What specific project should I build to close my biggest gap?",
+    "How do I prepare for the technical interview?",
     "What skills should I prioritize learning first?",
-    "Is my resume good enough for your ATS screening?",
+    "Is my resume good enough for ATS screening?",
   ];
 
   return (
@@ -244,10 +1029,10 @@ function RecruiterChat({ session, companyName }: { session: RecruiterSession; co
           <UserCheck className="h-5 w-5" />
         </div>
         <div>
-          <h4 className="text-sm font-bold text-foreground">{companyName} — Head of Talent</h4>
+          <h4 className="text-sm font-bold text-foreground">Practice with a recruiter-style coach</h4>
           <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5 font-medium">
             <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            Online — Ask any brutal questions about your hiring chances
+            Coaching for {companyName} — a practice coach, not their hiring team
           </p>
         </div>
       </div>
@@ -255,7 +1040,8 @@ function RecruiterChat({ session, companyName }: { session: RecruiterSession; co
       <div className="max-h-[380px] space-y-3 overflow-y-auto p-6">
         {messages.length === 0 && (
           <p className="py-6 text-center text-xs text-muted-foreground font-medium">
-            Ask the recruiter anything: target salary, how to prepare, project ideas, or why you'd be rejected.
+            Ask the coach anything: how to close your gaps, how to prepare, project ideas, or why
+            an application would be rejected.
           </p>
         )}
         {messages.map((msg, i) => (
@@ -276,7 +1062,7 @@ function RecruiterChat({ session, companyName }: { session: RecruiterSession; co
           <div className="flex justify-start">
             <div className="flex items-center gap-2 rounded-2xl rounded-bl-xs bg-secondary px-4 py-3 text-xs text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin text-terracotta" />
-              {companyName} recruiter is typing...
+              Coach is typing...
             </div>
           </div>
         )}
@@ -303,7 +1089,7 @@ function RecruiterChat({ session, companyName }: { session: RecruiterSession; co
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
-          placeholder="Ask the recruiter..."
+          placeholder="Ask the coach..."
           disabled={chat.isPending}
           className="flex-1 rounded-xl border border-border bg-background px-4 py-2.5 text-xs font-medium outline-none focus:border-terracotta"
         />
@@ -315,6 +1101,107 @@ function RecruiterChat({ session, companyName }: { session: RecruiterSession; co
         >
           <Send className="h-4 w-4" />
         </Button>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Stage 5 — Verdict & next action                                     */
+/* ------------------------------------------------------------------ */
+
+function VerdictSection({
+  audit,
+  verdict,
+  onAddToRoadmap,
+  roadmapPending,
+}: {
+  audit: RecruiterAudit;
+  verdict: RecruiterVerdict;
+  onAddToRoadmap: () => void;
+  roadmapPending: boolean;
+}) {
+  return (
+    <div className="space-y-6">
+      <div className="card-surface p-6 sm:p-8 space-y-4">
+        <SectionHeading
+          icon={Flame}
+          title="Stage 5 — Verdict"
+          note="Readiness in plain language. Every claim below traces to a stage output — no percentages-as-probabilities."
+        />
+        <div
+          className={cn(
+            "rounded-2xl border p-5",
+            verdict.band === "ready" && "border-emerald-500/30 bg-emerald-500/5",
+            verdict.band === "one_gap" && "border-amber-500/30 bg-amber-500/5",
+            verdict.band === "not_yet" && "border-terracotta/30 bg-terracotta/5",
+          )}
+        >
+          <p className="font-display text-xl font-black text-foreground">{verdict.headline}</p>
+          {verdict.topFixes.length > 0 && (
+            <ol className="mt-3 space-y-2">
+              {verdict.topFixes.map((fix, i) => (
+                <li key={i} className="flex items-start gap-2 text-xs leading-relaxed text-foreground">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-terracotta/10 text-[10px] font-bold text-terracotta">
+                    {i + 1}
+                  </span>
+                  <span>
+                    {fix.fix}{" "}
+                    <span className="text-muted-foreground">({fix.stage})</span>
+                  </span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+
+        <div className="rounded-2xl border border-terracotta/20 bg-terracotta/5 p-5">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-terracotta">
+            Your single highest-value next action
+          </p>
+          <p className="mt-2 text-sm font-bold text-foreground">{verdict.nextAction.label}</p>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            {verdict.nextAction.detail} <span className="font-medium">({verdict.nextAction.stage})</span>
+          </p>
+        </div>
+      </div>
+
+      <div className="card-surface p-6 sm:p-8 space-y-3">
+        <h3 className="font-display text-lg font-semibold flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-terracotta" />
+          Recommended Proof Project to Build
+        </h3>
+        <h4 className="text-sm font-bold text-foreground">{audit.whatYouNeedToBuild.title}</h4>
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          {audit.whatYouNeedToBuild.description}
+        </p>
+        <div className="flex flex-wrap gap-2 pt-2">
+          {audit.whatYouNeedToBuild.techStack.map((t) => (
+            <span
+              key={t}
+              className="rounded-full bg-terracotta/10 px-3 py-1 text-xs font-bold text-terracotta"
+            >
+              {t}
+            </span>
+          ))}
+        </div>
+
+        <div className="pt-4">
+          <Button
+            onClick={onAddToRoadmap}
+            disabled={roadmapPending}
+            className="w-full rounded-xl py-3 font-bold text-xs bg-terracotta hover:bg-terracotta/90 text-white"
+          >
+            {roadmapPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <BookOpen className="mr-2 h-4 w-4" />
+                Add Fixes & Project to My Roadmap
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -333,10 +1220,12 @@ function RecruiterPage() {
   const [selectedCompany, setSelectedCompany] = useState("Systems Limited");
   const [customCompanyInput, setCustomCompanyInput] = useState("");
   const [selectedRole, setSelectedRole] = useState("Associate Software Engineer");
+  const [jobDescription, setJobDescription] = useState("");
 
   const effectiveCompany = isCustomCompany
     ? customCompanyInput.trim() || "Target Company"
     : selectedCompany;
+  const isFeaturedCompany = FEATURED_COMPANIES.some((co) => co.name === effectiveCompany);
 
   const { data: existingSession } = useRecruiterSession();
   const runAudit = useRunRecruiterAudit();
@@ -362,6 +1251,15 @@ function RecruiterPage() {
     }
   }, [existingSession, currentSession]);
 
+  const hasSession = Boolean(currentSession);
+  const hasStages = Boolean(
+    currentSession?.auditResult.resumeScreen &&
+      currentSession?.auditResult.evidenceAudit &&
+      currentSession?.auditResult.barComparison &&
+      currentSession?.auditResult.mockInterview &&
+      currentSession?.auditResult.verdict,
+  );
+
   function handleRunAudit() {
     if (isCustomCompany && !customCompanyInput.trim()) {
       toast.error("Please enter a custom company name.");
@@ -371,13 +1269,23 @@ function RecruiterPage() {
       toast.error("Please select a target company.");
       return;
     }
+    if (!isFeaturedCompany) {
+      toast.error(
+        "The audit runs only for researched companies. Pick one of the featured companies.",
+      );
+      return;
+    }
     if (!selectedRole.trim()) {
       toast.error("Please enter a target role position.");
       return;
     }
 
     runAudit.mutate(
-      { company: effectiveCompany, role: selectedRole },
+      {
+        company: effectiveCompany,
+        role: selectedRole,
+        ...(jobDescription.trim() ? { jobDescription: jobDescription.trim() } : {}),
+      },
       {
         onSuccess: (session) => {
           setCurrentSession(session);
@@ -404,7 +1312,6 @@ function RecruiterPage() {
   return (
     <AppLayout title={LAYOUT_TITLE} subtitle={LAYOUT_SUBTITLE}>
       <div className="space-y-6 pb-12">
-        {/* Top Hero Card (Inspired directly by RECRUITIQ screenshot layout with girl laptop image) */}
         <RecruiterHeroCard
           targetCompany={effectiveCompany}
           targetRole={selectedRole}
@@ -415,8 +1322,11 @@ function RecruiterPage() {
           }
         />
 
-        {/* Process Stepper Pipeline (Inspired directly by bottom stepper in RECRUITIQ screenshot) */}
-        <RecruiterPipelineStepper activeStep={activeStep} onStepClick={setActiveStep} />
+        <RecruiterPipelineStepper
+          activeStep={activeStep}
+          onStepClick={setActiveStep}
+          hasSession={hasSession}
+        />
 
         <AnimatePresence mode="wait">
           {runAudit.isPending ? (
@@ -432,7 +1342,8 @@ function RecruiterPage() {
                         Select Target Employer
                       </h2>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        Pick a prominent Pakistani/Global tech employer or enter your own custom company.
+                        Pick a researched employer, then paste the real job description for the
+                        role. The audit screens your actual resume, projects, and evidence.
                       </p>
                     </div>
 
@@ -494,6 +1405,10 @@ function RecruiterPage() {
                     </div>
                   )}
 
+                  {effectiveCompany !== "Target Company" && (
+                    <CompanyResearchPanel companyName={effectiveCompany} />
+                  )}
+
                   <div className="pt-2">
                     <label className="text-xs font-bold text-foreground">Target Role Position</label>
                     <input
@@ -505,16 +1420,37 @@ function RecruiterPage() {
                     />
                   </div>
 
+                  <div>
+                    <label className="text-xs font-bold text-foreground">
+                      Job Description <span className="text-muted-foreground font-medium">(paste the real posting — recommended)</span>
+                    </label>
+                    <textarea
+                      value={jobDescription}
+                      onChange={(e) => setJobDescription(e.target.value)}
+                      placeholder={"Paste the full job description here. The resume screen checks your resume against its must-have skills, and the mock interview questions are drafted from it.\n\nWithout a JD, the screen checks against the company bar instead."}
+                      className="mt-1.5 min-h-36 w-full resize-y rounded-xl border border-border bg-background px-4 py-3 text-xs leading-relaxed outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-terracotta"
+                    />
+                    <p className="mt-1.5 text-[11px] text-muted-foreground">
+                      {jobDescription.trim().length} characters · Only the extracted keywords are
+                      kept with the audit, not the full text.
+                    </p>
+                  </div>
+
                   <Button
                     onClick={handleRunAudit}
-                    disabled={runAudit.isPending || !selectedRole.trim()}
+                    disabled={runAudit.isPending || !selectedRole.trim() || !isFeaturedCompany}
+                    title={
+                      !isFeaturedCompany
+                        ? "The audit runs only for researched companies — pick a featured company."
+                        : undefined
+                    }
                     className="w-full rounded-xl py-3 font-bold text-xs bg-terracotta hover:bg-terracotta/90 text-white"
                   >
                     {runAudit.isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <>
-                        Run Brutal Recruiter Audit for {effectiveCompany}
+                        Run Recruiter Audit for {effectiveCompany}
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </>
                     )}
@@ -522,17 +1458,67 @@ function RecruiterPage() {
                 </div>
               )}
 
-              {/* STEP 2 & 3: Recruiter Dashboard Widgets & Scorecard */}
-              {(activeStep === 2 || activeStep === 3) && currentSession && (
-                <div className="space-y-6">
-                  {/* Rating Dots & Match Score Dashboard Widgets matching user screenshot */}
-                  <RecruiterDashboardWidgets audit={currentSession.auditResult} companyName={currentSession.companyName} />
+              {/* Steps 2-5 need a session; the stepper disables them, this is defense in depth. */}
+              {activeStep > 1 && !currentSession && (
+                <div className="card-surface p-8 text-center">
+                  <p className="font-display text-lg font-bold text-foreground">Run an audit first</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Pick a company and role on step 1 — the stage screens unlock once an audit
+                    exists.
+                  </p>
+                  <Button
+                    type="button"
+                    onClick={() => setActiveStep(1)}
+                    className="mt-4 rounded-xl bg-terracotta px-5 py-2.5 text-xs font-bold text-white hover:bg-terracotta/90"
+                  >
+                    Go to step 1
+                  </Button>
+                </div>
+              )}
 
-                  {/* Verdict Cards */}
+              {/* STEP 2: Resume Screen + Evidence Audit */}
+              {activeStep === 2 && currentSession && (
+                <div className="space-y-6">
+                  {hasStages ? (
+                    <>
+                      <ResumeScreenSection stage={currentSession.auditResult.resumeScreen!} />
+                      <EvidenceAuditSection stage={currentSession.auditResult.evidenceAudit!} />
+                    </>
+                  ) : (
+                    <LegacyAuditNotice />
+                  )}
+
+                  <div className="flex justify-end pt-4 border-t border-border mt-6">
+                    <Button
+                      onClick={() => setActiveStep(3)}
+                      className="rounded-xl px-6 py-2.5 font-bold text-xs bg-terracotta hover:bg-terracotta/90 text-white"
+                    >
+                      Continue to Evidence & Bar
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 3: Bar Comparison + Scorecard + Rubric detail */}
+              {activeStep === 3 && currentSession && (
+                <div className="space-y-6">
+                  {hasStages ? (
+                    <>
+                      <BarComparisonSection stage={currentSession.auditResult.barComparison!} />
+                      <RecruiterDashboardWidgets audit={currentSession.auditResult} companyName={currentSession.companyName} />
+                    </>
+                  ) : (
+                    <>
+                      <LegacyAuditNotice />
+                      <RecruiterDashboardWidgets audit={currentSession.auditResult} companyName={currentSession.companyName} />
+                    </>
+                  )}
+
                   <div>
                     <h3 className="font-display text-lg font-semibold mb-3 flex items-center gap-2">
                       <Flame className="h-5 w-5 text-terracotta" />
-                      Brutal Verdict Breakdown
+                      Evidence Rubric Detail
                     </h3>
                     <div className="grid gap-3 sm:grid-cols-2">
                       {currentSession.auditResult.brutalVerdicts.map((v) => (
@@ -541,81 +1527,121 @@ function RecruiterPage() {
                     </div>
                   </div>
 
-                  {/* Step Navigation */}
-                  <div className="flex justify-end pt-4 border-t border-border mt-6">
-                    <Button 
+                  <div className="flex justify-between pt-4 border-t border-border mt-6">
+                    <Button
+                      variant="outline"
+                      onClick={() => setActiveStep(2)}
+                      className="rounded-xl px-6 py-2.5 font-bold text-xs"
+                    >
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      Back to Resume Screen
+                    </Button>
+                    <Button
                       onClick={() => setActiveStep(4)}
                       className="rounded-xl px-6 py-2.5 font-bold text-xs bg-terracotta hover:bg-terracotta/90 text-white"
                     >
-                      Continue to Action Plan
+                      Continue to Mock Interview
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </div>
                 </div>
               )}
 
-              {/* STEP 4 & 5: Live Q&A & Roadmap Action Plan */}
-              {(activeStep === 4 || activeStep === 5) && currentSession && (
+              {/* STEP 4: Mock Interview + Coach Chat */}
+              {activeStep === 4 && currentSession && (
                 <div className="space-y-6">
-                  {/* Recommended Proof Project */}
-                  <div className="card-surface p-6 sm:p-8 space-y-3">
-                    <h3 className="font-display text-lg font-semibold flex items-center gap-2">
-                      <Sparkles className="h-5 w-5 text-terracotta" />
-                      Recommended Proof Project to Build
-                    </h3>
-                    <h4 className="text-sm font-bold text-foreground">
-                      {currentSession.auditResult.whatYouNeedToBuild.title}
-                    </h4>
-                    <p className="text-xs leading-relaxed text-muted-foreground">
-                      {currentSession.auditResult.whatYouNeedToBuild.description}
-                    </p>
-                    <div className="flex flex-wrap gap-2 pt-2">
-                      {currentSession.auditResult.whatYouNeedToBuild.techStack.map((t) => (
-                        <span
-                          key={t}
-                          className="rounded-full bg-terracotta/10 px-3 py-1 text-xs font-bold text-terracotta"
-                        >
-                          {t}
-                        </span>
-                      ))}
-                    </div>
+                  <MockInterviewSection session={currentSession} />
 
-                    <div className="pt-4">
-                      <Button
-                        onClick={handleAddToRoadmap}
-                        disabled={generateRoadmap.isPending}
-                        className="w-full rounded-xl py-3 font-bold text-xs bg-terracotta hover:bg-terracotta/90 text-white"
-                      >
-                        {generateRoadmap.isPending ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <>
-                            <BookOpen className="mr-2 h-4 w-4" />
-                            Add Fixes & Project to My Roadmap
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Live Chat */}
                   <div>
                     <h3 className="font-display text-lg font-semibold mb-3 flex items-center gap-2">
                       <MessageCircle className="h-5 w-5 text-terracotta" />
-                      Live Chat with {currentSession.companyName} Recruiter
+                      Practice with the Coach
                     </h3>
-                    <RecruiterChat session={currentSession} companyName={currentSession.companyName} />
+                    <CoachChat session={currentSession} companyName={currentSession.companyName} />
                   </div>
 
-                  {/* Step Navigation */}
-                  <div className="flex justify-start pt-4 border-t border-border mt-6">
-                    <Button 
+                  <div className="flex justify-between pt-4 border-t border-border mt-6">
+                    <Button
                       variant="outline"
                       onClick={() => setActiveStep(3)}
                       className="rounded-xl px-6 py-2.5 font-bold text-xs"
                     >
                       <ArrowLeft className="mr-2 h-4 w-4" />
-                      Back to Dashboard
+                      Back to Evidence & Bar
+                    </Button>
+                    <Button
+                      onClick={() => setActiveStep(5)}
+                      className="rounded-xl px-6 py-2.5 font-bold text-xs bg-terracotta hover:bg-terracotta/90 text-white"
+                    >
+                      Continue to Verdict
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 5: Verdict & Action Plan */}
+              {activeStep === 5 && currentSession && (
+                <div className="space-y-6">
+                  {hasStages && currentSession.auditResult.verdict ? (
+                    <VerdictSection
+                      audit={currentSession.auditResult}
+                      verdict={currentSession.auditResult.verdict}
+                      onAddToRoadmap={handleAddToRoadmap}
+                      roadmapPending={generateRoadmap.isPending}
+                    />
+                  ) : (
+                    <div className="space-y-6">
+                      <LegacyAuditNotice />
+                      <div className="card-surface p-6 sm:p-8 space-y-3">
+                        <h3 className="font-display text-lg font-semibold flex items-center gap-2">
+                          <Sparkles className="h-5 w-5 text-terracotta" />
+                          Recommended Proof Project to Build
+                        </h3>
+                        <h4 className="text-sm font-bold text-foreground">
+                          {currentSession.auditResult.whatYouNeedToBuild.title}
+                        </h4>
+                        <p className="text-xs leading-relaxed text-muted-foreground">
+                          {currentSession.auditResult.whatYouNeedToBuild.description}
+                        </p>
+                        <div className="flex flex-wrap gap-2 pt-2">
+                          {currentSession.auditResult.whatYouNeedToBuild.techStack.map((t) => (
+                            <span
+                              key={t}
+                              className="rounded-full bg-terracotta/10 px-3 py-1 text-xs font-bold text-terracotta"
+                            >
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="pt-4">
+                          <Button
+                            onClick={handleAddToRoadmap}
+                            disabled={generateRoadmap.isPending}
+                            className="w-full rounded-xl py-3 font-bold text-xs bg-terracotta hover:bg-terracotta/90 text-white"
+                          >
+                            {generateRoadmap.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <>
+                                <BookOpen className="mr-2 h-4 w-4" />
+                                Add Fixes & Project to My Roadmap
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-start pt-4 border-t border-border mt-6">
+                    <Button
+                      variant="outline"
+                      onClick={() => setActiveStep(4)}
+                      className="rounded-xl px-6 py-2.5 font-bold text-xs"
+                    >
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      Back to Mock Interview
                     </Button>
                   </div>
                 </div>
@@ -627,4 +1653,3 @@ function RecruiterPage() {
     </AppLayout>
   );
 }
-

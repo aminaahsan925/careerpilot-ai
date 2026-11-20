@@ -1,113 +1,18 @@
-// Client-side Push Notification and Service Worker Manager
+// Local event pins + immediate local reminders.
+//
+// NOTE (2026-11-20 rebuild): CareerPilot has NO push notification system.
+// The old push facade was removed: there is no service-worker registration,
+// no push subscription, and no "subscribed" localStorage flag — the
+// previous toggle claimed users would receive daily updates "even when
+// closed", which was false. What remains here is honest and local:
+//   - pinned events (localStorage only, shown on the Roadmap page), and
+//   - an immediate local notification shown the moment the user taps a
+//     reminder button (plain `Notification`, no service worker, nothing
+//     scheduled, nothing sent later).
+// In-app notifications are separate and real: roadmap_notifications rows
+// rendered by NotificationBell.
 
-export interface NotificationPreferences {
-  events: boolean;
-  roadmap: boolean;
-  future_tech: boolean;
-  market_reality: boolean;
-  city: string;
-}
-
-const STORAGE_KEY = 'careerpilot_push_preferences';
-const SUBSCRIPTION_STATUS_KEY = 'careerpilot_push_subscribed';
 const PINNED_EVENTS_KEY = 'careerpilot_pinned_events';
-
-export const DEFAULT_PREFERENCES: NotificationPreferences = {
-  events: true,
-  roadmap: true,
-  future_tech: true,
-  market_reality: true,
-  city: 'Lahore',
-};
-
-// Register Service Worker
-export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
-  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
-    return null;
-  }
-
-  try {
-    const registration = await navigator.serviceWorker.register('/sw.js', {
-      scope: '/',
-    });
-    return registration;
-  } catch (error) {
-    console.warn('[CareerPilot SW] Service worker registration failed:', error);
-    return null;
-  }
-}
-
-// Request Notification Permission
-export async function requestNotificationPermission(): Promise<NotificationPermission> {
-  if (typeof window === 'undefined' || !('Notification' in window)) {
-    return 'denied';
-  }
-
-  try {
-    const permission = await Notification.requestPermission();
-    if (permission === 'granted') {
-      await registerServiceWorker();
-      localStorage.setItem(SUBSCRIPTION_STATUS_KEY, 'true');
-    }
-    return permission;
-  } catch (err) {
-    console.error('Error requesting notification permission:', err);
-    return 'denied';
-  }
-}
-
-// Get saved preferences
-export function getNotificationPreferences(): NotificationPreferences {
-  if (typeof window === 'undefined') return DEFAULT_PREFERENCES;
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? { ...DEFAULT_PREFERENCES, ...JSON.parse(saved) } : DEFAULT_PREFERENCES;
-  } catch {
-    return DEFAULT_PREFERENCES;
-  }
-}
-
-// Save preferences
-export function saveNotificationPreferences(prefs: NotificationPreferences) {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
-}
-
-// Check if subscribed
-export function isPushSubscribed(): boolean {
-  if (typeof window === 'undefined' || !('Notification' in window)) return false;
-  return Notification.permission === 'granted' && localStorage.getItem(SUBSCRIPTION_STATUS_KEY) === 'true';
-}
-
-// Trigger a native test notification
-export async function sendLocalTestNotification(title: string, body: string, url: string = '/market') {
-  if (typeof window === 'undefined') return false;
-
-  if (Notification.permission !== 'granted') {
-    const permission = await requestNotificationPermission();
-    if (permission !== 'granted') return false;
-  }
-
-  const registration = await registerServiceWorker();
-  if (registration && registration.showNotification) {
-    await registration.showNotification(title, {
-      body,
-      icon: '/favicon.ico',
-      badge: '/favicon.ico',
-      data: { url },
-      tag: 'careerpilot-test',
-    });
-    return true;
-  } else if ('Notification' in window) {
-    new Notification(title, {
-      body,
-      icon: '/favicon.ico',
-      data: { url },
-    });
-    return true;
-  }
-  return false;
-}
 
 // Pinned Flight Plan Events
 export interface PinnedEvent {
@@ -153,13 +58,31 @@ export function togglePinEvent(event: Omit<PinnedEvent, 'addedAt'>): boolean {
   }
 }
 
+/**
+ * Show an immediate local reminder notification for a pinned event.
+ * Nothing is scheduled: the notification appears now, in this session.
+ * Returns true when the notification was shown, false otherwise
+ * (unsupported browser, or permission denied).
+ */
 export async function sendEventReminderNotification(
   event: Pick<PinnedEvent, "title" | "organizer" | "city" | "eventDate">,
   daysLeft?: number,
 ): Promise<boolean> {
-  const timeText = daysLeft && daysLeft > 0 ? `in ${daysLeft} days` : "happening soon";
-  const title = `Reminder: ${event.title}`;
-  const body = `${event.title} in ${event.city} by ${event.organizer} is ${timeText}. Check requirements & prep!`;
-  return await sendLocalTestNotification(title, body, "/events");
-}
+  if (typeof window === 'undefined' || !('Notification' in window)) return false;
 
+  try {
+    if (Notification.permission !== 'granted') {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') return false;
+    }
+    const timeText = daysLeft && daysLeft > 0 ? `in ${daysLeft} days` : "happening soon";
+    new Notification(`Reminder: ${event.title}`, {
+      body: `${event.title} in ${event.city} by ${event.organizer} is ${timeText}. Check requirements & prep!`,
+      icon: '/favicon.ico',
+    });
+    return true;
+  } catch (error) {
+    console.warn('[CareerPilot] Local reminder notification failed:', error);
+    return false;
+  }
+}

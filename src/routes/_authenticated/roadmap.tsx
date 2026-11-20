@@ -629,9 +629,9 @@ function RoadmapPage() {
                           onClick={async () => {
                             const sent = await sendEventReminderNotification(evt, daysLeft);
                             if (sent) {
-                              toast.success(`Reminder alert sent for "${evt.title}"!`);
+                              toast.success(`Reminder shown for "${evt.title}".`);
                             } else {
-                              toast.info(`Reminder saved for "${evt.title}". Ensure browser alerts are allowed.`);
+                              toast.info(`Could not show a reminder for "${evt.title}". Allow browser alerts and try again.`);
                             }
                           }}
                           className="flex h-8 w-8 items-center justify-center rounded-xl border border-border text-muted-foreground hover:border-terracotta/40 hover:text-terracotta transition-colors"

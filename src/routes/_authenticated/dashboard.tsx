@@ -339,11 +339,11 @@ function DashboardPage() {
                     Live Tech Ecosystem
                   </span>
                   <span className="text-[11px] font-semibold text-muted-foreground">
-                    Gemini Grounded Events & Offline Alerts
+                    Gemini Grounded Events
                   </span>
                 </div>
                 <p className="mt-0.5 text-xs text-foreground font-medium">
-                  Inspect upcoming student hackathons, workshops & configure 4-in-1 offline push alerts.
+                  Inspect upcoming student hackathons and workshops, and pin the ones you want to attend.
                 </p>
               </div>
             </div>

@@ -10,7 +10,7 @@ interface RecruiterHeroCardProps {
 
 export function RecruiterHeroCard({ targetCompany, targetRole, score = null }: RecruiterHeroCardProps) {
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-terracotta/20 bg-gradient-to-br from-[#FAF7F2] via-card to-[#FAF7F2] p-6 sm:p-8 shadow-xl">
+    <div className="relative overflow-hidden rounded-3xl border border-terracotta/20 bg-gradient-to-br from-background via-card to-background p-6 sm:p-8 shadow-xl">
       {/* Background Decorative Circles */}
       <div className="pointer-events-none absolute -top-12 -left-12 h-48 w-48 rounded-full bg-terracotta/5 blur-2xl" />
       <div className="pointer-events-none absolute -bottom-12 -right-12 h-48 w-48 rounded-full bg-terracotta/8 blur-2xl" />
@@ -61,7 +61,7 @@ export function RecruiterHeroCard({ targetCompany, targetRole, score = null }: R
         {/* Right Side: Animated Recruiter Character Frame (Directly styled like user screenshot!) */}
         <div className="relative flex items-center justify-center">
           {/* Main Rounded Box matching screenshot black outline container */}
-          <div className="relative w-full max-w-[380px] rounded-3xl border-2 border-foreground/80 bg-[#FAF7F2] p-6 shadow-2xl">
+          <div className="relative w-full max-w-[380px] rounded-3xl border-2 border-foreground/80 bg-background p-6 shadow-2xl">
             {/* Top Bubble: "Looking for a..." */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}

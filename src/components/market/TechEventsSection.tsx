@@ -196,9 +196,9 @@ export function TechEventsSection({ userCity, targetRole }: TechEventsSectionPro
     );
 
     if (sent) {
-      toast.success(`Reminder alert scheduled for "${event.title}"!`);
+      toast.success(`Reminder shown for "${event.title}".`);
     } else {
-      toast.info(`Reminder saved for "${event.title}". Ensure browser notifications are enabled.`);
+      toast.info(`Could not show a reminder for "${event.title}". Allow browser notifications and try again.`);
     }
   };
 
