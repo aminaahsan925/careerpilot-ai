@@ -9,6 +9,10 @@
 
 .cp-lens-base {
   position: relative;
+  /* Fill the root when it has a definite height (the hero orbit's
+     fixed box), so h-full children size correctly. When the root is
+     auto-height this resolves to auto and changes nothing. */
+  height: 100%;
 }
 
 .cp-lens-zoom-wrap {

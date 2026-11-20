@@ -1,0 +1,110 @@
+/* Right-side hero composition (Round 3, Direction 2). Keyframes for the
+ * orbiting constellation, the drifting glass chips, and the live pulse.
+ * All motion is gated by prefers-reduced-motion: with it on, everything
+ * sits still and the full detail renders in place (the component also
+ * branches to a static layout, so this is belt and braces).
+ */
+
+/* The orbit ring: one slow turn every 90 seconds. */
+.cp-orbit-spin {
+  animation: cp-orbit-spin 90s linear infinite;
+}
+
+@keyframes cp-orbit-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Node labels counter-rotate at the same rate, so they stay upright
+ * while their positions orbit. Duration must match .cp-orbit-spin. */
+.cp-orbit-spin-rev {
+  animation: cp-orbit-spin-rev 90s linear infinite;
+}
+
+@keyframes cp-orbit-spin-rev {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+/* The inner decorative ring turns the other way, slower. */
+.cp-orbit-spin-slow-rev {
+  animation: cp-orbit-spin-rev 150s linear infinite;
+}
+
+/* Glass chips drift gently at different rates, so the composition is
+ * never still. Small amplitudes: the chips stay inside the box. */
+.cp-chip-drift-a {
+  animation: cp-chip-drift-a 7s ease-in-out infinite alternate;
+}
+
+@keyframes cp-chip-drift-a {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(5px, -6px, 0);
+  }
+}
+
+.cp-chip-drift-b {
+  animation: cp-chip-drift-b 9s ease-in-out infinite alternate;
+}
+
+@keyframes cp-chip-drift-b {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-6px, 5px, 0);
+  }
+}
+
+.cp-chip-drift-c {
+  animation: cp-chip-drift-c 11s ease-in-out infinite alternate;
+}
+
+@keyframes cp-chip-drift-c {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(4px, 6px, 0);
+  }
+}
+
+/* The hub's live dot breathes. */
+.cp-hub-pulse {
+  animation: cp-hub-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes cp-hub-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.55;
+  }
+}
+
+/* The mobile strip's live dot. Same rhythm as the hub. */
+.cp-live-dot {
+  animation: cp-hub-pulse 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cp-orbit-spin,
+  .cp-orbit-spin-rev,
+  .cp-orbit-spin-slow-rev,
+  .cp-chip-drift-a,
+  .cp-chip-drift-b,
+  .cp-chip-drift-c,
+  .cp-hub-pulse,
+  .cp-live-dot {
+    animation: none;
+  }
+}

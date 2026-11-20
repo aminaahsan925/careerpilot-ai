@@ -1,8 +1,15 @@
+import { useRef } from "react";
 import { Link } from "@tanstack/react-router";
 import { Lens } from "@/components/lens/Lens";
 import { Flashlight } from "@/components/lens/Flashlight";
 import { MagneticButton } from "@/components/lens/MagneticButton";
 import { KineticText } from "@/components/lens/KineticText";
+import {
+  HeroOrbit,
+  HeroSignalsStrip,
+  useHeroOrbitData,
+} from "@/components/landing/HeroOrbit";
+import type { HeroOrbitData } from "@/components/landing/hero-orbit-data";
 
 /**
  * Round 3 hero (Direction 2, Cursor as Flashlight / Lens).
@@ -39,9 +46,18 @@ const DATA_STRIP = [
   },
 ];
 
-export function HeroLens() {
+export function HeroLens({ dataOverride }: { dataOverride?: HeroOrbitData } = {}) {
+  // Live orbit data (stored postings + resume state, real or honestly
+  // empty). dataOverride exists only for the temporary proof route,
+  // which renders the hero with labelled sample data; the live hero
+  // never passes it.
+  const liveData = useHeroOrbitData();
+  const data = dataOverride ?? liveData;
+  const heroRef = useRef<HTMLElement>(null);
+
   return (
     <section
+      ref={heroRef}
       style={{
         position: "relative",
         overflow: "hidden",
@@ -86,6 +102,11 @@ export function HeroLens() {
             Move your cursor to look closer
           </span>
         </div>
+
+        {/* Right-side living composition (desktop only): the orbiting
+            skill constellation + drifting glass chips. It floats in
+            the space the headline does not reach. */}
+        <HeroOrbit data={data} heroRef={heroRef} />
 
         {/* Headline under the lens: the screenshot moment. */}
         <Lens magnify={1.7} className="mt-12 md:mt-16">
@@ -156,6 +177,10 @@ export function HeroLens() {
         >
           Resume, roadmap, market, recruiter. One workspace.
         </p>
+
+        {/* Mobile signals strip: the same live signals, compact, below
+            the headline. Desktop shows the full composition instead. */}
+        <HeroSignalsStrip data={data} />
 
         {/* Flashlight reveal: the audit detail is a different layer. */}
         <div

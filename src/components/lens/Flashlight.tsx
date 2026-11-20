@@ -20,15 +20,28 @@ import "./lens.css";
  * - The lit layer is aria-hidden until it is revealed, and the toggle
  *   carries aria-expanded, so screen reader users get the toggle path
  *   instead of clipped content.
+ * - `dimChildren={false}` keeps the base layer at full brightness and
+ *   the light only adds the lit detail layer: for compositions that
+ *   must stay alive and readable at rest (the hero orbit), where the
+ *   light reveals provenance rather than the content itself.
+ * - `hideToggle` renders no reveal toggle. Use it only when the
+ *   flashlight sits inside a Lens, whose children must be static (no
+ *   interactive elements, nothing duplicated by the magnified copy).
+ *   Touch users still get the light by tapping; the lit detail must
+ *   stay supplementary (provenance, never the only copy of a fact).
  */
 interface FlashlightProps {
   children: ReactNode;
   /** The hidden detail, revealed only inside the light. */
   lit: ReactNode;
   className?: string;
+  /** When false, children render at full brightness. Default true. */
+  dimChildren?: boolean;
+  /** When true, no reveal toggle is rendered. Default false. */
+  hideToggle?: boolean;
 }
 
-export function Flashlight({ children, lit, className }: FlashlightProps) {
+export function Flashlight({ children, lit, className, dimChildren, hideToggle }: FlashlightProps) {
   const reduced = usePrefersReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
   const { x, y, active } = useCursorSpring(ref);
@@ -71,16 +84,26 @@ export function Flashlight({ children, lit, className }: FlashlightProps) {
   }
 
   const litVisible = active || revealed;
+  const dim = dimChildren !== false;
 
   return (
     <div className={className}>
-      <div ref={ref} style={{ position: "relative" }}>
-        {/* Dimmed base layer. */}
+      {/* height: 100% on this wrapper and on the children wrapper below
+          keeps the h-full chain intact when the Flashlight sits in a
+          fixed-height box (the hero orbit). When the root is
+          auto-height both resolve to auto and change nothing. */}
+      <div ref={ref} style={{ position: "relative", height: "100%" }}>
+        {/* Dimmed base layer (or full brightness when dimChildren is false). */}
         <div
-          style={{
-            filter: "brightness(0.38) saturate(0.55)",
-            transition: "filter 0.3s ease",
-          }}
+          style={
+            dim
+              ? {
+                  height: "100%",
+                  filter: "brightness(0.38) saturate(0.55)",
+                  transition: "filter 0.3s ease",
+                }
+              : { height: "100%" }
+          }
         >
           {children}
         </div>
@@ -89,7 +112,7 @@ export function Flashlight({ children, lit, className }: FlashlightProps) {
             Opaque backing so the dimmed base does not show through and
             double with the lit text. */}
         <motion.div
-          id={litId}
+          id={hideToggle ? undefined : litId}
           aria-hidden={!litVisible}
           style={{
             position: "absolute",
@@ -130,29 +153,34 @@ export function Flashlight({ children, lit, className }: FlashlightProps) {
         />
       </div>
 
-      {/* No-cursor fallback: reveals the lit layer in full. */}
-      <button
-        type="button"
-        className="cp-flashlight-toggle"
-        aria-expanded={revealed}
-        aria-controls={litId}
-        onClick={() => setRevealed((v) => !v)}
-        style={{
-          marginTop: "0.75rem",
-          fontFamily:
-            "var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace)",
-          fontSize: "11px",
-          letterSpacing: "0.14em",
-          textTransform: "uppercase",
-          color: "var(--cp-lime, #e1f10d)",
-          background: "transparent",
-          border: "none",
-          padding: "0.25rem 0",
-          cursor: "pointer",
-        }}
-      >
-        {revealed ? "Hide the detail" : "Reveal the hidden detail"}
-      </button>
+      {/* No-cursor fallback: reveals the lit layer in full. Omitted when
+          hideToggle is set (the flashlight sits inside a Lens, whose
+          children must be static); touch users still get the light by
+          tapping, and the lit detail stays supplementary. */}
+      {hideToggle ? null : (
+        <button
+          type="button"
+          className="cp-flashlight-toggle"
+          aria-expanded={revealed}
+          aria-controls={litId}
+          onClick={() => setRevealed((v) => !v)}
+          style={{
+            marginTop: "0.75rem",
+            fontFamily:
+              "var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace)",
+            fontSize: "11px",
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            color: "var(--cp-lime, #e1f10d)",
+            background: "transparent",
+            border: "none",
+            padding: "0.25rem 0",
+            cursor: "pointer",
+          }}
+        >
+          {revealed ? "Hide the detail" : "Reveal the hidden detail"}
+        </button>
+      )}
     </div>
   );
 }

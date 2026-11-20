@@ -194,3 +194,155 @@ restored; zero trace verified by grep.
   ("on touch, tap and drag"). Minor copy nit, not fixed.
 - **KineticText** was proven mid-morph in the spotlight frame; its full
   scroll cycle (start to end) was not captured frame-by-frame.
+
+---
+
+## Addendum: right-side hero animation (Round 3b, 20 Nov 2026, evening)
+
+Amina approved the Round 3 build ("yes", 21:07 PKT) with ONE change: the
+hero's right side needs animation. At rest the right ~40% of the desktop hero
+was empty dark space (the lens only appears where the cursor is). This
+addendum covers that change only. Local commit on top of `a310fa9`; nothing
+pushed.
+
+### What was built
+
+A living composition in a fixed 340x400 box at the hero's right side
+(`absolute right-6 top-[140px]`, lg+ only, `z-10`, see the hit-test note
+below). Four layers, all inside the existing lens/flashlight engine (no
+second engine built):
+
+- **Starfield** (far layer, depth 4): 26 deterministic seeded dots, no images.
+- **Orbit ring** (mid layer, depth 8): a dashed orbit path plus a slower
+  counter-rotating inner ring, and a 60-second orbit carrying six nodes.
+  Each node is one of the student's own detected skills with its real count
+  (title mentions in stored postings, exactly like the Market Mirror; the
+  alias matching is the shared `aliasesFor` helper). Labels counter-rotate
+  so they stay upright. Slots with no skill, or no stored postings, stay
+  hollow dashed dots: "not measured yet", never a fake count.
+- **Hub** (depth 6): the market total at the ring's centre ("MARKET, LIVE",
+  stored-posting count, pulsing dot).
+- **Glass chips** (near layer, depth 14): three drifting chips (resume band,
+  top gap, stored postings), each drifting on its own period and depth, with
+  a soft glow where a node passes behind the frosted glass.
+- **The lens** (its own instance, magnify 1.7) magnifies nodes and chips;
+  **the flashlight** (`dimChildren={false}`, so the composition stays fully
+  visible at rest) lights a detail layer: counts with denominators
+  ("12/48"), the ATS score with its "format checks, not a hiring chance"
+  disclaimer, the newest-saved date, and the "Counts are title mentions in
+  stored postings" source line. Detail lines are laid out in both layers
+  (hidden in the base) so base and lit align exactly.
+- **Parallax** reuses the MarketLens pattern (pointer state over the whole
+  hero section plus a CSS transition, no extra spring): stars 4, ring and
+  nodes 8, hub 6, chips 14.
+- **Mobile** (`<lg`): the composition is hidden; a compact signals strip
+  (LIVE dot + Resume / Top gap / Market chips) sits below the headline and
+  below the CTAs, so the CTAs stay above the fold at 390px. No overflow.
+- **Reduced motion**: the component branches to a static full-detail scene
+  (no Lens, no Flashlight, no orbit). The nodes layer rises above the chips
+  there, because a frozen node resting behind a chip would stay unreadable
+  forever; the orbit path stays behind the chips. CSS also kills the
+  keyframes.
+
+Data (`src/components/landing/hero-orbit-data.ts`, pure helpers plus the
+`useHeroOrbitData` hook in `HeroOrbit.tsx`): stored postings via the shared
+`getStoredJobsWithCoverage` server function (same TanStack Query key as the
+Market Mirror, so the cache is shared), gated on a session so anonymous
+visitors never hit the authed function; resume band and top gap via the
+existing `useLatestResume` / `useLatestAnalysis` hooks. The hook is called
+once in `HeroLens` and the data passed to both the desktop composition and
+the mobile strip. Empty states are honest throughout: "Not analysed yet",
+"Not measured yet", "None stored yet", hub "—". Loading states ("Reading
+your resume…") show while the queries run. The composition keeps orbiting
+and drifting in every state, including empty.
+
+Files: `src/components/landing/HeroOrbit.tsx` (new),
+`src/components/landing/hero-orbit-data.ts` (new),
+`src/components/landing/hero-orbit-data.test.ts` (new, 9 tests),
+`src/components/landing/hero-orbit.css` (new),
+`src/components/landing/HeroLens.tsx` (wire-in: hero ref, data hook,
+`<HeroOrbit>` + `<HeroSignalsStrip>`, plus a `dataOverride` prop used only
+by the temporary proof routes, now deleted). Headline, lime slab, CTAs and
+headline lens untouched.
+
+### Engine fixes the composition needed (small, safe)
+
+- **Height chain** (`lens.css`, `Flashlight.tsx`): `.cp-lens-base` and the
+  Flashlight's inner wrapper had no height, so an `h-full` child collapsed
+  inside a fixed-height Lens/Flashlight (first proof run: hub and chips
+  piled at the top, ring misplaced). Both now carry `height: 100%`, which
+  resolves to `auto` when the parent is auto-height, so the existing
+  usages are unaffected. The zoom copy already had `height: 100%`.
+- **`hideToggle` prop** (`Flashlight.tsx`): the flashlight inside a Lens
+  must not render a toggle (Lens children must be static; the magnified
+  copy would duplicate an interactive element). The lit detail stays
+  supplementary provenance; touch users still get the light by tapping.
+- **Hit test** (`HeroOrbit.tsx`): the composition box carries `z-10`.
+  Without it the headline's full-width Lens box receives the pointer over
+  the top of the composition, the composition's lens never activates, and
+  the headline lens shows a black disc magnifying the empty right end of
+  its row. The headline text ends well left of the box, so nothing the
+  user reads is ever covered.
+
+### Verification
+
+- `npx tsc --noEmit`: 0 errors. `npm run build`: exit 0.
+  `npm test`: 159/159 passing (150 baseline + 9 new
+  `topSkillsByMentions` / `bandLabel` tests).
+- Rendered proof (CDP driver, real mouse moves, real-time waits):
+  `~/workspace/careerpilot-r3b-proof/` (driver `drive.mjs`).
+  - `preview-t0.png`, `preview-t8.png`, `preview-t16.png`: the orbit
+    advances (nodes in clearly different positions, labels upright),
+    chips drifted, no overlap with the headline or eyebrow.
+  - `preview-lens.png`: the disc magnifies the hub ("48 / stored
+    postings" big and crisp); the light pool around it shows the detail
+    layer (counts with denominators, ATS detail line).
+  - `preview-flashlight-chip.png`: cursor over the postings chip; the
+    disc magnifies the chip and the pool reveals the hub source line.
+  - `preview-parallax-left.png`, `preview-parallax-right.png`: layers
+    shift at different depths between the two cursor extremes (subtle by
+    design, up to 14px for the chips).
+  - `preview-1024.png`: narrowest lg, no headline overlap, everything
+    readable.
+  - `empty-t0.png`, `empty-t8.png`: settled empty state, hollow nodes
+    still orbiting, honest copy, zero invented numbers.
+  - `empty-lens.png`, `hero-lens-empty.png`: lens + flashlight work on
+    the empty state.
+  - `hero-t0.png`, `hero-t8.png`, `hero-settled.png`: the live landing
+    page (real queries). In the offline proof browser the resume query
+    takes ~70s to exhaust its retries, so the loading state lingers in
+    `hero-t8`; `hero-settled` (60s later) shows the live path settling
+    to the same honest empty state. In a real browser with internet the
+    anonymous queries return in well under a second.
+  - `preview-reduced.png`: static full-detail branch, all six node
+    labels readable (nodes above chips), counts with denominators,
+    all detail lines visible.
+  - `hero-390.png`, `preview-390.png`: mobile strip, no overflow, CTAs
+    above the fold (long gap values truncate with an ellipsis).
+  - The proof used two temporary routes (`/preview-r3b` with labelled
+    sample data, `/preview-r3b-empty` with the settled empty state).
+    Both files are deleted; `routeTree.gen.ts` regenerated with zero
+    trace (`grep preview-r3b src/` empty). The live hero never uses
+    sample data.
+
+### Caveats
+
+- **Proof fonts are fallbacks** (same as the Round 3 proof): the offline
+  browser cannot load Fontshare/Google Fonts.
+- **Labels at the disc/pool boundary**: a node label sitting exactly on
+  the lens disc's edge is partly covered by the disc's opaque backing
+  while its magnified copy falls outside the disc, and a detail count
+  straddling the light pool's edge clips mid-number (e.g. "14/4"). Both
+  are inherent to the lens/flashlight engine (same on the R3 headline
+  lens), momentary as the ring orbits, and the full text is readable at
+  rest or with a small cursor move. Not fixed; fixing it would mean
+  redesigning the engine's opaque backings.
+- **Headline lens over empty space**: outside the composition box, the
+  headline lens still magnifies the empty right end of its row (a black
+  disc) when the cursor rests there. Pre-existing Round 3 behaviour,
+  untouched per the brief; the composition's `z-10` keeps it from
+  happening over the composition itself.
+- **One extra query per landing load**: the hero now reads the session
+  and (when signed in) the stored-jobs cache plus the resume hooks. The
+  stored-jobs query shares its key with the Market Mirror, so it is
+  cached, not duplicated.
