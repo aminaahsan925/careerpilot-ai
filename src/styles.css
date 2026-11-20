@@ -19,8 +19,8 @@
  * The @theme inline block maps CSS custom properties to Tailwind utility
  * classes (e.g. --color-primary -> bg-primary, text-primary).
  *
- * The :root block defines the actual color values. Direction 3 (Character-Led
- * / Living World) tokens are hex, per the Direction 3 token contract; the
+ * The :root block defines the actual color values. Round 3 (Cursor as
+ * Flashlight / Lens) tokens are hex, per the Round 3 token contract; the
  * older semantic tokens below are mapped onto them.
  *
  * To add a new semantic color:
@@ -36,8 +36,11 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
-  --font-sans: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-body);
+  --font-body: var(--font-body);
   --font-display: var(--font-display);
+  --font-serif: var(--font-serif);
+  --font-mono: var(--font-mono);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -61,21 +64,14 @@
   --color-ink: var(--ink);
   --color-terracotta: var(--terracotta);
   --color-clay: var(--clay);
-  /* Direction 3 palette (token contract): bg-d3-cream, text-d3-choco, ... */
-  --color-d3-cream: var(--d3-cream);
-  --color-d3-paper: var(--d3-paper);
-  --color-d3-choco: var(--d3-choco);
-  --color-d3-ink: var(--d3-ink);
-  --color-d3-mustard: var(--d3-mustard);
-  --color-d3-flame: var(--d3-flame);
-  --color-d3-leaf: var(--d3-leaf);
-  --color-d3-lime: var(--d3-lime);
-  --color-d3-navy: var(--d3-navy);
-  --color-d3-peri: var(--d3-peri);
-  --color-d3-sky: var(--d3-sky);
-  --color-d3-teal: var(--d3-teal);
-  --color-d3-koi: var(--d3-koi);
-  --color-d3-gold: var(--d3-gold);
+  /* Round 3 palette (token contract): bg-cp-ink, text-cp-lime, ... */
+  --color-cp-ink: var(--cp-ink);
+  --color-cp-panel: var(--cp-panel);
+  --color-cp-lime: var(--cp-lime);
+  --color-cp-lime2: var(--cp-lime2);
+  --color-cp-ember: var(--cp-ember);
+  --color-cp-stone: var(--cp-stone);
+  --color-cp-paper: var(--cp-paper);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -84,72 +80,73 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --shadow-card: 0 1px 2px rgba(59, 35, 20, 0.05), 0 10px 28px -18px rgba(59, 35, 20, 0.18);
-  --shadow-lift: 0 2px 6px rgba(59, 35, 20, 0.06), 0 20px 44px -24px rgba(59, 35, 20, 0.3);
-  --shadow-d3-chunky: 0 3px 0 rgba(36, 20, 7, 0.06), 0 18px 36px -18px rgba(59, 35, 20, 0.28);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px -20px rgb(0 0 0 / 0.7);
+  --shadow-lift: 0 2px 8px rgb(0 0 0 / 0.45), 0 24px 48px -24px rgb(0 0 0 / 0.75);
 }
 
 :root {
   --radius: 0.875rem;
 
   /*
-   * Direction 3 (Character-Led / Living World) token contract.
+   * Round 3 (Cursor as Flashlight / Lens) token contract.
    * These exact variable names are shared across workers; do not rename.
-   * Toy-bright palette on a cream ground (never dark).
+   * Near-black ground, one neon lime accent, warm stone secondary text.
+   * Ember is the alternate accent, used only where lime fails.
    */
-  --d3-cream: #fff6e3;
-  --d3-paper: #fffdf6;
-  --d3-choco: #3b2314;
-  --d3-ink: #241407;
-  --d3-mustard: #e4b41c;
-  --d3-flame: #d83b0f;
-  --d3-leaf: #528f38;
-  --d3-lime: #a7d13d;
-  --d3-navy: #1f2a5a;
-  --d3-peri: #aab8f5;
-  --d3-sky: #7fb8e8;
-  --d3-teal: #0e7c7b;
-  --d3-koi: #f58220;
-  --d3-gold: #f2b705;
+  --cp-ink: #040403;
+  --cp-panel: #0e0e0c;
+  --cp-lime: #e1f10d;
+  --cp-lime2: #9bf80d;
+  --cp-ember: #ff7a45;
+  --cp-stone: #c6c5bf;
+  --cp-paper: #f4f1ea;
 
-  /* Chunky rounded display font (Baloo 2, loaded in __root.tsx). */
-  --font-display: "Baloo 2", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-
-  /* Semantic tokens, mapped onto the Direction 3 palette. */
-  --background: var(--d3-cream);
-  --foreground: var(--d3-ink);
-  --card: var(--d3-paper);
-  --card-foreground: var(--d3-ink);
-  --popover: var(--d3-paper);
-  --popover-foreground: var(--d3-ink);
-  --primary: var(--d3-choco);
-  --primary-foreground: var(--d3-paper);
-  --secondary: #fbeed3;
-  --secondary-foreground: var(--d3-choco);
-  --muted: #f7eac6;
-  --muted-foreground: #7c5b3a;
-  --accent: var(--d3-mustard);
-  --accent-foreground: var(--d3-ink);
-  --destructive: #b92e0b;
-  --destructive-foreground: var(--d3-paper);
-  --border: oklch(0.35 0.03 60 / 12%);
-  --input: oklch(0.35 0.03 60 / 16%);
-  --ring: var(--d3-flame);
   /*
-   * Legacy names, remapped onto the Direction 3 palette so screens that
+   * Type stack (Kiln). Display grotesk and body sans load from Fontshare,
+   * mono and the reveal serif from Google Fonts, all in __root.tsx.
+   * Fallbacks are sane for offline renders: system grotesk, Georgia
+   * serif, ui-monospace.
+   */
+  --font-display: "Cabinet Grotesk", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Satoshi", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Semantic tokens, mapped onto the Round 3 palette. */
+  --background: var(--cp-ink);
+  --foreground: var(--cp-paper);
+  --card: var(--cp-panel);
+  --card-foreground: var(--cp-paper);
+  --popover: var(--cp-panel);
+  --popover-foreground: var(--cp-paper);
+  --primary: var(--cp-lime);
+  --primary-foreground: var(--cp-ink);
+  --secondary: #171714;
+  --secondary-foreground: var(--cp-paper);
+  --muted: #141412;
+  --muted-foreground: var(--cp-stone);
+  --accent: var(--cp-lime);
+  --accent-foreground: var(--cp-ink);
+  --destructive: #ff5c38;
+  --destructive-foreground: var(--cp-paper);
+  --border: rgb(244 241 234 / 0.1);
+  --input: rgb(244 241 234 / 0.14);
+  --ring: var(--cp-lime);
+  /*
+   * Legacy names, remapped onto the Round 3 palette so screens that
    * still use them land in the new palette until they are re-skinned.
    */
-  --ink: var(--d3-ink);
-  --terracotta: var(--d3-flame);
-  --clay: var(--d3-koi);
-  --sidebar: var(--d3-cream);
-  --sidebar-foreground: var(--d3-choco);
-  --sidebar-primary: var(--d3-mustard);
-  --sidebar-primary-foreground: var(--d3-ink);
-  --sidebar-accent: #fbeed3;
-  --sidebar-accent-foreground: var(--d3-ink);
-  --sidebar-border: oklch(0.35 0.03 60 / 12%);
-  --sidebar-ring: var(--d3-flame);
+  --ink: var(--cp-ink);
+  --terracotta: var(--cp-ember);
+  --clay: var(--cp-ember);
+  --sidebar: var(--cp-ink);
+  --sidebar-foreground: var(--cp-paper);
+  --sidebar-primary: var(--cp-lime);
+  --sidebar-primary-foreground: var(--cp-ink);
+  --sidebar-accent: #171714;
+  --sidebar-accent-foreground: var(--cp-paper);
+  --sidebar-border: rgb(244 241 234 / 0.1);
+  --sidebar-ring: var(--cp-lime);
 }
 
 @layer base {
@@ -178,6 +175,16 @@
     min-width: 0;
     overflow-x: clip;
   }
+
+  ::selection {
+    background-color: var(--cp-lime);
+    color: var(--cp-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--cp-lime);
+    outline-offset: 2px;
+  }
 }
 
 @utility card-surface {
@@ -195,98 +202,35 @@
 }
 
 /*
- * Direction 3 (Character-Led / Living World) shared utilities.
+ * Round 3 (Cursor as Flashlight / Lens) shared utilities.
  * Token contract: these class names are shared across workers.
+ * Body text stays fully readable: no lens or flashlight effect ever
+ * touches body copy, only hero and key reveal moments.
  */
 
-/* Chunky toy card: 2rem radius, soft chunky shadow, paper surface. */
-@utility d3-card {
-  background-color: var(--d3-paper);
-  border: 1px solid oklch(0.35 0.03 60 / 10%);
-  border-radius: 2rem;
-  box-shadow: var(--shadow-d3-chunky);
+/* Small mono uppercase label for section eyebrows. */
+@utility cp-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--cp-stone);
 }
 
-/*
- * Tilted collage cards. Tiles straighten on hover, keyboard focus, or
- * focus-within so tilted content never traps a keyboard user at an angle.
- * The global prefers-reduced-motion rule below makes the straightening
- * effectively instant for users who asked for reduced motion.
- */
-@utility d3-tilt-l {
-  rotate: -1.5deg;
-  transition:
-    rotate 0.25s ease,
-    transform 0.25s ease;
-
-  &:hover,
-  &:focus-visible,
-  &:focus-within {
-    rotate: 0deg;
-  }
-}
-
-@utility d3-tilt-r {
-  rotate: 1.5deg;
-  transition:
-    rotate 0.25s ease,
-    transform 0.25s ease;
-
-  &:hover,
-  &:focus-visible,
-  &:focus-within {
-    rotate: 0deg;
-  }
-}
-
-/* Rounded-full bold pill. Colour comes from the call site. */
-@utility d3-chip {
+/* Quiet bordered pill. Colour comes from the call site. */
+@utility cp-chip {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
+  border: 1px solid rgb(244 241 234 / 0.14);
   border-radius: 9999px;
   padding: 0.375rem 0.875rem;
-  font-size: 12px;
-  font-weight: 700;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
   line-height: 1.4;
-}
-
-/* Chunky rounded display type (Baloo 2). */
-@utility d3-display {
-  font-family: var(--font-display);
-}
-
-/* Gentle float for decorative landing elements (mascot friends, koi). */
-@keyframes d3-bob {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-8px);
-  }
-}
-
-@utility animate-d3-bob {
-  animation: d3-bob 3.2s ease-in-out infinite;
-}
-
-/*
- * Koi drift across the pond strip. The element keeps a base `left` from
- * its classes, so under reduced motion (animation completes instantly and
- * returns to base) the fish stays visible instead of swimming offscreen.
- */
-@keyframes d3-swim {
-  from {
-    left: -12%;
-  }
-  to {
-    left: 104%;
-  }
-}
-
-@utility animate-d3-swim {
-  animation: d3-swim 26s linear infinite;
 }
 
 /*
@@ -311,10 +255,33 @@
 }
 
 /*
+ * Blur-in scroll reveal (Kiln pattern). Transform and filter only, so
+ * there is no layout shift while the reveal runs.
+ */
+@keyframes blur-in {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+@utility animate-blur-in {
+  animation: blur-in 0.6s ease-out both;
+}
+
+/*
  * Reduced motion: honour the OS setting. CSS transitions and animations
  * run effectively instantly, and Motion components are switched to
  * user-reduced-motion mode via <MotionConfig reducedMotion="user"> in
  * src/routes/__root.tsx, which disables their transform/layout animation.
+ * Pointer-driven effects (tilt, spotlight, lens) check the same setting
+ * in JS and stay still when it is on.
  */
 @media (prefers-reduced-motion: reduce) {
   *,

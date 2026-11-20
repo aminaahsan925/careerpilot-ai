@@ -22,9 +22,9 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
 import { AppLayout } from "@/components/app/AppLayout";
-import { PilotSays } from "@/components/mascot/PilotMascot";
+import { SpotlightCard } from "@/components/lens/SpotlightCard";
 import { CompletionCertificate } from "@/components/roadmap/CompletionCertificate";
-import { LoopHeader, LoopMotif } from "@/components/roadmap/LoopHeader";
+import { RoadmapHeader } from "@/components/roadmap/RoadmapHeader";
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/data/user";
 import {
@@ -64,19 +64,19 @@ export const Route = createFileRoute("/_authenticated/roadmap")({
 });
 
 /* ------------------------------------------------------------------ */
-/* Level badge colours (Direction 3 toy-bright tokens)                */
+/* Level badge colours (Round 3 tokens)                               */
 /* ------------------------------------------------------------------ */
 
 function levelColor(level: string) {
   switch (level) {
     case "beginner":
-      return "border-[var(--d3-leaf)]/40 bg-[var(--d3-leaf)]/15 text-[var(--d3-leaf)]";
+      return "border-cp-lime2/40 bg-cp-lime2/15 text-cp-lime2";
     case "intermediate":
-      return "border-[var(--d3-mustard)]/50 bg-[var(--d3-mustard)]/20 text-[var(--d3-choco)]";
+      return "border-cp-lime/50 bg-cp-lime/20 text-cp-paper";
     case "expert":
-      return "border-[var(--d3-flame)]/40 bg-[var(--d3-flame)]/10 text-[var(--d3-flame)]";
+      return "border-cp-ember/40 bg-cp-ember/10 text-cp-ember";
     default:
-      return "border-[var(--d3-choco)]/15 bg-[var(--d3-paper)] text-[var(--d3-ink)]/70";
+      return "border-cp-paper/15 bg-cp-panel text-cp-paper/70";
   }
 }
 
@@ -96,10 +96,10 @@ function categoryIcon(category: string) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Learning Path Card (tilted collage card)                           */
+/* Learning Path Card (spotlight card)                                */
 /* ------------------------------------------------------------------ */
 
-function LearningPathCard({ path, index }: { path: LearningPath; index: number }) {
+function LearningPathCard({ path }: { path: LearningPath }) {
   const [expanded, setExpanded] = useState(false);
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
   const [quizDayId, setQuizDayId] = useState("");
@@ -172,66 +172,64 @@ function LearningPathCard({ path, index }: { path: LearningPath; index: number }
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-      {/* Tilt lives on the inner card so the entrance motion and the
-          collage tilt stay independent. */}
-      <div className={cn("d3-card overflow-hidden", index % 2 === 0 ? "d3-tilt-l" : "d3-tilt-r")}>
+      <SpotlightCard className="card-surface overflow-hidden">
         <button
           type="button"
           onClick={() => setExpanded(!expanded)}
-          className="flex w-full items-start gap-4 p-5 text-left transition-colors hover:bg-[var(--d3-cream)]/60"
+          className="flex w-full items-start gap-4 p-5 text-left transition-colors hover:bg-cp-paper/5/60"
         >
           <div
             className={cn(
               "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2",
               path.completed
-                ? "border-[var(--d3-leaf)] bg-[var(--d3-leaf)] text-white"
-                : "border-[var(--d3-choco)]/15 bg-[var(--d3-paper)] text-[var(--d3-ink)]/60",
+                ? "border-cp-lime2 bg-cp-lime2 text-cp-ink"
+                : "border-cp-paper/15 bg-cp-panel text-cp-paper/60",
             )}
           >
             {path.completed ? <Check className="h-4 w-4" /> : <CatIcon className="h-4 w-4" />}
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <p className="text-[14.5px] font-bold tracking-[-0.01em] text-[var(--d3-ink)]">
+              <p className="text-[14.5px] font-bold tracking-[-0.01em] text-cp-paper">
                 {path.title}
               </p>
-              <span className={cn("d3-chip uppercase", levelColor(path.level))}>
+              <span className={cn("cp-chip uppercase", levelColor(path.level))}>
                 {path.level}
               </span>
             </div>
-            <p className="mt-1 text-[12px] leading-snug text-[var(--d3-ink)]/65 line-clamp-2">
+            <p className="mt-1 text-[12px] leading-snug text-cp-paper/65 line-clamp-2">
               {path.description}
             </p>
             {path.outdated_warning && (
-              <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-[var(--d3-choco)]">
-                <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-[var(--d3-flame)]" />
+              <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-cp-paper">
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-cp-ember" />
                 {path.outdated_warning}
               </div>
             )}
             <div className="mt-3 flex items-center gap-3">
-              <div className="h-2 flex-1 overflow-hidden rounded-full bg-[var(--d3-choco)]/10">
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-cp-ink/10">
                 <div
-                  className="h-full rounded-full bg-[var(--d3-mustard)] transition-all"
+                  className="h-full rounded-full bg-cp-lime transition-all"
                   style={{
                     width: totalDays > 0 ? `${(completedDays / totalDays) * 100}%` : "0%",
                   }}
                 />
               </div>
-              <span className="shrink-0 text-xs font-bold text-[var(--d3-ink)]/65">
+              <span className="shrink-0 text-xs font-bold text-cp-paper/65">
                 {completedDays}/{totalDays || "?"} days
               </span>
             </div>
           </div>
           {expanded ? (
-            <ChevronDown className="mt-1 h-4 w-4 shrink-0 text-[var(--d3-ink)]/50" />
+            <ChevronDown className="mt-1 h-4 w-4 shrink-0 text-cp-paper/50" />
           ) : (
-            <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-[var(--d3-ink)]/50" />
+            <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-cp-paper/50" />
           )}
         </button>
 
         {expanded && dayList.length > 0 && (
-          <div className="border-t border-[var(--d3-choco)]/10 px-5 pb-4 pt-3">
-            <p className="mb-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--d3-ink)]/55">
+          <div className="border-t border-cp-paper/10 px-5 pb-4 pt-3">
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.12em] text-cp-paper/55">
               Must Know
             </p>
             {path.must_know.length > 0 && (
@@ -239,14 +237,14 @@ function LearningPathCard({ path, index }: { path: LearningPath; index: number }
                 {path.must_know.map((skill) => (
                   <span
                     key={skill}
-                    className="d3-chip border border-[var(--d3-choco)]/15 bg-[var(--d3-cream)] text-[var(--d3-ink)]"
+                    className="cp-chip border border-cp-paper/15 bg-cp-ink text-cp-paper"
                   >
                     {skill}
                   </span>
                 ))}
               </div>
             )}
-            <p className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--d3-ink)]/55">
+            <p className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-cp-paper/55">
               Daily Tasks
             </p>
             <div className="space-y-1.5">
@@ -257,25 +255,25 @@ function LearningPathCard({ path, index }: { path: LearningPath; index: number }
                   aria-expanded={selectedDayId === day.id}
                   onClick={() => openDay(day)}
                   className={cn(
-                    "flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-left text-[12.5px] transition-colors hover:bg-[var(--d3-cream)]",
-                    selectedDayId === day.id && "ring-2 ring-[var(--d3-peri)]/50",
+                    "flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-left text-[12.5px] transition-colors hover:bg-cp-paper/5",
+                    selectedDayId === day.id && "ring-2 ring-cp-lime/50",
                     day.completed
-                      ? "bg-[var(--d3-cream)]/70 text-[var(--d3-ink)]/55"
-                      : "bg-[var(--d3-paper)] text-[var(--d3-ink)]",
+                      ? "bg-cp-ink/70 text-cp-paper/55"
+                      : "bg-cp-panel text-cp-paper",
                   )}
                 >
                   <span
                     className={cn(
                       "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold",
                       day.completed
-                        ? "bg-[var(--d3-leaf)] text-white"
-                        : "border border-[var(--d3-choco)]/25 text-[var(--d3-ink)]/60",
+                        ? "bg-cp-lime2 text-cp-ink"
+                        : "border border-cp-paper/25 text-cp-paper/60",
                     )}
                   >
                     {day.completed ? <Check className="h-3 w-3" /> : day.day_number}
                   </span>
                   <span className="min-w-0 flex-1 truncate">{day.title}</span>
-                  <span className="shrink-0 text-xs text-[var(--d3-ink)]/55">
+                  <span className="shrink-0 text-xs text-cp-paper/55">
                     {day.estimated_minutes}m
                   </span>
                 </button>
@@ -283,40 +281,40 @@ function LearningPathCard({ path, index }: { path: LearningPath; index: number }
             </div>
 
             {selectedDay && (
-              <div className="mt-4 rounded-2xl border border-[var(--d3-choco)]/10 bg-[var(--d3-paper)] p-4">
+              <div className="mt-4 rounded-2xl border border-cp-paper/10 bg-cp-panel p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--d3-flame)]">
+                    <p className="text-xs font-bold uppercase tracking-[0.12em] text-cp-ember">
                       Day {selectedDay.day_number} · Topic brief
                     </p>
-                    <h4 className="mt-1 text-[14px] font-bold text-[var(--d3-ink)]">
+                    <h4 className="mt-1 text-[14px] font-bold text-cp-paper">
                       {selectedDay.title}
                     </h4>
                   </div>
-                  <span className="text-xs text-[var(--d3-ink)]/55">
+                  <span className="text-xs text-cp-paper/55">
                     {selectedDay.estimated_minutes} minutes
                   </span>
                 </div>
-                <p className="mt-3 text-[12.5px] leading-relaxed text-[var(--d3-ink)]">
+                <p className="mt-3 text-[12.5px] leading-relaxed text-cp-paper">
                   {selectedDay.what_is_this}
                 </p>
-                <p className="mt-3 text-[12px] leading-relaxed text-[var(--d3-ink)]/70">
+                <p className="mt-3 text-[12px] leading-relaxed text-cp-paper/70">
                   {selectedDay.explanation}
                 </p>
-                <div className="mt-3 rounded-xl bg-[var(--d3-cream)] p-3">
-                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--d3-ink)]/55">
+                <div className="mt-3 rounded-xl bg-cp-ink p-3">
+                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-cp-paper/55">
                     How to learn it
                   </p>
-                  <p className="mt-1 whitespace-pre-line text-[12px] leading-relaxed text-[var(--d3-ink)]">
+                  <p className="mt-1 whitespace-pre-line text-[12px] leading-relaxed text-cp-paper">
                     {selectedDay.how_to_learn}
                   </p>
                 </div>
-                <p className="mt-3 text-[12px] leading-relaxed text-[var(--d3-ink)]/70">
-                  <span className="font-semibold text-[var(--d3-ink)]">Company signal:</span>{" "}
+                <p className="mt-3 text-[12px] leading-relaxed text-cp-paper/70">
+                  <span className="font-semibold text-cp-paper">Company signal:</span>{" "}
                   {selectedDay.why_companies_care}
                 </p>
-                <p className="mt-2 text-[12px] leading-relaxed text-[var(--d3-ink)]/70">
-                  <span className="font-semibold text-[var(--d3-ink)]">Build:</span>{" "}
+                <p className="mt-2 text-[12px] leading-relaxed text-cp-paper/70">
+                  <span className="font-semibold text-cp-paper">Build:</span>{" "}
                   {selectedDay.hands_on_task}
                 </p>
                 {selectedDay.curated_links.length > 0 && (
@@ -328,7 +326,7 @@ function LearningPathCard({ path, index }: { path: LearningPath; index: number }
                         target="_blank"
                         rel="noreferrer"
                         onClick={(event) => event.stopPropagation()}
-                        className="inline-flex items-center gap-1 rounded-full border border-[var(--d3-peri)]/40 px-2.5 py-1 text-xs font-medium text-[var(--d3-peri)] transition-colors hover:bg-[var(--d3-peri)]/10"
+                        className="inline-flex items-center gap-1 rounded-full border border-cp-stone/40 px-2.5 py-1 text-xs font-medium text-cp-stone transition-colors hover:bg-cp-stone/10"
                       >
                         {link.label}
                         <ExternalLink className="h-3 w-3" />
@@ -339,7 +337,7 @@ function LearningPathCard({ path, index }: { path: LearningPath; index: number }
                 {!selectedDay.completed && !quizDayId && (
                   <Button
                     size="sm"
-                    className="mt-4 rounded-xl border-2 border-[var(--d3-choco)] bg-[var(--d3-mustard)] font-bold text-[var(--d3-choco)] shadow-[3px_3px_0_var(--d3-choco)] hover:bg-[var(--d3-gold)]"
+                    className="mt-4 rounded-xl bg-cp-lime font-bold text-cp-ink hover:bg-cp-lime/90"
                     disabled={claimDay.isPending}
                     onClick={() => startMcq(selectedDay)}
                   >
@@ -353,28 +351,28 @@ function LearningPathCard({ path, index }: { path: LearningPath; index: number }
                 )}
 
                 {quizDayId === selectedDay.id && (
-                  <div className="mt-4 border-t border-[var(--d3-choco)]/10 pt-4">
+                  <div className="mt-4 border-t border-cp-paper/10 pt-4">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--d3-flame)]">
+                        <p className="text-xs font-bold uppercase tracking-[0.12em] text-cp-ember">
                           Role-specific checkpoint
                         </p>
-                        <p className="mt-1 text-[12px] text-[var(--d3-ink)]/65">
+                        <p className="mt-1 text-[12px] text-cp-paper/65">
                           Pass at 70% to unlock the next day.
                         </p>
                       </div>
                       <button
                         type="button"
                         onClick={() => setQuizDayId("")}
-                        className="text-xs font-medium text-[var(--d3-ink)]/60 hover:text-[var(--d3-ink)]"
+                        className="text-xs font-medium text-cp-paper/60 hover:text-cp-paper"
                       >
                         Close
                       </button>
                     </div>
                     {questionsLoading ? (
-                      <div className="mt-3 h-20 animate-pulse rounded-xl bg-[var(--d3-cream)]" />
+                      <div className="mt-3 h-20 animate-pulse rounded-xl bg-cp-ink" />
                     ) : questions.length === 0 ? (
-                      <p className="mt-3 rounded-xl bg-[var(--d3-mustard)]/15 p-3 text-[12px] text-[var(--d3-choco)]">
+                      <p className="mt-3 rounded-xl bg-cp-lime/15 p-3 text-[12px] text-cp-paper">
                         This path has no checkpoint questions yet. Regenerate the roadmap to create
                         its company-specific assessment.
                       </p>
@@ -390,9 +388,9 @@ function LearningPathCard({ path, index }: { path: LearningPath; index: number }
                           return (
                             <div
                               key={question.id}
-                              className="rounded-xl border border-[var(--d3-choco)]/10 p-3"
+                              className="rounded-xl border border-cp-paper/10 p-3"
                             >
-                              <p className="text-[12.5px] font-semibold leading-relaxed text-[var(--d3-ink)]">
+                              <p className="text-[12.5px] font-semibold leading-relaxed text-cp-paper">
                                 {index + 1}. {question.question}
                               </p>
                               <div className="mt-2 grid gap-2 sm:grid-cols-2">
@@ -412,14 +410,14 @@ function LearningPathCard({ path, index }: { path: LearningPath; index: number }
                                       quizResult?.results.find(
                                         (result) => result.questionId === question.id,
                                       )?.correctOption === key
-                                        ? "border-[var(--d3-leaf)] bg-[var(--d3-leaf)]/10 text-[var(--d3-ink)]"
+                                        ? "border-cp-lime2 bg-cp-lime2/10 text-cp-paper"
                                         : quizResult?.results.find(
                                               (result) => result.questionId === question.id,
                                             )?.selectedOption === key
-                                          ? "border-[var(--d3-flame)] bg-[var(--d3-flame)]/10 text-[var(--d3-ink)]"
+                                          ? "border-cp-ember bg-cp-ember/10 text-cp-paper"
                                           : answers[question.id] === key
-                                            ? "border-[var(--d3-peri)] bg-[var(--d3-peri)]/10 text-[var(--d3-ink)]"
-                                            : "border-[var(--d3-choco)]/15 text-[var(--d3-ink)]/70 hover:bg-[var(--d3-cream)]",
+                                            ? "border-cp-stone bg-cp-stone/10 text-cp-paper"
+                                            : "border-cp-paper/15 text-cp-paper/70 hover:bg-cp-paper/5",
                                     )}
                                   >
                                     <span className="mr-1 font-bold uppercase">{key}.</span> {label}
@@ -437,8 +435,8 @@ function LearningPathCard({ path, index }: { path: LearningPath; index: number }
                                       className={cn(
                                         "mt-3 rounded-xl p-3 text-xs leading-relaxed",
                                         result.correct
-                                          ? "bg-[var(--d3-leaf)]/10 text-[var(--d3-ink)]"
-                                          : "bg-[var(--d3-flame)]/10 text-[var(--d3-ink)]",
+                                          ? "bg-cp-lime2/10 text-cp-paper"
+                                          : "bg-cp-ember/10 text-cp-paper",
                                       )}
                                     >
                                       <p className="font-bold">
@@ -450,7 +448,7 @@ function LearningPathCard({ path, index }: { path: LearningPath; index: number }
                                     </div>
                                   );
                                 })()}
-                              <p className="mt-2 text-xs text-[var(--d3-ink)]/55">
+                              <p className="mt-2 text-xs text-cp-paper/55">
                                 {question.company_relevance}
                               </p>
                             </div>
@@ -459,7 +457,7 @@ function LearningPathCard({ path, index }: { path: LearningPath; index: number }
                         {!quizResult && (
                           <Button
                             size="sm"
-                            className="rounded-xl border-2 border-[var(--d3-choco)] bg-[var(--d3-mustard)] font-bold text-[var(--d3-choco)] shadow-[3px_3px_0_var(--d3-choco)] hover:bg-[var(--d3-gold)]"
+                            className="rounded-xl bg-cp-lime font-bold text-cp-ink hover:bg-cp-lime/90"
                             disabled={submitMcq.isPending}
                             onClick={submitAssessment}
                           >
@@ -493,8 +491,8 @@ function LearningPathCard({ path, index }: { path: LearningPath; index: number }
                     className={cn(
                       "mt-3 flex items-center gap-2 rounded-xl p-3 text-[12px]",
                       quizResult.passed
-                        ? "bg-[var(--d3-leaf)]/10 text-[var(--d3-ink)]"
-                        : "bg-[var(--d3-mustard)]/15 text-[var(--d3-ink)]",
+                        ? "bg-cp-lime2/10 text-cp-paper"
+                        : "bg-cp-lime/15 text-cp-paper",
                     )}
                   >
                     {quizResult.passed ? (
@@ -511,7 +509,7 @@ function LearningPathCard({ path, index }: { path: LearningPath; index: number }
             )}
           </div>
         )}
-      </div>
+      </SpotlightCard>
     </motion.div>
   );
 }
@@ -552,15 +550,15 @@ function RoadmapPage() {
   return (
     <AppLayout
       title="Career Roadmap"
-      subtitle="One day at a time, all the way around the loop"
+      subtitle="Day by day, toward the role"
     >
-      {/* Cream ground: bleeds to the content column edges (AppLayout owns the
+      {/* Ink ground: bleeds to the content column edges (AppLayout owns the
           outer padding, so negative margins reclaim it). */}
-      <div className="-mx-4 -mb-6 -mt-6 bg-[var(--d3-cream)] px-4 pb-6 pt-6 sm:-mx-6 lg:-mx-8 lg:-mb-8 lg:pb-8">
+      <div className="-mx-4 -mb-6 -mt-6 bg-cp-ink px-4 pb-6 pt-6 sm:-mx-6 lg:-mx-8 lg:-mb-8 lg:pb-8">
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
           <div className="space-y-4">
-            {/* Friendly loop header (Loop pattern): real streak, encouraging copy. */}
-            <LoopHeader
+            {/* Disciplined dark header: real streak, goal, progress. */}
+            <RoadmapHeader
               goal={user?.goal ?? "Your goal"}
               streak={streak}
               streakLoading={streakLoading}
@@ -574,24 +572,24 @@ function RoadmapPage() {
 
             {/* Pinned Tech Events & Hackathon Milestones */}
             {pinnedEvents.length > 0 && (
-              <div className="d3-card p-5 sm:p-6">
+              <div className="card-surface p-5 sm:p-6">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2.5">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[var(--d3-flame)]/15 text-[var(--d3-flame)]">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-cp-ember/15 text-cp-ember">
                       <Flame className="h-4 w-4" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-[var(--d3-ink)]">
+                      <h3 className="text-sm font-bold text-cp-paper">
                         Target Hackathons & Event Milestones
                       </h3>
-                      <p className="text-xs text-[var(--d3-ink)]/60">
+                      <p className="text-xs text-cp-paper/60">
                         Competitions and hackathons pinned to your active Career Roadmap.
                       </p>
                     </div>
                   </div>
                   <Link
                     to="/events"
-                    className="shrink-0 text-xs font-semibold text-[var(--d3-flame)] hover:underline"
+                    className="shrink-0 text-xs font-semibold text-cp-ember hover:underline"
                   >
                     Browse events →
                   </Link>
@@ -603,22 +601,22 @@ function RoadmapPage() {
                     return (
                       <div
                         key={evt.id}
-                        className="flex items-start justify-between gap-3 rounded-2xl border border-[var(--d3-choco)]/10 bg-[var(--d3-paper)] p-4 transition-all hover:border-[var(--d3-flame)]/30"
+                        className="flex items-start justify-between gap-3 rounded-2xl border border-cp-paper/10 bg-cp-panel p-4 transition-all hover:border-cp-ember/30"
                       >
                         <div className="min-w-0 flex-1 space-y-1">
                           <div className="flex items-center gap-2">
-                            <span className="rounded-md bg-[var(--d3-flame)]/10 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-[var(--d3-flame)]">
+                            <span className="rounded-md bg-cp-ember/10 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-cp-ember">
                               {evt.eventType}
                             </span>
-                            <span className="text-xs font-medium text-[var(--d3-ink)]/60">
+                            <span className="text-xs font-medium text-cp-paper/60">
                               {daysLeft > 0 ? `in ${daysLeft} days` : "Event active"}
                             </span>
                           </div>
-                          <h4 className="truncate text-xs font-bold text-[var(--d3-ink)]">
+                          <h4 className="truncate text-xs font-bold text-cp-paper">
                             {evt.title}
                           </h4>
-                          <p className="flex items-center gap-1 truncate text-xs text-[var(--d3-ink)]/60">
-                            <MapPin className="h-3 w-3 shrink-0 text-[var(--d3-flame)]" />
+                          <p className="flex items-center gap-1 truncate text-xs text-cp-paper/60">
+                            <MapPin className="h-3 w-3 shrink-0 text-cp-ember" />
                             <span className="truncate">{evt.city}</span> ·{" "}
                             <span className="truncate">{evt.organizer}</span>
                           </p>
@@ -637,7 +635,7 @@ function RoadmapPage() {
                                 );
                               }
                             }}
-                            className="flex h-8 w-8 items-center justify-center rounded-xl border border-[var(--d3-choco)]/15 text-[var(--d3-ink)]/60 transition-colors hover:border-[var(--d3-flame)]/40 hover:text-[var(--d3-flame)]"
+                            className="flex h-8 w-8 items-center justify-center rounded-xl border border-cp-paper/15 text-cp-paper/60 transition-colors hover:border-cp-ember/40 hover:text-cp-ember"
                             title="Send / Test Event Reminder"
                           >
                             <Bell className="h-3.5 w-3.5" />
@@ -646,7 +644,7 @@ function RoadmapPage() {
                             href={evt.eventUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className="flex h-8 w-8 items-center justify-center rounded-xl border border-[var(--d3-choco)]/15 text-[var(--d3-ink)]/60 transition-colors hover:border-[var(--d3-flame)]/40 hover:text-[var(--d3-flame)]"
+                            className="flex h-8 w-8 items-center justify-center rounded-xl border border-cp-paper/15 text-cp-paper/60 transition-colors hover:border-cp-ember/40 hover:text-cp-ember"
                             title="Open Event Website"
                           >
                             <ExternalLink className="h-3.5 w-3.5" />
@@ -654,7 +652,7 @@ function RoadmapPage() {
                           <button
                             type="button"
                             onClick={() => handleRemovePinnedEvent(evt)}
-                            className="flex h-8 w-8 items-center justify-center rounded-xl text-[var(--d3-ink)]/60 transition-colors hover:bg-[var(--d3-flame)]/10 hover:text-[var(--d3-flame)]"
+                            className="flex h-8 w-8 items-center justify-center rounded-xl text-cp-paper/60 transition-colors hover:bg-cp-ember/10 hover:text-cp-ember"
                             title="Remove from Roadmap"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -669,22 +667,22 @@ function RoadmapPage() {
 
             {/* Learning Paths */}
             <div className="space-y-3">
-              <h3 className="d3-display pt-2 text-xl font-bold text-[var(--d3-ink)]">Learning Paths</h3>
+              <h3 className="font-display pt-2 text-xl font-bold text-cp-paper">Learning Paths</h3>
               {isLoading ? (
                 <div className="space-y-3">
                   {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="d3-card h-28 animate-pulse" />
+                    <div key={i} className="card-surface h-28 animate-pulse" />
                   ))}
                 </div>
               ) : pathsError ? (
-                <div className="d3-card p-6 text-center sm:p-8">
-                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--d3-flame)]/10 text-[var(--d3-flame)]">
+                <div className="card-surface p-6 text-center sm:p-8">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-cp-ember/10 text-cp-ember">
                     <AlertTriangle className="h-6 w-6" />
                   </div>
-                  <h4 className="d3-display mt-4 text-lg font-bold text-[var(--d3-ink)]">
+                  <h4 className="font-display mt-4 text-lg font-bold text-cp-paper">
                     Your learning paths couldn&apos;t be loaded
                   </h4>
-                  <p className="mx-auto mt-2 max-w-md text-[13px] leading-relaxed text-[var(--d3-ink)]/65">
+                  <p className="mx-auto mt-2 max-w-md text-[13px] leading-relaxed text-cp-paper/65">
                     {pathsError instanceof Error
                       ? pathsError.message
                       : "Something went wrong while loading your roadmap."}
@@ -698,25 +696,25 @@ function RoadmapPage() {
                   </Button>
                 </div>
               ) : pathList.length > 0 ? (
-                pathList.map((path, index) => (
-                  <LearningPathCard key={path.id} path={path} index={index} />
+                pathList.map((path) => (
+                  <LearningPathCard key={path.id} path={path} />
                 ))
               ) : (
-                <div className="d3-card relative overflow-hidden p-5 sm:p-7">
+                <div className="card-surface relative overflow-hidden p-5 sm:p-7">
                   <div className="relative grid items-center gap-6 md:grid-cols-[minmax(0,1fr)_minmax(220px,0.85fr)] md:gap-8">
                     <div className="text-center md:text-left">
-                      <span className="d3-chip border border-[var(--d3-mustard)]/50 bg-[var(--d3-mustard)]/20 uppercase tracking-[0.14em] text-[var(--d3-choco)]">
+                      <span className="cp-chip border border-cp-lime/50 bg-cp-lime/20 uppercase tracking-[0.14em] text-cp-paper">
                         Your next chapter
                       </span>
-                      <h4 className="d3-display mt-3 text-xl font-bold text-[var(--d3-ink)] sm:text-2xl">
+                      <h4 className="font-display mt-3 text-xl font-bold text-cp-paper sm:text-2xl">
                         Turn your goal into a plan you can follow.
                       </h4>
-                      <p className="mx-auto mt-2 max-w-md text-[13px] leading-relaxed text-[var(--d3-ink)]/65 md:mx-0">
+                      <p className="mx-auto mt-2 max-w-md text-[13px] leading-relaxed text-cp-paper/65 md:mx-0">
                         No learning paths generated yet. Build a roadmap based on your profile,
                         target role, and market gaps.
                       </p>
                       <Button
-                        className="mt-5 rounded-xl border-2 border-[var(--d3-choco)] bg-[var(--d3-mustard)] font-bold text-[var(--d3-choco)] shadow-[3px_3px_0_var(--d3-choco)] hover:bg-[var(--d3-gold)]"
+                        className="mt-5 rounded-xl bg-cp-lime font-bold text-cp-ink hover:bg-cp-lime/90"
                         disabled={generateRoadmap.isPending}
                         onClick={() =>
                           generateRoadmap.mutate(undefined, {
@@ -746,15 +744,28 @@ function RoadmapPage() {
                       </Button>
                     </div>
 
-                    {/* The loop + Pilot, drawn in code: no stock illustration.
-                        PilotSays renders the mascot plus its bubble. */}
-                    <div className="relative mx-auto w-full max-w-[330px] overflow-hidden rounded-2xl border-2 border-[var(--d3-choco)] bg-[var(--d3-choco)] p-5">
-                      <LoopMotif className="w-full" />
-                      <div className="mt-2 flex justify-center">
-                        <PilotSays mood="encouraging" size={72} className="w-full max-w-[280px]">
-                          Your loop starts with one day.
-                        </PilotSays>
-                      </div>
+                    {/* How the roadmap starts, in three steps. No mascot. */}
+                    <div className="relative mx-auto w-full max-w-[330px] rounded-2xl border border-cp-lime/30 bg-cp-ink p-5">
+                      <p className="cp-eyebrow">How it starts</p>
+                      <ol className="mt-4 space-y-3">
+                        {[
+                          { n: "01", text: "Generate the roadmap from your profile and target role." },
+                          { n: "02", text: "Pass one checkpoint to start the streak." },
+                          { n: "03", text: "One day at a time. Proof, not promises." },
+                        ].map((step) => (
+                          <li key={step.n} className="flex items-start gap-3">
+                            <span className="font-mono text-xs font-semibold text-cp-lime">
+                              {step.n}
+                            </span>
+                            <span className="text-[12.5px] leading-relaxed text-cp-paper/80">
+                              {step.text}
+                            </span>
+                          </li>
+                        ))}
+                      </ol>
+                      <p className="mt-4 border-t border-border pt-3 font-serif text-[14px] leading-relaxed text-cp-paper/75 italic">
+                        One day is all it takes to start.
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -766,7 +777,7 @@ function RoadmapPage() {
               <div className="flex justify-center pt-2">
                 <Button
                   variant="ghost"
-                  className="rounded-xl text-[12.5px] text-[var(--d3-ink)]/65"
+                  className="rounded-xl text-[12.5px] text-cp-paper/65"
                   disabled={generateRoadmap.isPending}
                   onClick={() =>
                     generateRoadmap.mutate(undefined, {
@@ -798,26 +809,26 @@ function RoadmapPage() {
           {/* Sidebar */}
           <div className="space-y-4">
             {/* Progress Summary */}
-            <div className="d3-card p-5">
-              <h3 className="text-[14.5px] font-bold text-[var(--d3-ink)]">Progress</h3>
+            <div className="card-surface p-5">
+              <h3 className="text-[14.5px] font-bold text-cp-paper">Progress</h3>
               <div className="mt-4 space-y-3">
                 <div className="flex items-center justify-between text-[13px]">
-                  <span className="text-[var(--d3-ink)]/60">Learning Paths</span>
-                  <span className="font-semibold text-[var(--d3-ink)]">
+                  <span className="text-cp-paper/60">Learning Paths</span>
+                  <span className="font-semibold text-cp-paper">
                     {completedPaths}/{totalPaths}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-[13px]">
-                  <span className="text-[var(--d3-ink)]/60">Days Completed</span>
-                  <span className="font-semibold text-[var(--d3-ink)]">
+                  <span className="text-cp-paper/60">Days Completed</span>
+                  <span className="font-semibold text-cp-paper">
                     {completedDays}/{totalDays || "?"}
                   </span>
                 </div>
                 {progress?.currentLevel && (
                   <div className="flex items-center justify-between text-[13px]">
-                    <span className="text-[var(--d3-ink)]/60">Current Level</span>
+                    <span className="text-cp-paper/60">Current Level</span>
                     <span
-                      className={cn("d3-chip capitalize", levelColor(progress.currentLevel))}
+                      className={cn("cp-chip capitalize", levelColor(progress.currentLevel))}
                     >
                       {progress.currentLevel}
                     </span>
@@ -825,58 +836,58 @@ function RoadmapPage() {
                 )}
                 {progress?.mcqsPassed != null && (
                   <div className="flex items-center justify-between text-[13px]">
-                    <span className="text-[var(--d3-ink)]/60">MCQs Passed</span>
-                    <span className="font-semibold text-[var(--d3-ink)]">{progress.mcqsPassed}</span>
+                    <span className="text-cp-paper/60">MCQs Passed</span>
+                    <span className="font-semibold text-cp-paper">{progress.mcqsPassed}</span>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Measurable impact: derived from completed work and assessment history. */}
-            <div className="d3-card p-5">
+            <div className="card-surface p-5">
               <div className="flex items-center justify-between gap-3">
-                <h3 className="text-[14.5px] font-bold text-[var(--d3-ink)]">Proof of progress</h3>
-                <span className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--d3-flame)]">
+                <h3 className="text-[14.5px] font-bold text-cp-paper">Proof of progress</h3>
+                <span className="text-xs font-bold uppercase tracking-[0.12em] text-cp-ember">
                   Evidence
                 </span>
               </div>
               <div className="mt-4 grid grid-cols-2 gap-3">
-                <div className="rounded-xl bg-[var(--d3-sky)]/15 p-3">
-                  <p className="text-xs text-[var(--d3-ink)]/60">Completion rate</p>
-                  <p className="mt-1 text-lg font-bold text-[var(--d3-ink)]">
+                <div className="rounded-xl bg-cp-stone/15 p-3">
+                  <p className="text-xs text-cp-paper/60">Completion rate</p>
+                  <p className="mt-1 text-lg font-bold text-cp-paper">
                     {progress?.completionRate ?? 0}%
                   </p>
                 </div>
-                <div className="rounded-xl bg-[var(--d3-lime)]/20 p-3">
-                  <p className="text-xs text-[var(--d3-ink)]/60">Avg. checkpoint</p>
-                  <p className="mt-1 text-lg font-bold text-[var(--d3-ink)]">
+                <div className="rounded-xl bg-cp-lime/20 p-3">
+                  <p className="text-xs text-cp-paper/60">Avg. checkpoint</p>
+                  <p className="mt-1 text-lg font-bold text-cp-paper">
                     {progress?.averageMcqScore != null ? `${progress.averageMcqScore}%` : "Not yet"}
                   </p>
                 </div>
-                <div className="rounded-xl bg-[var(--d3-mustard)]/20 p-3">
-                  <p className="text-xs text-[var(--d3-ink)]/60">Learning time</p>
-                  <p className="mt-1 text-lg font-bold text-[var(--d3-ink)]">
+                <div className="rounded-xl bg-cp-lime/20 p-3">
+                  <p className="text-xs text-cp-paper/60">Learning time</p>
+                  <p className="mt-1 text-lg font-bold text-cp-paper">
                     {progress?.estimatedMinutesCompleted
                       ? `${Math.round(progress.estimatedMinutesCompleted / 60)}h`
                       : "0h"}
                   </p>
                 </div>
-                <div className="rounded-xl bg-[var(--d3-peri)]/15 p-3">
-                  <p className="text-xs text-[var(--d3-ink)]/60">Checkpoints</p>
-                  <p className="mt-1 text-lg font-bold text-[var(--d3-ink)]">
+                <div className="rounded-xl bg-cp-stone/15 p-3">
+                  <p className="text-xs text-cp-paper/60">Checkpoints</p>
+                  <p className="mt-1 text-lg font-bold text-cp-paper">
                     {progress?.mcqsPassed ?? 0}/{progress?.mcqsAttempted ?? 0}
                   </p>
                 </div>
               </div>
-              <p className="mt-3 text-xs leading-relaxed text-[var(--d3-ink)]/60">
+              <p className="mt-3 text-xs leading-relaxed text-cp-paper/60">
                 Based on completed roadmap days, estimated work time, checkpoint scores, and
                 recorded assessment attempts.
               </p>
             </div>
 
             {/* Next Action */}
-            <div className="d3-tilt-r rounded-3xl border-2 border-[var(--d3-navy)] bg-[var(--d3-navy)] p-5 text-[var(--d3-cream)] shadow-[0_10px_30px_rgba(20,20,80,0.25)]">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--d3-gold)]">
+            <div className="rounded-3xl border border-cp-lime/40 bg-cp-ink p-5">
+              <p className="cp-eyebrow">
                 Next Action
               </p>
               <p className="mt-2 text-[14px] font-semibold leading-snug">

@@ -63,7 +63,7 @@ export function UniversitySearch({ value, onChange }: UniversitySearchProps) {
           ref={triggerRef}
           type="button"
           className={cn(
-            "flex w-full items-center justify-between rounded-xl border border-border bg-card px-4 py-2.5 text-[13.5px] outline-none transition-colors focus:border-terracotta",
+            "flex w-full items-center justify-between rounded-xl border border-border bg-card px-4 py-2.5 text-[13.5px] outline-none transition-colors focus:border-cp-lime",
             !value && "text-muted-foreground",
           )}
           aria-label="Select university or college"
@@ -108,7 +108,7 @@ export function UniversitySearch({ value, onChange }: UniversitySearchProps) {
             <button
               type="button"
               onClick={() => handleSelect(`__manual__${trimmed}`)}
-              className="flex w-full items-center gap-2 border-t border-border px-2 py-2.5 text-left text-[13px] text-terracotta hover:bg-accent"
+              className="flex w-full items-center gap-2 border-t border-border px-2 py-2.5 text-left text-[13px] text-cp-ember hover:bg-accent"
             >
               <span className="ml-6 font-semibold">Use &ldquo;{trimmed}&rdquo;</span>
             </button>

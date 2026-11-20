@@ -1,6 +1,7 @@
 import { motion } from "motion/react";
 import { Check, Search, Sparkles, UserCheck } from "lucide-react";
-import { PilotMascot, PilotSays, type PilotMood } from "@/components/mascot/PilotMascot";
+import { Lens } from "@/components/lens/Lens";
+import { SpotlightCard } from "@/components/lens/SpotlightCard";
 import type { RecruiterVerdict } from "@/data/recruiter";
 
 interface RecruiterHeroCardProps {
@@ -11,17 +12,22 @@ interface RecruiterHeroCardProps {
   verdictBand?: RecruiterVerdict["band"] | null;
 }
 
-/** Pilot reacts to the readiness band: a win cheers, a gap encourages. */
-const BAND_MOOD: Record<RecruiterVerdict["band"], PilotMood> = {
-  ready: "cheering",
-  one_gap: "encouraging",
-  not_yet: "thinking",
+const BAND_LABEL: Record<RecruiterVerdict["band"], string> = {
+  ready: "Ready to apply",
+  one_gap: "One gap to close",
+  not_yet: "Not yet",
+};
+
+const BAND_TONE: Record<RecruiterVerdict["band"], string> = {
+  ready: "text-cp-lime2",
+  one_gap: "text-cp-lime",
+  not_yet: "text-cp-ember",
 };
 
 const BAND_COPY: Record<RecruiterVerdict["band"], string> = {
-  ready: "Pilot found a match. This role fits your evidence, so it is time to apply.",
-  one_gap: "One gap to close, then this role is yours. Pilot has the fix in the verdict below.",
-  not_yet: "Not yet, but every fix below is a real step. Pilot will keep score.",
+  ready: "This role fits your evidence. It is time to apply.",
+  one_gap: "One gap to close, then this role is yours. The fix is in the verdict below.",
+  not_yet: "Not yet. Every fix below is a real step toward this role.",
 };
 
 export function RecruiterHeroCard({
@@ -30,127 +36,118 @@ export function RecruiterHeroCard({
   score = null,
   verdictBand = null,
 }: RecruiterHeroCardProps) {
-  const mood: PilotMood = verdictBand ? BAND_MOOD[verdictBand] : "happy";
-  const bubble = verdictBand
+  const bandLabel = verdictBand ? BAND_LABEL[verdictBand] : "No verdict yet";
+  const bandTone = verdictBand ? BAND_TONE[verdictBand] : "text-cp-stone";
+  const bandCopy = verdictBand
     ? BAND_COPY[verdictBand]
-    : "Pick a role and a company, and Pilot will screen you like a real recruiter would. No flattery, just the gaps.";
+    : "Pick a role and a company, then run the audit. The screen reads like a real recruiter would: no flattery, just the gaps.";
 
   return (
-    <div className="d3-card relative overflow-hidden p-6 sm:p-8">
-      {/* Toy-bright blobs behind the card content. */}
-      <div className="pointer-events-none absolute -top-14 -left-14 h-48 w-48 rounded-full bg-d3-lime/30 blur-2xl" />
-      <div className="pointer-events-none absolute -bottom-14 -right-14 h-48 w-48 rounded-full bg-d3-sky/40 blur-2xl" />
+    <SpotlightCard className="card-surface relative overflow-hidden p-6 sm:p-8">
+      {/* Lime glow behind the card content. */}
+      <div className="pointer-events-none absolute -top-20 -left-20 h-64 w-64 rounded-full bg-cp-lime/10 blur-3xl" />
 
       <div className="relative z-10 grid items-center gap-8 lg:grid-cols-[1.1fr_0.9fr]">
         {/* Left side: headline, subhead, feature badges. */}
         <div className="space-y-5">
-          <div className="d3-chip bg-d3-mustard text-d3-ink">
-            <Sparkles className="h-3.5 w-3.5" />
+          <div className="cp-eyebrow flex items-center gap-2">
+            <Sparkles className="h-3.5 w-3.5 text-cp-lime" />
             CareerPilot Coach · AI screening coach
           </div>
 
           <div className="space-y-1.5">
-            <h1 className="d3-display text-3xl font-black tracking-tight text-d3-ink sm:text-4xl lg:text-5xl leading-tight">
+            <h1 className="font-display editorial-title text-4xl text-cp-paper sm:text-5xl lg:text-6xl">
               Audit Right. <br />
-              <span className="text-d3-flame">Build Better.</span>
+              <span className="text-cp-lime">Build Better.</span>
             </h1>
-            <p className="text-xs sm:text-sm font-medium leading-relaxed text-d3-ink/70 max-w-md pt-1">
-              Pilot checks your resume, projects, and evidence footprint for{" "}
-              <strong className="text-d3-ink">{targetRole}</strong> at{" "}
-              <span className="font-bold text-d3-flame">{targetCompany}</span>{" "}
+            <p className="max-w-md pt-1 text-xs leading-relaxed font-medium text-cp-paper/70 sm:text-sm">
+              The audit checks your resume, projects, and evidence footprint for{" "}
+              <strong className="text-cp-paper">{targetRole}</strong> at{" "}
+              <span className="font-bold text-cp-lime">{targetCompany}</span>{" "}
               with zero flattery.
             </p>
           </div>
 
           <div className="grid grid-cols-2 gap-3 pt-2">
-            <div className="flex items-center gap-2.5 rounded-2xl border-2 border-d3-choco/15 bg-d3-paper p-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-d3-lime/40 text-d3-choco">
+            <div className="flex items-center gap-2.5 rounded-2xl border border-border bg-cp-ink p-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-cp-lime/15 text-cp-lime">
                 <Search className="h-4 w-4" />
               </div>
               <div>
-                <p className="text-xs font-bold text-d3-ink">Smart Sourcing</p>
-                <p className="text-[10px] text-d3-ink/60">GitHub &amp; Project Proof</p>
+                <p className="text-xs font-bold text-cp-paper">Smart Sourcing</p>
+                <p className="text-[10px] text-cp-paper/60">GitHub &amp; Project Proof</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2.5 rounded-2xl border-2 border-d3-choco/15 bg-d3-paper p-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-d3-sky/50 text-d3-choco">
+            <div className="flex items-center gap-2.5 rounded-2xl border border-border bg-cp-ink p-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-cp-lime2/15 text-cp-lime2">
                 <UserCheck className="h-4 w-4" />
               </div>
               <div>
-                <p className="text-xs font-bold text-d3-ink">CV Screening</p>
-                <p className="text-[10px] text-d3-ink/60">ATS Keyword Audit</p>
+                <p className="text-xs font-bold text-cp-paper">CV Screening</p>
+                <p className="text-[10px] text-cp-paper/60">ATS Keyword Audit</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right side: Pilot, the recruiter's face, breaking out of the frame. */}
-        <div className="relative flex items-center justify-center">
-          <div className="d3-tilt-r relative w-full max-w-[380px] rounded-3xl border-2 border-d3-choco bg-d3-paper p-6 shadow-[5px_5px_0_var(--d3-choco)]">
-            {/* Top bubble: target role. */}
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="absolute -top-4 left-6 z-20 flex max-w-[calc(100%-2rem)] items-center gap-2 rounded-full border-2 border-d3-choco bg-d3-mustard px-3.5 py-1.5 shadow-md"
-            >
-              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-d3-navy text-white">
-                <Search className="h-3 w-3" />
-              </div>
-              <div className="text-[11px] leading-snug font-bold text-d3-ink">
-                Target: <span className="text-d3-navy">{targetRole}</span>
-              </div>
-            </motion.div>
+        {/* Right side: the verdict panel. No face, just the verdict in
+            type, with the lens over the evidence score. */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.15 }}
+          className="relative w-full rounded-3xl border border-border bg-cp-ink p-6"
+        >
+          <p className="cp-eyebrow">
+            Target · {targetRole}
+          </p>
 
-            {/* Floating evidence chip. */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="absolute -right-3 top-8 z-20 flex items-center gap-2.5 rounded-2xl border-2 border-d3-choco bg-d3-paper p-2.5 shadow-lg"
-            >
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-d3-lime text-xs font-black text-d3-ink">
-                CP
-              </div>
-              <div>
-                <p className="text-[11px] font-bold text-d3-ink">Evidence score</p>
-                <p className="text-[10px] font-extrabold text-d3-flame">
-                  {score === null ? "Run audit first" : `${score}/100 evidence`}
-                </p>
-              </div>
-              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-d3-leaf text-white">
-                <Check className="h-3 w-3 stroke-[3]" />
-              </div>
-            </motion.div>
+          <p className={`font-display editorial-title mt-4 text-3xl sm:text-4xl ${bandTone}`}>
+            {bandLabel}
+          </p>
+          <p className="mt-3 font-serif text-[15px] leading-relaxed text-cp-paper/80 italic">
+            {bandCopy}
+          </p>
 
-            {/* Pilot, breaking out of the top of the frame. */}
-            <div className="relative z-10 -mt-10 flex items-center justify-center pt-2">
-              <motion.div
-                initial={{ scale: 0.95, rotate: -2 }}
-                animate={{ scale: [0.98, 1.02, 0.98], rotate: [-2, 1, -2] }}
-                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-              >
-                <PilotMascot mood={mood} size={200} />
-              </motion.div>
-            </div>
-
-            <PilotSays mood={mood} showMascot={false} className="relative z-10 mt-1">
-              {bubble}
-            </PilotSays>
-
-            {/* Bottom label badge. */}
-            <div className="mt-4 flex items-center justify-between gap-3 rounded-xl bg-d3-navy px-4 py-2 text-white shadow-md">
-              <span className="shrink-0 text-xs font-black tracking-widest uppercase text-d3-mustard">
-                Pilot · Coach
-              </span>
-              <span className="min-w-0 truncate text-right text-[10px] font-bold opacity-80">
-                {targetCompany} Panel
-              </span>
-            </div>
+          {/* Evidence score under the lens: static text, magnified. */}
+          <div className="mt-6 border-t border-border pt-5">
+            <Lens>
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <p className="cp-eyebrow">Evidence score</p>
+                  <p className="font-display mt-1 text-4xl font-black tracking-tight text-cp-paper">
+                    {score === null ? "n/a" : `${score}/100`}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 pb-1">
+                  {score !== null && (
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-cp-lime2 text-cp-ink">
+                      <Check className="h-3.5 w-3.5 stroke-[3]" />
+                    </span>
+                  )}
+                  <span className="text-[11px] font-bold text-cp-paper/60">
+                    {score === null ? "Run audit first" : "Evidence rubric"}
+                  </span>
+                </div>
+              </div>
+            </Lens>
+            <p className="mt-2 text-[11px] leading-relaxed text-cp-paper/50">
+              Evidence rubric only; not a hiring probability. Move the lens over the
+              score to inspect it.
+            </p>
           </div>
-        </div>
+
+          <div className="mt-5 flex items-center justify-between gap-3 rounded-xl bg-cp-panel px-4 py-2.5">
+            <span className="shrink-0 font-mono text-[11px] font-semibold tracking-[0.18em] text-cp-lime uppercase">
+              Coach
+            </span>
+            <span className="min-w-0 truncate text-right text-[10px] font-bold text-cp-paper/60">
+              {targetCompany} Panel
+            </span>
+          </div>
+        </motion.div>
       </div>
-    </div>
+    </SpotlightCard>
   );
 }

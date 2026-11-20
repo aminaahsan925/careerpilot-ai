@@ -29,7 +29,7 @@ export function AppLayout({
           <button
             type="button"
             aria-label="Close navigation"
-            className="flex-1 bg-d3-ink/40 backdrop-blur-[2px]"
+            className="flex-1 bg-cp-ink/70 backdrop-blur-[2px]"
             onClick={() => setOpen(false)}
           />
         </div>
@@ -49,7 +49,7 @@ export function AppLayout({
 
             <div className="min-w-0 flex-1">
               {title && (
-                <h1 className="d3-display text-[26px] font-extrabold tracking-[-0.01em] text-foreground">
+                <h1 className="font-display text-[26px] font-extrabold tracking-[-0.01em] text-foreground">
                   {title}
                 </h1>
               )}

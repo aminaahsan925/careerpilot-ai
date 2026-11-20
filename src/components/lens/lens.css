@@ -1,0 +1,78 @@
+/* Round 3 lens engine styles (Direction 2, Cursor as Flashlight / Lens).
+ * These rules need descendant selectors and masks, so they live here
+ * instead of inline styles. Imported once by Lens.tsx and Flashlight.tsx.
+ * Colours come from the Round 3 tokens in styles.css (worker 2); the
+ * fallbacks match the token contract exactly.
+ */
+
+/* --- Lens: base and magnified layers ----------------------------------- */
+
+.cp-lens-base {
+  position: relative;
+}
+
+.cp-lens-zoom-wrap {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  /* Opaque backing: inside the disc only the magnified copy shows. Without
+     this the base layer shows through and the two copies double up. A
+     caller on a different surface can override --cp-lens-bg. */
+  background: var(--cp-lens-bg, var(--cp-ink, #040403));
+}
+
+.cp-lens-zoom {
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+}
+
+/*
+ * Monochrome to colour under the lens. Elements marked
+ * .cp-colour-under-lens render grey in the base layer and in full colour
+ * inside the magnified lens copy, so colour appears only where the lens
+ * sits. Used by the hero data strip (HeroLens.tsx).
+ */
+.cp-lens-base .cp-colour-under-lens {
+  filter: grayscale(1) brightness(0.92);
+}
+
+.cp-lens-zoom .cp-colour-under-lens {
+  filter: none;
+}
+
+.cp-lens-ring {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* --- Flashlight: reveal toggle ------------------------------------------
+ * The toggle is the no-cursor fallback (keyboard, touch, screen reader).
+ * It stays in the tab order at all times, shows on keyboard focus, and is
+ * always visible on touch devices and under reduced motion.
+ */
+
+.cp-flashlight-toggle {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.cp-flashlight-toggle:focus-visible {
+  opacity: 1;
+}
+
+@media (pointer: coarse) {
+  .cp-flashlight-toggle {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cp-flashlight-toggle {
+    opacity: 1;
+  }
+}

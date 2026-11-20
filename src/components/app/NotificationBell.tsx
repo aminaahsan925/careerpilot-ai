@@ -65,19 +65,19 @@ export function NotificationBell() {
       >
         <Bell className="h-4 w-4 text-foreground" />
         {count > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-d3-flame px-1 text-[9px] font-bold text-white">
+          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-cp-lime px-1 text-[9px] font-bold text-cp-ink">
             {count > 9 ? "9+" : count}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 top-12 z-50 w-[min(380px,calc(100vw-2rem))] overflow-hidden rounded-[2rem] border border-border bg-card shadow-d3-chunky">
+        <div className="absolute right-0 top-12 z-50 w-[min(380px,calc(100vw-2rem))] overflow-hidden rounded-[2rem] border border-border bg-card shadow-card">
           {/* Header */}
-          <div className="border-b border-border bg-d3-mustard/15 p-3.5">
+          <div className="border-b border-border bg-cp-lime/15 p-3.5">
             <div className="flex items-center gap-1.5">
-              <BellRing className="h-4 w-4 text-d3-flame" />
-              <p className="d3-display text-[13px] font-extrabold text-foreground">Notifications</p>
+              <BellRing className="h-4 w-4 text-cp-lime" />
+              <p className="font-display text-[13px] font-extrabold text-foreground">Notifications</p>
             </div>
           </div>
 
@@ -107,7 +107,7 @@ export function NotificationBell() {
                     }}
                     className={cn(
                       "flex w-full items-start gap-2.5 rounded-2xl p-2.5 text-left transition-colors hover:bg-muted/50",
-                      !notification.read && "bg-d3-mustard/10"
+                      !notification.read && "bg-cp-lime/10"
                     )}
                   >
                     <span
@@ -115,7 +115,7 @@ export function NotificationBell() {
                         "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-xl text-xs",
                         notification.read
                           ? "bg-secondary text-muted-foreground"
-                          : "bg-d3-mustard/25 text-d3-choco"
+                          : "bg-cp-lime/25 text-cp-paper"
                       )}
                     >
                       <Icon className="h-3.5 w-3.5" />
@@ -126,7 +126,7 @@ export function NotificationBell() {
                           {notification.title}
                         </span>
                         {!notification.read && (
-                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-d3-flame" />
+                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-cp-lime" />
                         )}
                       </span>
                       <span className="mt-0.5 block text-[10.5px] leading-relaxed text-muted-foreground line-clamp-2">
@@ -146,7 +146,7 @@ export function NotificationBell() {
             <Link
               to="/roadmap"
               onClick={() => setOpen(false)}
-              className="text-[11px] font-bold text-d3-flame hover:underline"
+              className="text-[11px] font-bold text-cp-lime hover:underline"
             >
               View full roadmap →
             </Link>

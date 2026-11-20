@@ -4,7 +4,7 @@ type SparklineProps = {
   className?: string;
 };
 
-export function Sparkline({ data, color = "var(--d3-flame)", className }: SparklineProps) {
+export function Sparkline({ data, color = "var(--cp-ember)", className }: SparklineProps) {
   if (data.length === 0) return null;
 
   const w = 100;

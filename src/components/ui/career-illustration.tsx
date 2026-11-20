@@ -30,12 +30,12 @@ export function CareerIllustration({ className = "", badgeText = "your employabi
             opacity: { duration: 0.6 },
             y: { duration: 4, repeat: Infinity, ease: "easeInOut" },
           }}
-          className="absolute left-2 top-8 z-0 flex items-end gap-1.5 rounded-2xl border border-d3-choco/10 bg-d3-paper/90 p-3 shadow-md backdrop-blur-xs sm:left-4"
+          className="absolute left-2 top-8 z-0 flex items-end gap-1.5 rounded-2xl border border-cp-paper/10 bg-cp-panel/90 p-3 shadow-md backdrop-blur-xs sm:left-4"
         >
-          <div className="h-6 w-2.5 rounded-xs bg-d3-flame/30" />
-          <div className="h-10 w-2.5 rounded-xs bg-d3-flame/60" />
-          <div className="h-14 w-2.5 rounded-xs bg-d3-flame" />
-          <div className="h-12 w-2.5 rounded-xs bg-d3-koi" />
+          <div className="h-6 w-2.5 rounded-xs bg-cp-ember/30" />
+          <div className="h-10 w-2.5 rounded-xs bg-cp-ember/60" />
+          <div className="h-14 w-2.5 rounded-xs bg-cp-ember" />
+          <div className="h-12 w-2.5 rounded-xs bg-cp-lime2" />
         </motion.div>
 
         {/* Floating Donut Chart (Right Background) */}
@@ -50,25 +50,25 @@ export function CareerIllustration({ className = "", badgeText = "your employabi
         >
           <svg viewBox="0 0 100 100" className="h-full w-full drop-shadow-sm">
             {/* Background Donut */}
-            <circle cx="50" cy="50" r="38" fill="none" stroke="#FBEED3" strokeWidth="18" />
+            <circle cx="50" cy="50" r="38" fill="none" stroke="var(--cp-paper)" strokeOpacity="0.15" strokeWidth="18" />
             {/* Segment 1: Flame */}
             <circle
               cx="50"
               cy="50"
               r="38"
               fill="none"
-              stroke="#D83B0F"
+              stroke="var(--cp-ember)"
               strokeWidth="18"
               strokeDasharray="140 100"
               strokeDashoffset="20"
             />
-            {/* Segment 2: Koi orange */}
+            {/* Segment 2: Lime2 */}
             <circle
               cx="50"
               cy="50"
               r="38"
               fill="none"
-              stroke="#F58220"
+              stroke="var(--cp-lime2)"
               strokeWidth="18"
               strokeDasharray="70 170"
               strokeDashoffset="-120"
@@ -85,93 +85,64 @@ export function CareerIllustration({ className = "", badgeText = "your employabi
         >
           {/* Leaves */}
           <div className="flex gap-1 mb-[-4px]">
-            <div className="h-10 w-4 rounded-full bg-d3-lime rotate-[-25deg] shadow-xs" />
-            <div className="h-12 w-4 rounded-full bg-d3-leaf rotate-[5deg] shadow-xs" />
-            <div className="h-10 w-4 rounded-full bg-d3-lime rotate-[30deg] shadow-xs" />
+            <div className="h-10 w-4 rounded-full bg-cp-lime rotate-[-25deg] shadow-xs" />
+            <div className="h-12 w-4 rounded-full bg-cp-lime2 rotate-[5deg] shadow-xs" />
+            <div className="h-10 w-4 rounded-full bg-cp-lime rotate-[30deg] shadow-xs" />
           </div>
           {/* Pot */}
-          <div className="h-9 w-8 rounded-b-lg bg-d3-choco shadow-md" />
+          <div className="h-9 w-8 rounded-b-lg bg-cp-ink shadow-md" />
         </motion.div>
 
-        {/* Central Character & Laptop SVG */}
-        <svg viewBox="0 0 340 260" className="relative z-10 w-full h-full">
-          {/* Desk Base Line */}
-          <line x1="20" y1="230" x2="320" y2="230" stroke="#3B2314" strokeWidth="2.5" strokeLinecap="round" />
+        {/* Central Lens Motif (Round 3): an abstract glass lens over a
+            score ring. No character, no face, no invented number: the
+            ring is decorative geometry, not a score. */}
+        <svg viewBox="0 0 340 260" className="relative z-10 w-full h-full" aria-hidden="true">
+          {/* Baseline */}
+          <line x1="20" y1="230" x2="320" y2="230" stroke="var(--cp-paper)" strokeOpacity="0.25" strokeWidth="2" strokeLinecap="round" />
 
-          {/* Torso / Sweater (Flame #D83B0F) */}
-          <path
-            d="M 130 180 C 130 150, 160 145, 185 145 C 220 145, 235 155, 240 210 L 125 210 Z"
-            fill="#D83B0F"
-          />
+          {/* Document under the lens: abstract resume lines. */}
+          <g>
+            <rect x="60" y="120" width="120" height="100" rx="8" fill="none" stroke="var(--cp-paper)" strokeOpacity="0.3" strokeWidth="1.5" />
+            <line x1="76" y1="142" x2="164" y2="142" stroke="var(--cp-paper)" strokeOpacity="0.45" strokeWidth="5" strokeLinecap="round" />
+            <line x1="76" y1="160" x2="148" y2="160" stroke="var(--cp-paper)" strokeOpacity="0.25" strokeWidth="5" strokeLinecap="round" />
+            <line x1="76" y1="178" x2="156" y2="178" stroke="var(--cp-paper)" strokeOpacity="0.25" strokeWidth="5" strokeLinecap="round" />
+            <line x1="76" y1="196" x2="132" y2="196" stroke="var(--cp-paper)" strokeOpacity="0.25" strokeWidth="5" strokeLinecap="round" />
+          </g>
 
-          {/* Arms & Hands on Laptop */}
-          <path
-            d="M 140 185 Q 165 205, 180 210"
+          {/* Score ring, right of the document. */}
+          <circle cx="232" cy="150" r="46" fill="none" stroke="var(--cp-paper)" strokeOpacity="0.15" strokeWidth="10" />
+          <circle
+            cx="232"
+            cy="150"
+            r="46"
             fill="none"
-            stroke="#F58220"
-            strokeWidth="12"
+            stroke="var(--cp-lime2)"
+            strokeWidth="10"
             strokeLinecap="round"
-          />
-          <path
-            d="M 180 205 Q 200 208, 220 210"
-            fill="none"
-            stroke="#D83B0F"
-            strokeWidth="12"
-            strokeLinecap="round"
-          />
-          {/* Hand */}
-          <circle cx="170" cy="208" r="7" fill="#FADCB9" />
-          <circle cx="185" cy="208" r="7" fill="#FADCB9" />
-
-          {/* Neck */}
-          <rect x="176" y="125" width="14" height="25" fill="#FADCB9" rx="4" />
-
-          {/* Head & Face */}
-          <ellipse cx="183" cy="105" rx="20" ry="24" fill="#FADCB9" />
-
-          {/* Facial Features */}
-          {/* Eye */}
-          <ellipse cx="176" cy="102" rx="2.5" ry="3.5" fill="#241407" />
-          {/* Eyebrow */}
-          <path d="M 172 95 Q 177 93, 181 95" stroke="#241407" strokeWidth="2" fill="none" strokeLinecap="round" />
-          {/* Smile */}
-          <path d="M 170 114 Q 176 120, 182 114" stroke="#241407" strokeWidth="2" fill="none" strokeLinecap="round" />
-          {/* Nose */}
-          <path d="M 171 106 Q 168 110, 172 110" stroke="#E2B895" strokeWidth="2" fill="none" />
-
-          {/* Lush Black Hair (#241407) */}
-          <path
-            d="M 160 100 C 150 70, 205 65, 208 95 C 215 120, 210 170, 212 195 C 198 190, 195 150, 195 130 C 190 100, 160 110, 160 100 Z"
-            fill="#241407"
-          />
-          <path
-            d="M 165 92 Q 180 80, 195 90 C 185 85, 170 85, 165 92 Z"
-            fill="#241407"
+            strokeDasharray="289"
+            strokeDashoffset="96"
+            transform="rotate(-90 232 150)"
           />
 
-          {/* Sleek Laptop (Navy #1F2A5A) */}
-          {/* Screen Body */}
-          <path
-            d="M 60 150 L 155 150 L 155 220 L 60 220 Z"
-            fill="#1F2A5A"
-            rx="6"
-          />
-          {/* Laptop Base keyboard deck */}
-          <path
-            d="M 25 224 L 165 224 L 160 230 L 30 230 Z"
-            fill="#1F2A5A"
-          />
-          {/* Glowing 4-Point Star Emblem on Laptop Cover */}
-          <g transform="translate(107, 185)">
+          {/* Lens disc over the join: glass ring with a lime rim. */}
+          <circle cx="183" cy="118" r="52" fill="var(--cp-lime)" fillOpacity="0.06" stroke="var(--cp-lime)" strokeWidth="2" />
+          <circle cx="183" cy="118" r="44" fill="none" stroke="var(--cp-paper)" strokeOpacity="0.35" strokeWidth="1" />
+          {/* Specular arc on the lens. */}
+          <path d="M 152 88 A 52 52 0 0 1 196 70" fill="none" stroke="var(--cp-paper)" strokeOpacity="0.7" strokeWidth="3" strokeLinecap="round" />
+          {/* Ember counter-edge, like the lens chromatic rim. */}
+          <path d="M 196 166 A 52 52 0 0 1 152 148" fill="none" stroke="var(--cp-ember)" strokeOpacity="0.8" strokeWidth="2" strokeLinecap="round" />
+
+          {/* Four-point star, kept from the original emblem. */}
+          <g transform="translate(232, 150)">
             <path
               d="M 0 -10 Q 0 0, 10 0 Q 0 0, 0 10 Q 0 0, -10 0 Q 0 0, 0 -10 Z"
-              fill="#FFFDF6"
+              fill="var(--cp-paper)"
             />
           </g>
         </svg>
 
-        {/* Ambient Glow behind Laptop */}
-        <div className="pointer-events-none absolute left-20 bottom-10 h-24 w-24 rounded-full bg-d3-flame/20 blur-xl" />
+        {/* Ambient Glow behind the lens */}
+        <div className="pointer-events-none absolute left-20 bottom-10 h-24 w-24 rounded-full bg-cp-lime/15 blur-xl" />
       </div>
     </div>
   );

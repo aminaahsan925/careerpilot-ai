@@ -46,7 +46,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { AppLayout } from "@/components/app/AppLayout";
-import { KoiPond, type PondKoi } from "@/components/market/KoiPond";
+import { MarketLens, type LensPosting } from "@/components/market/MarketLens";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -110,7 +110,7 @@ function MarketRealityPage() {
   const { data: user } = useCurrentUser();
   const { data: market, isLoading, error, refetch } = useMarketReality();
   const { data: outdatedData } = useOutdatedTech();
-  // The pond's koi: the student's stored real postings, newest first,
+  // The mirror's nodes: the student's stored real postings, newest first,
   // annotated with deterministic per-posting coverage.
   const { data: storedJobs, isLoading: jobsLoading } = useStoredJobsWithCoverage();
   const queryClient = useQueryClient();
@@ -182,8 +182,8 @@ function MarketRealityPage() {
         title="Market Reality"
         subtitle="Connect your target role to see real-world hiring data"
       >
-        <div className="card-surface mx-auto max-w-lg p-8 text-center sm:p-12 border-terracotta/20">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-terracotta/10 text-terracotta">
+        <div className="card-surface mx-auto max-w-lg p-8 text-center sm:p-12 border-cp-lime/20">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-cp-lime/10 text-cp-lime">
             <Target className="h-7 w-7" />
           </div>
           <h2 className="mt-4 font-display text-2xl font-bold text-foreground">
@@ -199,7 +199,7 @@ function MarketRealityPage() {
                 key={r}
                 variant="outline"
                 size="sm"
-                className="rounded-xl text-xs font-bold hover:border-terracotta/40 hover:text-terracotta"
+                className="rounded-xl text-xs font-bold hover:border-cp-lime/40 hover:text-cp-lime"
                 onClick={async () => {
                   await updateRole.mutateAsync(r);
                 }}
@@ -239,7 +239,7 @@ function MarketRealityPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="mt-2 h-7 px-0 text-xs font-bold text-terracotta"
+                    className="mt-2 h-7 px-0 text-xs font-bold text-cp-lime"
                     onClick={() => updateRole.mutate(recommendation.role)}
                   >
                     Choose this target <ChevronRight className="ml-1 h-3 w-3" />
@@ -257,7 +257,7 @@ function MarketRealityPage() {
             <Button
               variant="ghost"
               size="sm"
-              className="mt-2 rounded-xl text-xs font-bold text-terracotta"
+              className="mt-2 rounded-xl text-xs font-bold text-cp-lime"
               onClick={() => updateRole.mutate("I don't know my target yet")}
             >
               I don't know my target yet <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
@@ -287,7 +287,7 @@ function MarketRealityPage() {
     try {
       await refreshMutation.mutateAsync();
       // The fresh market pass re-runs job research, which stores new real
-      // postings; refill the pond from them.
+      // postings; refill the mirror from them.
       await queryClient.invalidateQueries({ queryKey: ["job-intel", "stored-jobs"] });
       toast.success("Market reality data refreshed from latest research pass!");
     } catch {
@@ -352,11 +352,11 @@ function MarketRealityPage() {
   const profileSkills = user?.skills?.map((skill) => skill.name).slice(0, 5) ?? [];
   const firstOutdatedItem = outdatedData?.outdatedItems[0];
 
-  // The pond's koi: one real stored posting each. "Matched" reuses the
+  // The mirror's nodes: one real stored posting each. "Matched" reuses the
   // SavedPostings 70% bar: deterministic coverage of the posting's
   // requirements by the student's saved evidence. Null coverage means
   // "not measured yet", never a default.
-  const pondKoi: PondKoi[] = (storedJobs ?? []).map((job) => {
+  const lensPostings: LensPosting[] = (storedJobs ?? []).map((job) => {
     const location = [job.locationCity, job.locationCountry].filter(Boolean).join(", ");
     const workMode =
       job.remoteType === "remote"
@@ -388,7 +388,7 @@ function MarketRealityPage() {
     <AppLayout
       title={
         <span>
-          Market Reality & Future Tech <Sparkles className="inline h-5 w-5 text-d3-flame" />
+          Market Reality & Future Tech <Sparkles className="inline h-5 w-5 text-cp-lime" />
         </span>
       }
       subtitle="The worldwide hiring bar for your target role, with optional local context and live emerging tech signals."
@@ -410,10 +410,10 @@ function MarketRealityPage() {
             <Button
               variant="outline"
               size="sm"
-              className="rounded-xl border-d3-flame/30 text-xs font-semibold hover:bg-d3-flame/10 hover:text-d3-flame"
+              className="rounded-xl border-cp-lime/30 text-xs font-semibold hover:bg-cp-lime/10 hover:text-cp-lime"
               onClick={() => setShowRoleDialog(true)}
             >
-              <Pencil className="mr-1.5 h-3.5 w-3.5 text-d3-flame" />
+              <Pencil className="mr-1.5 h-3.5 w-3.5 text-cp-lime" />
               Change Role: <strong className="ml-1 text-foreground">{market.targetRole}</strong>
             </Button>
             <Button
@@ -425,7 +425,7 @@ function MarketRealityPage() {
             >
               <RefreshCw
                 className={cn(
-                  "mr-1.5 h-3.5 w-3.5 text-d3-flame",
+                  "mr-1.5 h-3.5 w-3.5 text-cp-lime",
                   refreshMutation.isPending && "animate-spin",
                 )}
               />
@@ -435,13 +435,13 @@ function MarketRealityPage() {
         </div>
 
         {/* Target selector: visible before the report so every section has clear context. */}
-        <section className="d3-card d3-tilt-l flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+        <section className="card-surface flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
           <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-d3-mustard/25 text-d3-choco">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cp-lime/15 text-cp-lime">
               <Target className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-d3-flame">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-cp-lime">
                 Your target career
               </p>
               <h2 className="mt-1 text-lg font-bold tracking-tight text-foreground">
@@ -454,31 +454,34 @@ function MarketRealityPage() {
           </div>
           <Button
             variant="outline"
-            className="rounded-xl border-d3-flame/30 font-bold hover:bg-d3-flame/10 hover:text-d3-flame"
+            className="rounded-xl border-cp-lime/30 font-bold hover:bg-cp-lime/10 hover:text-cp-lime"
             onClick={() => setShowRoleDialog(true)}
           >
-            <Pencil className="mr-2 h-4 w-4 text-d3-flame" />
+            <Pencil className="mr-2 h-4 w-4 text-cp-lime" />
             Search or change target
           </Button>
         </section>
 
         {/* ═══════════════════════════════════════════════════════════════ */}
-        {/* THE MARKET POND: live postings as koi (Direction 3)            */}
+        {/* THE MARKET MIRROR: real postings as a flashlight constellation */}
         {/* ═══════════════════════════════════════════════════════════════ */}
         {activeStep === 1 && (
           <section className="space-y-4">
-            <KoiPond
-              koi={pondKoi}
+            <MarketLens
+              postings={lensPostings}
               isLoading={jobsLoading}
               targetRole={market.targetRole}
               onRefresh={handleRefresh}
               refreshPending={refreshMutation.isPending}
               onDropResume={() => navigate({ to: "/resume" })}
+              highDemandSkills={highDemandSkills}
+              matchedSkills={matchedHighSkills}
+              missingSkills={criticalGaps}
             />
 
             {/* Scope switcher, kept from the old hero: Step 2 reads it. */}
-            <div className="d3-card flex flex-wrap items-center gap-2 p-4 sm:p-5">
-              <span className="mr-1 text-xs font-bold uppercase tracking-widest text-d3-choco/50">
+            <div className="card-surface flex flex-wrap items-center gap-2 p-4 sm:p-5">
+              <span className="mr-1 text-xs font-bold uppercase tracking-widest text-cp-stone">
                 Scope:
               </span>
               {[
@@ -493,8 +496,8 @@ function MarketRealityPage() {
                   className={cn(
                     "flex items-center gap-1.5 rounded-xl border px-3.5 py-1.5 text-xs font-bold transition-all",
                     marketScope === scope.id
-                      ? "border-d3-teal bg-d3-teal text-white shadow-md"
-                      : "border-d3-choco/15 bg-d3-paper text-d3-choco/60 hover:bg-d3-cream hover:text-d3-choco",
+                      ? "border-cp-lime bg-cp-lime text-cp-ink shadow-md"
+                      : "border-white/10 bg-cp-panel text-cp-stone hover:bg-white/5 hover:text-cp-paper",
                   )}
                 >
                   <scope.icon className="h-3.5 w-3.5" />
@@ -506,7 +509,7 @@ function MarketRealityPage() {
             {/* Live stats strip: the same four stats as the old hero, re-skinned. */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {/* Stat 1: Match Score Gauge */}
-              <div className="d3-card d3-tilt-l flex items-center gap-3 p-4">
+              <div className="card-surface flex items-center gap-3 p-4">
                 <div className="relative flex h-14 w-14 shrink-0 items-center justify-center">
                   <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
                     <circle
@@ -514,7 +517,7 @@ function MarketRealityPage() {
                       cy="50"
                       r="40"
                       fill="none"
-                      stroke="rgba(59,35,20,0.12)"
+                      stroke="rgba(244,241,234,0.12)"
                       strokeWidth="7"
                     />
                     <circle
@@ -522,7 +525,7 @@ function MarketRealityPage() {
                       cy="50"
                       r="40"
                       fill="none"
-                      className="stroke-d3-flame"
+                      className="stroke-cp-lime"
                       strokeWidth="7"
                       strokeDasharray="251.2"
                       strokeDashoffset={
@@ -531,13 +534,13 @@ function MarketRealityPage() {
                       strokeLinecap="round"
                     />
                   </svg>
-                  <span className="absolute text-sm font-black text-d3-choco">
+                  <span className="absolute text-sm font-black text-cp-paper">
                     {localMatchPct === null ? "?" : `${localMatchPct}%`}
                   </span>
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-d3-choco">Your Match</p>
-                  <p className="text-xs text-d3-choco/60">
+                  <p className="text-xs font-bold text-cp-paper">Your Match</p>
+                  <p className="text-xs text-cp-stone">
                     {localMatchPct === null
                       ? "Not assessed yet"
                       : localMatchPct >= 70
@@ -548,35 +551,35 @@ function MarketRealityPage() {
               </div>
 
               {/* Stat 2: Entry-Level Filter */}
-              <div className="d3-card d3-tilt-r flex items-center gap-3 p-4">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-d3-flame/10 text-d3-flame">
+              <div className="card-surface flex items-center gap-3 p-4">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-cp-lime/10 text-cp-lime">
                   <ShieldAlert className="h-6 w-6" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-d3-choco">Entry-Level Filter</p>
-                  <p className="text-xs text-d3-choco/60">Not measured yet</p>
+                  <p className="text-xs font-bold text-cp-paper">Entry-Level Filter</p>
+                  <p className="text-xs text-cp-stone">Not measured yet</p>
                 </div>
               </div>
 
               {/* Stat 3: Pakistan Salary */}
-              <div className="d3-card d3-tilt-l flex items-center gap-3 p-4">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-d3-flame/10 text-d3-flame">
+              <div className="card-surface flex items-center gap-3 p-4">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-cp-lime/10 text-cp-lime">
                   <DollarSign className="h-6 w-6" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-d3-choco">Pakistan Salary</p>
-                  <p className="text-xs text-d3-choco/60">Not measured yet</p>
+                  <p className="text-xs font-bold text-cp-paper">Pakistan Salary</p>
+                  <p className="text-xs text-cp-stone">Not measured yet</p>
                 </div>
               </div>
 
               {/* Stat 4: Demanded Skills */}
-              <div className="d3-card d3-tilt-r flex items-center gap-3 p-4">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-d3-flame/10 text-d3-flame">
+              <div className="card-surface flex items-center gap-3 p-4">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-cp-lime/10 text-cp-lime">
                   <Zap className="h-6 w-6" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-d3-choco">Top Skills</p>
-                  <p className="truncate text-xs text-d3-choco/60">
+                  <p className="text-xs font-bold text-cp-paper">Top Skills</p>
+                  <p className="truncate text-xs text-cp-stone">
                     {highDemandSkills.slice(0, 3).join(", ") || "Loading…"}
                   </p>
                 </div>
@@ -586,7 +589,7 @@ function MarketRealityPage() {
         )}
 
         {/* Step-by-Step Progressive Navigation Rail */}
-        <div className="d3-card p-3 sm:p-4">
+        <div className="card-surface p-3 sm:p-4">
           <div className="grid grid-cols-2 gap-2 md:grid-cols-3 2xl:grid-cols-6">
             {STEPS.map((s) => {
               const isCurrent = activeStep === s.id;
@@ -599,9 +602,9 @@ function MarketRealityPage() {
                   className={cn(
                     "flex min-w-0 items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left transition-all border sm:px-3.5",
                     isCurrent
-                      ? "border-d3-flame/40 bg-d3-choco text-d3-paper shadow-md scale-102"
+                      ? "border-cp-lime/40 bg-cp-lime text-cp-ink shadow-md scale-102"
                       : isPassed
-                        ? "border-d3-leaf/25 bg-d3-leaf/10 text-foreground hover:bg-d3-leaf/15"
+                        ? "border-cp-lime2/25 bg-cp-lime2/10 text-foreground hover:bg-cp-lime2/15"
                         : "border-transparent text-muted-foreground hover:bg-secondary/40 hover:text-foreground",
                   )}
                 >
@@ -609,9 +612,9 @@ function MarketRealityPage() {
                     className={cn(
                       "flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-xs font-bold",
                       isCurrent
-                        ? "bg-d3-flame text-d3-paper shadow-xs"
+                        ? "bg-cp-ink text-cp-lime shadow-xs"
                         : isPassed
-                          ? "bg-d3-leaf/15 text-d3-leaf"
+                          ? "bg-cp-lime2/15 text-cp-lime2"
                           : "bg-secondary text-muted-foreground",
                     )}
                   >
@@ -619,7 +622,12 @@ function MarketRealityPage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-bold leading-tight">{s.title}</p>
-                    <p className="text-xs leading-tight text-muted-foreground opacity-80">
+                    <p
+                      className={cn(
+                        "text-xs leading-tight opacity-80",
+                        isCurrent ? "text-cp-ink/70" : "text-muted-foreground",
+                      )}
+                    >
                       {s.subtitle}
                     </p>
                   </div>
@@ -644,9 +652,9 @@ function MarketRealityPage() {
               >
                 <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
                   {/* Left Card: Role Breakdown & Daily Responsibilities */}
-                  <div className="card-surface p-6 sm:p-8 space-y-6 border-terracotta/15">
+                  <div className="card-surface p-6 sm:p-8 space-y-6 border-cp-lime/15">
                     <div className="flex items-center gap-2.5">
-                      <Briefcase className="h-5 w-5 text-terracotta" />
+                      <Briefcase className="h-5 w-5 text-cp-lime" />
                       <h2 className="font-display text-xl font-bold text-foreground">
                         Role Definition & Day-to-Day Realities
                       </h2>
@@ -662,7 +670,7 @@ function MarketRealityPage() {
                           key={idx}
                           className="flex items-start gap-2.5 rounded-2xl border border-border bg-card p-4 shadow-xs"
                         >
-                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-terracotta/10 text-xs font-bold text-terracotta mt-0.5">
+                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cp-lime/10 text-xs font-bold text-cp-lime mt-0.5">
                             {idx + 1}
                           </span>
                           <p className="text-xs text-foreground leading-relaxed">{item}</p>
@@ -706,8 +714,8 @@ function MarketRealityPage() {
                             className={cn(
                               "rounded-full px-3 py-1 text-xs font-semibold transition-all border",
                               market.targetRole === r
-                                ? "border-terracotta bg-terracotta text-white shadow-xs"
-                                : "border-border bg-card text-muted-foreground hover:border-terracotta/40 hover:text-foreground",
+                                ? "border-cp-lime bg-cp-lime text-cp-ink shadow-xs"
+                                : "border-border bg-card text-muted-foreground hover:border-cp-lime/40 hover:text-foreground",
                             )}
                           >
                             {r}
@@ -716,8 +724,8 @@ function MarketRealityPage() {
                       </div>
                     </div>
 
-                    <div className="card-surface p-6 bg-gradient-to-br from-card to-terracotta/5 border-terracotta/20">
-                      <div className="flex items-center gap-2 text-terracotta">
+                    <div className="card-surface p-6 bg-gradient-to-br from-card to-cp-lime/5 border-cp-lime/20">
+                      <div className="flex items-center gap-2 text-cp-lime">
                         <Lightbulb className="h-5 w-5" />
                         <h3 className="font-bold text-sm text-foreground">
                           Industry Truth for Students
@@ -762,19 +770,19 @@ function MarketRealityPage() {
                       <div className="space-y-3">
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div className="flex min-w-0 items-start gap-2">
-                            <Building2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+                            <Building2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" />
                             <h2 className="min-w-0 break-words font-display text-lg font-bold leading-tight text-foreground">
                             Pakistan Local Market Reality
                             </h2>
                           </div>
                           {!localDemandIsLong && (
-                            <span className="max-w-full rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold leading-tight text-emerald-800">
+                            <span className="max-w-full rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-bold leading-tight text-emerald-300">
                               {localDemandSummary || "Local market context"}
                             </span>
                           )}
                         </div>
                         {localDemandIsLong && (
-                          <p className="rounded-xl border border-emerald-500/15 bg-emerald-50/70 p-3 text-xs leading-relaxed text-emerald-950">
+                          <p className="rounded-xl border border-emerald-500/15 bg-emerald-500/10 p-3 text-xs leading-relaxed text-cp-paper">
                             {localDemandSummary}
                           </p>
                         )}
@@ -818,7 +826,7 @@ function MarketRealityPage() {
                                 key={idx}
                                 className="flex items-start gap-2 rounded-lg bg-card/50 p-2.5 border border-border/40"
                               >
-                                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-600 shrink-0" />
+                                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />
                                 <span>{item}</span>
                               </li>
                             ))}
@@ -843,25 +851,25 @@ function MarketRealityPage() {
                       <div className="space-y-3">
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div className="flex min-w-0 items-start gap-2">
-                            <Globe className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
+                            <Globe className="mt-0.5 h-5 w-5 shrink-0 text-blue-400" />
                             <h2 className="min-w-0 break-words font-display text-lg font-bold leading-tight text-foreground">
                               Global Remote Market Reality
                             </h2>
                           </div>
                           {!globalDemandIsLong && (
-                            <span className="max-w-full rounded-full bg-blue-100 px-2.5 py-1 text-xs font-bold leading-tight text-blue-800">
+                            <span className="max-w-full rounded-full bg-blue-500/15 px-2.5 py-1 text-xs font-bold leading-tight text-blue-300">
                               {globalDemandSummary || "Global market context"}
                             </span>
                           )}
                         </div>
                         {globalDemandIsLong && (
-                          <p className="rounded-xl border border-blue-500/15 bg-blue-50/70 p-3 text-xs leading-relaxed text-blue-950">
+                          <p className="rounded-xl border border-blue-500/15 bg-blue-500/10 p-3 text-xs leading-relaxed text-cp-paper">
                             {globalDemandSummary}
                           </p>
                         )}
                       </div>
 
-                      <div className="rounded-xl bg-blue-50/60 border border-blue-100 p-4 text-xs text-blue-900 space-y-1">
+                      <div className="rounded-xl bg-blue-500/10 border border-blue-500/25 p-4 text-xs text-blue-200 space-y-1">
                         <p className="font-bold">The Global Compensation Advantage:</p>
                         <p className="text-xs leading-relaxed">
                           International startups pay{" "}
@@ -890,7 +898,7 @@ function MarketRealityPage() {
                                 key={idx}
                                 className="flex items-start gap-2 rounded-lg bg-card/50 p-2.5 border border-border/40"
                               >
-                                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-blue-600 shrink-0" />
+                                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-blue-400 shrink-0" />
                                 <span>{item}</span>
                               </li>
                             ))}
@@ -930,9 +938,9 @@ function MarketRealityPage() {
                 className="space-y-6"
               >
                 {/* Skill Demand Tiers */}
-                <div className="card-surface p-6 sm:p-8 space-y-6 border-terracotta/15">
+                <div className="card-surface p-6 sm:p-8 space-y-6 border-cp-lime/15">
                   <div className="flex items-center gap-2.5">
-                    <Zap className="h-5 w-5 text-terracotta" />
+                    <Zap className="h-5 w-5 text-cp-lime" />
                     <div>
                       <h2 className="font-display text-xl font-bold text-foreground">
                         Skills & Tech Stack Breakdown for {market.targetRole}
@@ -945,7 +953,7 @@ function MarketRealityPage() {
 
                   <div className="rounded-2xl border border-border bg-secondary/35 p-5 sm:p-6">
                     <div className="flex items-start gap-3">
-                      <Target className="mt-0.5 h-5 w-5 shrink-0 text-terracotta" />
+                      <Target className="mt-0.5 h-5 w-5 shrink-0 text-cp-lime" />
                       <div>
                         <h3 className="font-display text-lg font-bold text-foreground">
                           What does the market expect from you?
@@ -982,9 +990,9 @@ function MarketRealityPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-terracotta/20 bg-terracotta/5 p-5 sm:p-6">
+                  <div className="rounded-2xl border border-cp-lime/20 bg-cp-lime/5 p-5 sm:p-6">
                     <div className="flex items-center gap-2">
-                      <BookOpen className="h-5 w-5 text-terracotta" />
+                      <BookOpen className="h-5 w-5 text-cp-lime" />
                       <h3 className="font-display text-lg font-bold text-foreground">
                         What should you learn first?
                       </h3>
@@ -1002,7 +1010,7 @@ function MarketRealityPage() {
                               key={skill}
                               className="flex items-center gap-3 rounded-xl border border-border bg-card p-3"
                             >
-                              <span className="text-xs font-black text-terracotta">
+                              <span className="text-xs font-black text-cp-lime">
                                 {String(index + 1).padStart(2, "0")}
                               </span>
                               <span className="min-w-0 flex-1 text-xs font-bold text-foreground">
@@ -1017,8 +1025,8 @@ function MarketRealityPage() {
                                 className={cn(
                                   "shrink-0 rounded-lg border px-2.5 py-1.5 text-xs font-bold transition-colors",
                                   added
-                                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                                    : "border-terracotta/30 text-terracotta hover:bg-terracotta/10",
+                                    ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-300"
+                                    : "border-cp-lime/30 text-cp-lime hover:bg-cp-lime/10",
                                 )}
                               >
                                 {added ? "✓ Added" : "+ Add to Roadmap"}
@@ -1031,8 +1039,8 @@ function MarketRealityPage() {
 
                   <div className="grid gap-4 md:grid-cols-3">
                     {/* High Demand / Crucial */}
-                    <div className="rounded-2xl border border-rose-200 bg-rose-50/30 p-5">
-                      <div className="flex items-center gap-2 text-rose-700">
+                    <div className="rounded-2xl border border-rose-500/25 bg-rose-500/10 p-5">
+                      <div className="flex items-center gap-2 text-rose-300">
                         <Flame className="h-4 w-4" />
                         <h3 className="text-xs font-bold uppercase tracking-wider">
                           Crucial / Non-Negotiable
@@ -1045,7 +1053,7 @@ function MarketRealityPage() {
                         {market.skillDemand.high.map((skill) => (
                           <span
                             key={skill}
-                            className="rounded-lg bg-card border border-rose-200 px-2.5 py-1 text-xs font-bold text-rose-800 shadow-xs"
+                            className="rounded-lg bg-card border border-rose-500/25 px-2.5 py-1 text-xs font-bold text-rose-300 shadow-xs"
                           >
                             {skill}
                           </span>
@@ -1054,8 +1062,8 @@ function MarketRealityPage() {
                     </div>
 
                     {/* Common Demand */}
-                    <div className="rounded-2xl border border-amber-200 bg-amber-50/30 p-5">
-                      <div className="flex items-center gap-2 text-amber-700">
+                    <div className="rounded-2xl border border-amber-500/25 bg-amber-500/10 p-5">
+                      <div className="flex items-center gap-2 text-amber-300">
                         <Layers className="h-4 w-4" />
                         <h3 className="text-xs font-bold uppercase tracking-wider">
                           Commonly Expected
@@ -1068,7 +1076,7 @@ function MarketRealityPage() {
                         {market.skillDemand.common.map((skill) => (
                           <span
                             key={skill}
-                            className="rounded-lg bg-card border border-amber-200 px-2.5 py-1 text-xs font-semibold text-amber-900 shadow-xs"
+                            className="rounded-lg bg-card border border-amber-500/25 px-2.5 py-1 text-xs font-semibold text-amber-200 shadow-xs"
                           >
                             {skill}
                           </span>
@@ -1077,8 +1085,8 @@ function MarketRealityPage() {
                     </div>
 
                     {/* Differentiators */}
-                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/30 p-5">
-                      <div className="flex items-center gap-2 text-emerald-700">
+                    <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-5">
+                      <div className="flex items-center gap-2 text-emerald-300">
                         <Sparkles className="h-4 w-4" />
                         <h3 className="text-xs font-bold uppercase tracking-wider">
                           Standout Differentiators
@@ -1091,7 +1099,7 @@ function MarketRealityPage() {
                         {market.skillDemand.roleSpecific.map((skill) => (
                           <span
                             key={skill}
-                            className="rounded-lg bg-card border border-emerald-200 px-2.5 py-1 text-xs font-semibold text-emerald-900 shadow-xs"
+                            className="rounded-lg bg-card border border-emerald-500/25 px-2.5 py-1 text-xs font-semibold text-emerald-200 shadow-xs"
                           >
                             {skill}
                           </span>
@@ -1104,7 +1112,7 @@ function MarketRealityPage() {
                   <div className="card-surface p-6 sm:p-8 space-y-6 relative overflow-hidden">
                     <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-emerald-500/5 blur-[80px] pointer-events-none" />
                     <div className="flex items-center gap-2.5 relative z-10">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-terracotta/10 text-terracotta">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cp-lime/10 text-cp-lime">
                         <Cpu className="h-5 w-5" />
                       </div>
                       <div>
@@ -1120,15 +1128,15 @@ function MarketRealityPage() {
 
                     <div className="grid gap-6 md:grid-cols-2 relative z-10">
                       {/* Rising / Emerging in Pakistan */}
-                      <div className="rounded-3xl border border-emerald-500/20 bg-gradient-to-b from-emerald-50/50 to-transparent p-6 shadow-lg shadow-emerald-500/5">
+                      <div className="rounded-3xl border border-emerald-500/20 bg-gradient-to-b from-emerald-500/10 to-transparent p-6 shadow-lg shadow-emerald-500/5">
                         <div className="flex items-center justify-between mb-5">
-                          <div className="flex items-center gap-2 text-emerald-700">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100">
+                          <div className="flex items-center gap-2 text-emerald-300">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/15">
                               <TrendingUp className="h-4 w-4" />
                             </div>
                             <h3 className="text-sm font-bold tracking-tight">High-Growth Tech</h3>
                           </div>
-                          <span className="text-xs font-extrabold uppercase tracking-widest text-emerald-600/60">
+                          <span className="text-xs font-extrabold uppercase tracking-widest text-emerald-400/60">
                             Adoption Velocity
                           </span>
                         </div>
@@ -1165,22 +1173,22 @@ function MarketRealityPage() {
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: 0.1 * i, duration: 0.4 }}
                               key={item.name}
-                              className="group relative overflow-hidden rounded-2xl bg-white/60 p-3.5 border border-emerald-500/10 hover:border-emerald-500/30 hover:shadow-md transition-all duration-300"
+                              className="group relative overflow-hidden rounded-2xl bg-white/[0.04] p-3.5 border border-emerald-500/10 hover:border-emerald-500/30 hover:shadow-md transition-all duration-300"
                             >
                               <div className="flex justify-between items-start mb-2">
                                 <div>
-                                  <p className="text-xs font-bold text-emerald-950 group-hover:text-emerald-700 transition-colors">
+                                  <p className="text-xs font-bold text-cp-paper group-hover:text-emerald-300 transition-colors">
                                     {item.name}
                                   </p>
                                   <p className="text-xs text-muted-foreground mt-0.5">
                                     {item.desc}
                                   </p>
                                 </div>
-                                <span className="text-xs font-bold text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded">
+                                <span className="text-xs font-bold text-emerald-400 bg-emerald-500/15 px-1.5 py-0.5 rounded">
                                   +{item.score}%
                                 </span>
                               </div>
-                              <div className="h-1.5 w-full rounded-full bg-emerald-100 overflow-hidden">
+                              <div className="h-1.5 w-full rounded-full bg-emerald-500/15 overflow-hidden">
                                 <motion.div
                                   initial={{ width: 0 }}
                                   animate={{ width: `${item.score}%` }}
@@ -1194,9 +1202,9 @@ function MarketRealityPage() {
                       </div>
 
                       {/* Declining / Outdated Stacks */}
-                      <div className="rounded-3xl border border-rose-500/20 bg-gradient-to-b from-rose-50/50 to-transparent p-6 shadow-lg shadow-rose-500/5">
-                        <div className="flex items-center gap-2 text-rose-700 mb-5">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-rose-100">
+                      <div className="rounded-3xl border border-rose-500/20 bg-gradient-to-b from-rose-500/10 to-transparent p-6 shadow-lg shadow-rose-500/5">
+                        <div className="flex items-center gap-2 text-rose-300 mb-5">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-rose-500/15">
                             <TrendingDown className="h-4 w-4" />
                           </div>
                           <h3 className="text-sm font-bold tracking-tight">
@@ -1227,13 +1235,13 @@ function MarketRealityPage() {
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: 0.1 * i, duration: 0.4 }}
                               key={item.name}
-                              className="group flex items-start gap-3 rounded-2xl bg-white/60 p-3.5 border border-rose-500/10 hover:border-rose-500/30 transition-all"
+                              className="group flex items-start gap-3 rounded-2xl bg-white/[0.04] p-3.5 border border-rose-500/10 hover:border-rose-500/30 transition-all"
                             >
-                              <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+                              <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-rose-500/15 text-rose-400">
                                 <AlertCircle className="h-3 w-3" />
                               </div>
                               <div>
-                                <p className="text-xs font-bold text-rose-950">
+                                <p className="text-xs font-bold text-cp-paper">
                                   {item.name}
                                 </p>
                                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -1249,8 +1257,8 @@ function MarketRealityPage() {
 
                   {/* AI Impact Callout */}
                   {market.aiImpact && (
-                    <div className="rounded-2xl bg-gradient-to-r from-ink via-neutral-900 to-neutral-800 p-5 text-white shadow-lg border border-terracotta/20">
-                      <div className="flex items-center gap-2 text-terracotta">
+                    <div className="rounded-2xl bg-gradient-to-r from-ink via-neutral-900 to-neutral-800 p-5 text-white shadow-lg border border-cp-lime/20">
+                      <div className="flex items-center gap-2 text-cp-lime">
                         <Sparkles className="h-4 w-4" />
                         <h3 className="text-xs font-bold uppercase tracking-wider">
                           How AI Transforms Entry-Level Hiring
@@ -1299,9 +1307,9 @@ function MarketRealityPage() {
                 transition={{ duration: 0.25 }}
                 className="space-y-6"
               >
-                <div className="card-surface p-6 sm:p-8 space-y-6 border-terracotta/15">
+                <div className="card-surface p-6 sm:p-8 space-y-6 border-cp-lime/15">
                   <div className="flex items-center gap-2.5">
-                    <BarChart3 className="h-5 w-5 text-terracotta" />
+                    <BarChart3 className="h-5 w-5 text-cp-lime" />
                     <div>
                       <h2 className="font-display text-xl font-bold text-foreground">
                         Your Standing: Profile vs 100% Market Competitiveness
@@ -1319,13 +1327,13 @@ function MarketRealityPage() {
                       <div className="rounded-2xl border border-border bg-card p-5 space-y-3 shadow-xs">
                         <div className="flex items-center justify-between">
                           <p className="text-xs font-bold text-foreground">Local Market Standing</p>
-                          <span className="text-sm font-black text-terracotta">
+                          <span className="text-sm font-black text-cp-lime">
                             {localMatchPct === null ? "Not assessed" : `${localMatchPct}%`}
                           </span>
                         </div>
                         <div className="h-2.5 w-full rounded-full bg-secondary overflow-hidden">
                           <div
-                            className="h-2.5 rounded-full bg-terracotta transition-all"
+                            className="h-2.5 rounded-full bg-cp-lime transition-all"
                             style={{ width: localMatchPct === null ? "0%" : `${localMatchPct}%` }}
                           />
                         </div>
@@ -1360,8 +1368,8 @@ function MarketRealityPage() {
 
                   {/* Skill Match Breakdown */}
                   <div className="grid gap-4 md:grid-cols-2 pt-2">
-                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/30 p-5 space-y-2">
-                      <p className="text-xs font-bold uppercase tracking-wider text-emerald-800">
+                    <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-5 space-y-2">
+                      <p className="text-xs font-bold uppercase tracking-wider text-emerald-300">
                         Skills You Have Matched ({matchedHighSkills.length})
                       </p>
                       <div className="flex flex-wrap gap-1.5">
@@ -1369,7 +1377,7 @@ function MarketRealityPage() {
                           matchedHighSkills.map((s) => (
                             <span
                               key={s}
-                              className="rounded-lg bg-card border border-emerald-200 px-2.5 py-1 text-xs font-semibold text-emerald-900 shadow-xs"
+                              className="rounded-lg bg-card border border-emerald-500/25 px-2.5 py-1 text-xs font-semibold text-emerald-200 shadow-xs"
                             >
                               ✓ {s}
                             </span>
@@ -1382,8 +1390,8 @@ function MarketRealityPage() {
                       </div>
                     </div>
 
-                    <div className="rounded-2xl border border-rose-200 bg-rose-50/30 p-5 space-y-2">
-                      <p className="text-xs font-bold uppercase tracking-wider text-rose-800">
+                    <div className="rounded-2xl border border-rose-500/25 bg-rose-500/10 p-5 space-y-2">
+                      <p className="text-xs font-bold uppercase tracking-wider text-rose-300">
                         Critical Skills You Need to Build (
                         {highDemandSkills.filter((s) => !matchedHighSkills.includes(s)).length})
                       </p>
@@ -1393,7 +1401,7 @@ function MarketRealityPage() {
                           .map((s) => (
                             <span
                               key={s}
-                              className="rounded-lg bg-card border border-rose-200 px-2.5 py-1 text-xs font-semibold text-rose-800 shadow-xs"
+                              className="rounded-lg bg-card border border-rose-500/25 px-2.5 py-1 text-xs font-semibold text-rose-300 shadow-xs"
                             >
                               ! {s}
                             </span>
@@ -1404,12 +1412,12 @@ function MarketRealityPage() {
 
                   {/* Outdated Tech Alert (if any) */}
                   {outdatedData && outdatedData.outdatedItems.length > 0 && (
-                    <div className="rounded-2xl border border-amber-300 bg-amber-50/70 p-4 text-xs text-amber-900">
+                    <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-200">
                       <div className="flex items-center gap-2 font-bold">
-                        <AlertTriangle className="h-4 w-4 text-amber-600" />
+                        <AlertTriangle className="h-4 w-4 text-amber-400" />
                         <span>Outdated / Declining Market Reality</span>
                       </div>
-                      <p className="mt-1 text-xs text-amber-800">
+                      <p className="mt-1 text-xs text-amber-200">
                         Live market research found signals worth reviewing for {market.targetRole}.
                         A flagged skill is not automatically dead; use the replacement and evidence
                         to decide where to invest your time.
@@ -1418,11 +1426,11 @@ function MarketRealityPage() {
                         {outdatedData.outdatedItems.slice(0, 6).map((item) => (
                           <div
                             key={item.skill}
-                            className="rounded-xl border border-amber-200 bg-white/60 p-3"
+                            className="rounded-xl border border-amber-500/25 bg-white/[0.04] p-3"
                           >
                             <div className="flex items-center justify-between gap-2">
                               <span className="font-bold">{item.skill}</span>
-                              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold uppercase">
+                              <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-bold uppercase">
                                 {item.status === "at_risk" ? "At risk" : item.status}
                               </span>
                             </div>
@@ -1430,7 +1438,7 @@ function MarketRealityPage() {
                               {item.reason || item.evidence}
                             </p>
                             {item.replacement && (
-                              <p className="mt-2 font-semibold text-emerald-800">
+                              <p className="mt-2 font-semibold text-emerald-300">
                                 Better next focus: {item.replacement}
                               </p>
                             )}
@@ -1473,9 +1481,9 @@ function MarketRealityPage() {
               >
                 <div className="rounded-3xl border border-ink/10 bg-ink p-6 text-white shadow-xl sm:p-8">
                   <div className="flex items-start gap-3">
-                    <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-terracotta" />
+                    <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-cp-lime" />
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-[0.16em] text-terracotta">
+                      <p className="text-xs font-bold uppercase tracking-[0.16em] text-cp-lime">
                         Reality check
                       </p>
                       <h2 className="mt-2 font-display text-2xl font-black tracking-tight sm:text-3xl">
@@ -1490,9 +1498,9 @@ function MarketRealityPage() {
                   </div>
                 </div>
                 {/* Salary Benchmarks Card */}
-                <div className="card-surface p-6 sm:p-8 space-y-6 border-terracotta/15">
+                <div className="card-surface p-6 sm:p-8 space-y-6 border-cp-lime/15">
                   <div className="flex items-center gap-2.5">
-                    <DollarSign className="h-5 w-5 text-terracotta" />
+                    <DollarSign className="h-5 w-5 text-cp-lime" />
                     <div>
                       <h2 className="font-display text-xl font-bold text-foreground">
                         Real Market Salary Benchmarks for {market.targetRole}
@@ -1506,15 +1514,15 @@ function MarketRealityPage() {
                   <div className="grid gap-6 md:grid-cols-2">
                     {/* Optional localized salaries */}
                     {(marketScope === "both" || marketScope === "pakistan") && (
-                      <div className="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-5 space-y-3">
+                      <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-5 space-y-3">
                         <div className="flex items-center justify-between">
-                          <p className="text-xs font-bold text-emerald-950 uppercase tracking-wider">
+                          <p className="text-xs font-bold text-cp-paper uppercase tracking-wider">
                             Localized market benchmark
                           </p>
-                          <Building2 className="h-4 w-4 text-emerald-700" />
+                          <Building2 className="h-4 w-4 text-emerald-300" />
                         </div>
                         <div className="space-y-2 text-xs">
-                          <div className="flex justify-between rounded-xl bg-card p-3 border border-emerald-100 shadow-xs">
+                          <div className="flex justify-between rounded-xl bg-card p-3 border border-emerald-500/20 shadow-xs">
                             <span className="text-muted-foreground">
                               Entry-Level Trainee / Associate:
                             </span>
@@ -1522,7 +1530,7 @@ function MarketRealityPage() {
                               {market.salaryInsights?.entryLevel || "65,000 – 120,000 PKR"}
                             </span>
                           </div>
-                          <div className="flex justify-between rounded-xl bg-card p-3 border border-emerald-100 shadow-xs">
+                          <div className="flex justify-between rounded-xl bg-card p-3 border border-emerald-500/20 shadow-xs">
                             <span className="text-muted-foreground">
                               Mid-Level Software Engineer (2-4 yrs):
                             </span>
@@ -1530,7 +1538,7 @@ function MarketRealityPage() {
                               {market.salaryInsights?.midLevel || "160,000 – 320,000 PKR"}
                             </span>
                           </div>
-                          <div className="flex justify-between rounded-xl bg-card p-3 border border-emerald-100 shadow-xs">
+                          <div className="flex justify-between rounded-xl bg-card p-3 border border-emerald-500/20 shadow-xs">
                             <span className="text-muted-foreground">Top-Tier / Senior / Lead:</span>
                             <span className="font-bold text-foreground">
                               {market.salaryInsights?.seniorLevel || "400,000 – 750,000+ PKR"}
@@ -1541,27 +1549,27 @@ function MarketRealityPage() {
                     )}
 
                     {/* Global Remote Salaries */}
-                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-5 space-y-3">
+                    <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-5 space-y-3">
                       <div className="flex items-center justify-between">
-                        <p className="text-xs font-bold text-emerald-950 uppercase tracking-wider">
+                        <p className="text-xs font-bold text-cp-paper uppercase tracking-wider">
                           Global compensation (USD/mo)
                         </p>
-                        <Globe className="h-4 w-4 text-emerald-700" />
+                        <Globe className="h-4 w-4 text-emerald-300" />
                       </div>
                       <div className="space-y-2 text-xs">
-                        <div className="flex justify-between rounded-xl bg-card p-3 border border-emerald-100 shadow-xs">
+                        <div className="flex justify-between rounded-xl bg-card p-3 border border-emerald-500/20 shadow-xs">
                           <span className="text-muted-foreground">Junior Remote Engineer:</span>
                           <span className="font-bold text-foreground">
                             {"$1,200 – $2,200/mo (~350k–650k PKR)"}
                           </span>
                         </div>
-                        <div className="flex justify-between rounded-xl bg-card p-3 border border-emerald-100 shadow-xs">
+                        <div className="flex justify-between rounded-xl bg-card p-3 border border-emerald-500/20 shadow-xs">
                           <span className="text-muted-foreground">Mid-Level Remote Engineer:</span>
                           <span className="font-bold text-foreground">
                             {"$2,500 – $4,500/mo (~700k–1.3M PKR)"}
                           </span>
                         </div>
-                        <div className="flex justify-between rounded-xl bg-card p-3 border border-emerald-100 shadow-xs">
+                        <div className="flex justify-between rounded-xl bg-card p-3 border border-emerald-500/20 shadow-xs">
                           <span className="text-muted-foreground">
                             Senior / Staff Remote Engineer:
                           </span>
@@ -1575,9 +1583,9 @@ function MarketRealityPage() {
                 </div>
 
                 {/* The 4-Stage Action Blueprint to Reach 100% Market Standing */}
-                <div className="card-surface border-terracotta/30 p-6 sm:p-8 space-y-6 shadow-md">
+                <div className="card-surface border-cp-lime/30 p-6 sm:p-8 space-y-6 shadow-md">
                   <div className="flex items-center gap-2.5">
-                    <Rocket className="h-6 w-6 text-terracotta" />
+                    <Rocket className="h-6 w-6 text-cp-lime" />
                     <div>
                       <h2 className="font-display text-xl font-bold text-foreground">
                         The 4-Stage Action Blueprint to Reach 100% Market Standing
@@ -1616,7 +1624,7 @@ function MarketRealityPage() {
                         key={s.stage}
                         className="rounded-2xl border border-border bg-card p-4 space-y-2 shadow-xs"
                       >
-                        <span className="rounded-md bg-terracotta/10 px-2 py-0.5 text-xs font-bold text-terracotta">
+                        <span className="rounded-md bg-cp-lime/10 px-2 py-0.5 text-xs font-bold text-cp-lime">
                           {s.stage}
                         </span>
                         <h3 className="text-xs font-bold text-foreground">{s.title}</h3>
@@ -1629,7 +1637,7 @@ function MarketRealityPage() {
 
                   <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
                     <Button
-                      className="h-12 rounded-xl px-6 text-xs font-bold shadow-lg bg-terracotta hover:bg-terracotta/90 text-white"
+                      className="h-12 rounded-xl px-6 text-xs font-bold shadow-lg bg-cp-lime hover:bg-cp-lime2 text-cp-ink"
                       disabled={generateRoadmap.isPending}
                       onClick={handleGenerateRoadmap}
                     >
@@ -1649,7 +1657,7 @@ function MarketRealityPage() {
                     {generatedSuccess ? (
                       <Button
                         variant="outline"
-                        className="h-12 rounded-xl px-6 text-xs font-bold border-terracotta text-terracotta hover:bg-terracotta/10"
+                        className="h-12 rounded-xl px-6 text-xs font-bold border-cp-lime text-cp-lime hover:bg-cp-lime/10"
                         onClick={() => navigate({ to: "/roadmap" })}
                       >
                         <Sparkles className="mr-1.5 h-4 w-4" /> View Your Generated Roadmap →
@@ -1660,7 +1668,7 @@ function MarketRealityPage() {
                         className="h-12 rounded-xl px-6 text-xs font-bold border-border"
                         onClick={() => navigate({ to: "/diagnosis" })}
                       >
-                        <ShieldAlert className="mr-1.5 h-4 w-4 text-terracotta" />
+                        <ShieldAlert className="mr-1.5 h-4 w-4 text-cp-lime" />
                         Run Company-Specific Diagnosis
                       </Button>
                     )}
@@ -1668,16 +1676,16 @@ function MarketRealityPage() {
                 </div>
 
                 {/* Individual expert synthesis: the final answer to "what does this mean for me?" */}
-                <div className="relative overflow-hidden rounded-3xl border border-terracotta/25 bg-gradient-to-br from-background via-card to-terracotta/5 p-6 shadow-lift sm:p-8">
-                  <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-terracotta/10 blur-3xl" />
+                <div className="relative overflow-hidden rounded-3xl border border-cp-lime/25 bg-gradient-to-br from-background via-card to-cp-lime/5 p-6 shadow-lift sm:p-8">
+                  <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-cp-lime/10 blur-3xl" />
                   <div className="relative">
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div className="flex items-start gap-3">
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-ink text-white">
-                          <Sparkles className="h-5 w-5 text-terracotta" />
+                          <Sparkles className="h-5 w-5 text-cp-lime" />
                         </div>
                         <div>
-                          <p className="text-xs font-bold uppercase tracking-[0.16em] text-terracotta">
+                          <p className="text-xs font-bold uppercase tracking-[0.16em] text-cp-lime">
                             Expert market opinion
                           </p>
                           <h2 className="mt-1 font-display text-2xl font-black tracking-tight text-foreground sm:text-3xl">
@@ -1689,11 +1697,11 @@ function MarketRealityPage() {
                           </p>
                         </div>
                       </div>
-                      <div className="rounded-2xl border border-terracotta/20 bg-card px-4 py-3 text-right">
+                      <div className="rounded-2xl border border-cp-lime/20 bg-card px-4 py-3 text-right">
                         <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                           Current position
                         </p>
-                        <p className="mt-1 text-sm font-black text-terracotta">{positionLabel}</p>
+                        <p className="mt-1 text-sm font-black text-cp-lime">{positionLabel}</p>
                       </div>
                     </div>
 
@@ -1715,11 +1723,11 @@ function MarketRealityPage() {
                           toast("Use the print dialog to save this assessment as a PDF.");
                         }}
                       >
-                        <ExternalLink className="mr-2 h-3.5 w-3.5 text-terracotta" /> Export Opinion
+                        <ExternalLink className="mr-2 h-3.5 w-3.5 text-cp-lime" /> Export Opinion
                       </Button>
                     </div>
                     {opinionSearch.trim() && (
-                      <div className="mt-3 rounded-xl border border-terracotta/20 bg-terracotta/5 px-4 py-3 text-xs text-muted-foreground">
+                      <div className="mt-3 rounded-xl border border-cp-lime/20 bg-cp-lime/5 px-4 py-3 text-xs text-muted-foreground">
                         Searching this assessment for{" "}
                         <strong className="text-foreground">{opinionSearch}</strong>. Review the
                         market reality, strengths, gaps, and recommended actions below.
@@ -1770,7 +1778,7 @@ function MarketRealityPage() {
                               : "You can compete for selected junior opportunities, especially where your proof is strongest."}
                         </p>
                       </div>
-                      <ArrowRight className="hidden h-5 w-5 text-terracotta md:block" />
+                      <ArrowRight className="hidden h-5 w-5 text-cp-lime md:block" />
                       <div>
                         <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                           After closing the critical gaps
@@ -1784,7 +1792,7 @@ function MarketRealityPage() {
                     </div>
 
                     <div className="mt-5 rounded-2xl border border-border bg-card p-5 sm:p-6">
-                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-terracotta">
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-cp-lime">
                         Your recommended path
                       </p>
                       <h3 className="mt-1 text-lg font-bold text-foreground">
@@ -1811,7 +1819,7 @@ function MarketRealityPage() {
                                 key={action}
                                 className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-secondary/35 p-3"
                               >
-                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-terracotta text-xs font-black text-white">
+                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-cp-lime text-xs font-black text-cp-ink">
                                   {index + 1}
                                 </span>
                                 <div className="min-w-[180px] flex-1">
@@ -1827,8 +1835,8 @@ function MarketRealityPage() {
                                   className={cn(
                                     "rounded-lg border px-3 py-1.5 text-xs font-bold",
                                     added
-                                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                                      : "border-terracotta/30 text-terracotta hover:bg-terracotta/10",
+                                      ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-300"
+                                      : "border-cp-lime/30 text-cp-lime hover:bg-cp-lime/10",
                                   )}
                                 >
                                   {added ? "✓ Added to Roadmap" : "+ Add to Roadmap"}
@@ -1858,7 +1866,7 @@ function MarketRealityPage() {
                     </div>
 
                     <div className="mt-5 rounded-2xl bg-ink p-5 text-white sm:p-6">
-                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-terracotta">
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-cp-lime">
                         Bottom line
                       </p>
                       <p className="mt-3 text-sm leading-7 text-white/80">
@@ -1912,16 +1920,16 @@ function MarketRealityPage() {
                 ref={expertOpinionRef}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="card-surface overflow-hidden border-terracotta/25 shadow-lift"
+                className="card-surface overflow-hidden border-cp-lime/25 shadow-lift"
               >
                 <div className="bg-ink p-6 text-white sm:p-8">
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-terracotta text-white">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-cp-lime text-cp-ink">
                         <Sparkles className="h-5 w-5" />
                       </div>
                       <div>
-                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-terracotta">
+                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-cp-lime">
                           Step 6 · Expert Opinion
                         </p>
                         <h2 className="mt-2 font-display text-2xl font-black tracking-tight sm:text-3xl">
@@ -1940,8 +1948,8 @@ function MarketRealityPage() {
                       <p
                         className={
                           localMatchPct === null
-                            ? "mt-1 text-lg font-black text-terracotta"
-                            : "mt-1 text-2xl font-black text-terracotta"
+                            ? "mt-1 text-lg font-black text-cp-lime"
+                            : "mt-1 text-2xl font-black text-cp-lime"
                         }
                       >
                         {localMatchPct === null ? "Not assessed" : `${localMatchPct}%`}
@@ -1951,8 +1959,8 @@ function MarketRealityPage() {
                 </div>
 
                 <div className="space-y-5 p-5 sm:p-8">
-                  <div className="rounded-2xl border border-terracotta/20 bg-terracotta/5 p-5">
-                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-terracotta">
+                  <div className="rounded-2xl border border-cp-lime/20 bg-cp-lime/5 p-5">
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-cp-lime">
                       Expert verdict
                     </p>
                     <p className="mt-3 text-base font-semibold leading-7 text-foreground">
@@ -1997,7 +2005,7 @@ function MarketRealityPage() {
                   <div className="border-t border-border pt-5">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <p className="text-xs font-bold uppercase tracking-[0.14em] text-terracotta">
+                        <p className="text-xs font-bold uppercase tracking-[0.14em] text-cp-lime">
                           Recommended path
                         </p>
                         <h3 className="mt-1 text-lg font-bold text-foreground">
@@ -2012,7 +2020,7 @@ function MarketRealityPage() {
                           toast("Use the print dialog to save your Expert Opinion as a PDF.");
                         }}
                       >
-                        <ExternalLink className="mr-2 h-3.5 w-3.5 text-terracotta" />
+                        <ExternalLink className="mr-2 h-3.5 w-3.5 text-cp-lime" />
                         Export Expert Opinion
                       </Button>
                     </div>
@@ -2028,7 +2036,7 @@ function MarketRealityPage() {
                             className="rounded-xl border border-border bg-secondary/35 p-4"
                           >
                             <div className="flex items-center gap-2">
-                              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-terracotta text-xs font-black text-white">
+                              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-cp-lime text-xs font-black text-cp-ink">
                                 {index + 1}
                               </span>
                               <p className="text-xs font-bold text-foreground">{action}</p>
@@ -2072,7 +2080,7 @@ function MarketRealityPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="card-surface w-full max-w-md p-6 sm:p-8 space-y-4 shadow-2xl border-terracotta/30"
+              className="card-surface w-full max-w-md p-6 sm:p-8 space-y-4 shadow-2xl border-cp-lime/30"
             >
               <div className="flex items-center justify-between">
                 <h3 className="font-display text-lg font-bold text-foreground">
@@ -2094,7 +2102,7 @@ function MarketRealityPage() {
                 value={customRoleInput}
                 onChange={(e) => setCustomRoleInput(e.target.value)}
                 placeholder="e.g. Associate Software Engineer, Flutter Developer..."
-                className="h-12 rounded-xl border-border focus:border-terracotta"
+                className="h-12 rounded-xl border-border focus:border-cp-lime"
               />
 
               <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto pt-1">
@@ -2103,7 +2111,7 @@ function MarketRealityPage() {
                     key={r}
                     type="button"
                     onClick={() => setCustomRoleInput(r)}
-                    className="rounded-full bg-secondary px-2.5 py-1 text-xs font-semibold text-muted-foreground hover:bg-terracotta/10 hover:text-terracotta border border-border/50"
+                    className="rounded-full bg-secondary px-2.5 py-1 text-xs font-semibold text-muted-foreground hover:bg-cp-lime/10 hover:text-cp-lime border border-border/50"
                   >
                     {r}
                   </button>
@@ -2112,7 +2120,7 @@ function MarketRealityPage() {
               <button
                 type="button"
                 onClick={() => setCustomRoleInput("I don't know my target yet")}
-                className="rounded-xl border border-dashed border-terracotta/40 bg-terracotta/5 px-3 py-2 text-left text-xs font-semibold text-terracotta hover:bg-terracotta/10"
+                className="rounded-xl border border-dashed border-cp-lime/40 bg-cp-lime/5 px-3 py-2 text-left text-xs font-semibold text-cp-lime hover:bg-cp-lime/10"
               >
                 I don't know my target yet
               </button>
@@ -2128,7 +2136,7 @@ function MarketRealityPage() {
                 </Button>
                 <Button
                   size="sm"
-                  className="rounded-xl font-bold text-xs bg-terracotta hover:bg-terracotta/90 text-white shadow-md"
+                  className="rounded-xl font-bold text-xs bg-cp-lime hover:bg-cp-lime2 text-cp-ink shadow-md"
                   disabled={!customRoleInput.trim() || changingRole}
                   onClick={() => handleRoleChange(customRoleInput.trim())}
                 >
@@ -2158,9 +2166,9 @@ function OpinionBlock({
 }) {
   const toneClass = {
     dark: "border-ink/15 bg-ink text-white",
-    good: "border-emerald-200 bg-emerald-50/70 text-emerald-950",
-    gap: "border-rose-200 bg-rose-50/70 text-rose-950",
-    accent: "border-terracotta/20 bg-terracotta/10 text-foreground",
+    good: "border-emerald-500/25 bg-emerald-500/10 text-cp-paper",
+    gap: "border-rose-500/25 bg-rose-500/10 text-cp-paper",
+    accent: "border-cp-lime/20 bg-cp-lime/10 text-foreground",
   }[tone];
 
   return (
@@ -2168,7 +2176,7 @@ function OpinionBlock({
       <p
         className={cn(
           "text-xs font-bold uppercase tracking-[0.14em]",
-          tone === "dark" ? "text-terracotta" : "text-muted-foreground",
+          tone === "dark" ? "text-cp-lime" : "text-muted-foreground",
         )}
       >
         {label}
@@ -2195,9 +2203,9 @@ function EvidenceNote({
   tone: "good" | "accent" | "warn";
 }) {
   const toneClass = {
-    good: "border-emerald-200 bg-emerald-50/60",
-    accent: "border-terracotta/20 bg-terracotta/5",
-    warn: "border-amber-200 bg-amber-50/60",
+    good: "border-emerald-500/25 bg-emerald-500/10",
+    accent: "border-cp-lime/20 bg-cp-lime/5",
+    warn: "border-amber-500/25 bg-amber-500/10",
   }[tone];
 
   return (

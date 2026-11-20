@@ -81,7 +81,7 @@ function QuestionCard({
     <div
       className={cn(
         "rounded-2xl border bg-card transition-colors",
-        selected ? "border-terracotta/50" : "border-border",
+        selected ? "border-cp-lime/50" : "border-border",
       )}
     >
       <button
@@ -90,7 +90,7 @@ function QuestionCard({
         className="flex w-full items-center gap-3 p-4 text-left"
         aria-expanded={open}
       >
-        <CircleHelp className="h-4 w-4 shrink-0 text-terracotta" />
+        <CircleHelp className="h-4 w-4 shrink-0 text-cp-lime" />
         <span className="flex-1 text-[13px] font-semibold leading-relaxed text-foreground">
           {question.question}
         </span>
@@ -113,8 +113,8 @@ function QuestionCard({
             <p className="font-bold text-foreground">Strong answer shape</p>
             <p className="mt-1 text-muted-foreground">{question.strongAnswer}</p>
           </div>
-          <div className="rounded-xl bg-terracotta/5 p-3 text-muted-foreground">
-            <span className="font-bold text-terracotta">Hiring signal: </span>
+          <div className="rounded-xl bg-cp-lime/5 p-3 text-muted-foreground">
+            <span className="font-bold text-cp-lime">Hiring signal: </span>
             {question.companySignal}
           </div>
           <Button
@@ -195,19 +195,19 @@ function McqCheckpoint({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <ListChecks className="h-5 w-5 text-terracotta" />
+            <ListChecks className="h-5 w-5 text-cp-lime" />
             <h3 className="text-[15px] font-bold">Progressive MCQ checkpoint</h3>
           </div>
           <p className="mt-1 max-w-2xl text-[12px] text-muted-foreground">
             Start with role fundamentals, then work through employer-specific applied, advanced, and
             production scenarios.
             {totalAttempts > 0 && (
-              <> Your answers are saved — {totalAttempts} attempt{totalAttempts === 1 ? "" : "s"} recorded for this role and company.</>
+              <> Your answers are saved. {totalAttempts} attempt{totalAttempts === 1 ? "" : "s"} recorded for this role and company.</>
             )}
           </p>
         </div>
         {submitted && (
-          <span className="rounded-full bg-terracotta/10 px-3 py-1.5 text-[11px] font-bold text-terracotta">
+          <span className="rounded-full bg-cp-lime/10 px-3 py-1.5 text-[11px] font-bold text-cp-lime">
             Score: {score}/{questions.length}
           </span>
         )}
@@ -225,16 +225,16 @@ function McqCheckpoint({
                   key={level}
                   className={cn(
                     "rounded-lg border px-2 py-2 text-center",
-                    active ? "border-terracotta bg-terracotta/10" : "border-border bg-secondary/40",
+                    active ? "border-cp-lime bg-cp-lime/10" : "border-border bg-secondary/40",
                   )}
                 >
                   <div
                     className={cn(
                       "mx-auto flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold",
                       active
-                        ? "bg-terracotta text-white"
+                        ? "bg-cp-lime text-cp-ink"
                         : complete
-                          ? "bg-emerald-100 text-emerald-700"
+                          ? "bg-emerald-500/15 text-emerald-300"
                           : "bg-muted text-muted-foreground",
                     )}
                   >
@@ -249,7 +249,7 @@ function McqCheckpoint({
           </div>
           <div className="mt-5 rounded-2xl border border-border bg-background/60 p-4 sm:p-6">
             <div className="flex items-center justify-between gap-3">
-              <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-terracotta">
+              <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-cp-lime">
                 Question {currentIndex + 1} of {orderedQuestions.length}
               </span>
               <span className="rounded-full bg-secondary px-2.5 py-1 text-[10px] font-semibold text-muted-foreground">
@@ -273,12 +273,12 @@ function McqCheckpoint({
                     className={cn(
                       "rounded-xl border px-3 py-3 text-left text-[11.5px] transition-colors",
                       correct
-                        ? "border-emerald-500 bg-emerald-50 text-emerald-800"
+                        ? "border-emerald-500 bg-emerald-500/10 text-emerald-300"
                         : incorrect
-                          ? "border-rose-400 bg-rose-50 text-rose-800"
+                          ? "border-rose-400 bg-rose-500/10 text-rose-300"
                           : selected
-                            ? "border-terracotta bg-terracotta/10"
-                            : "border-border text-muted-foreground hover:border-terracotta/60 hover:bg-muted/40",
+                            ? "border-cp-lime bg-cp-lime/10"
+                            : "border-border text-muted-foreground hover:border-cp-lime/60 hover:bg-muted/40",
                     )}
                   >
                     <span className="mr-1 font-bold uppercase">{option.id}.</span> {option.text}
@@ -291,21 +291,21 @@ function McqCheckpoint({
                 className={cn(
                   "mt-4 rounded-xl border p-3 text-[11px] leading-relaxed",
                   selectedAnswer === currentQuestion.correctOption
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-                    : "border-rose-200 bg-rose-50 text-rose-900",
+                    ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-200"
+                    : "border-rose-500/25 bg-rose-500/10 text-rose-200",
                 )}
               >
                 <div className="flex items-start gap-2">
                   {selectedAnswer === currentQuestion.correctOption ? (
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
                   ) : (
-                    <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
+                    <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-400" />
                   )}
                   <div>
                     <p className="font-bold">
                       {selectedAnswer === currentQuestion.correctOption
-                        ? "Correct — strong hiring signal."
-                        : "Not quite — here is why."}
+                        ? "Correct. Strong hiring signal."
+                        : "Not quite. Here is why."}
                     </p>
                     <p className="mt-1">{currentQuestion.explanation}</p>
                     <p className="mt-2 font-semibold">
@@ -317,7 +317,7 @@ function McqCheckpoint({
             )}
             <div className="mt-5 flex justify-end">
               <Button
-                className="rounded-xl bg-terracotta text-xs text-primary-foreground hover:bg-terracotta/90"
+                className="rounded-xl bg-cp-lime text-xs text-cp-ink hover:bg-cp-lime2"
                 disabled={!selectedAnswer}
                 onClick={() =>
                   currentIndex === orderedQuestions.length - 1
@@ -334,8 +334,8 @@ function McqCheckpoint({
           </div>
         </>
       ) : (
-        <div className="mt-5 rounded-2xl border border-terracotta/20 bg-terracotta/5 p-5 text-center sm:p-8">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-terracotta/10 text-terracotta">
+        <div className="mt-5 rounded-2xl border border-cp-lime/20 bg-cp-lime/5 p-5 text-center sm:p-8">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-cp-lime/10 text-cp-lime">
             <CheckCircle2 className="h-6 w-6" />
           </div>
           <h4 className="mt-3 text-lg font-bold">Checkpoint complete</h4>
@@ -373,7 +373,7 @@ function InterviewPrepPage() {
   const intel = buildInterviewIntel(targetRole, selectedCompany);
   const firstQuestion = intel.questions[0];
 
-  // Persisted prep state (Supabase, per company + role) — no longer
+  // Persisted prep state (Supabase, per company + role), no longer
   // local useState that resets on refresh.
   const { data: savedPrep } = useInterviewPrep(selectedCompany, intel.role);
   const savePrep = useSaveInterviewPrep();
@@ -463,14 +463,14 @@ function InterviewPrepPage() {
       <div className="space-y-4">
         <section className="card-surface overflow-hidden bg-ink text-white">
           <div className="relative p-6 sm:p-8">
-            <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full border-[24px] border-terracotta/10" />
+            <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full border-[24px] border-cp-lime/10" />
             <div className="relative flex flex-wrap items-start justify-between gap-6">
               <div className="flex min-w-0 items-start gap-3">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-terracotta/20 text-terracotta">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-cp-lime/20 text-cp-lime">
                   <MessageSquareText className="h-6 w-6" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-terracotta">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-cp-lime">
                     Interview practice plan
                   </p>
                   <h2 className="mt-2 text-2xl font-black sm:text-3xl">{intel.role}</h2>
@@ -482,13 +482,13 @@ function InterviewPrepPage() {
               <div className="w-full rounded-2xl border border-white/10 bg-white/[0.06] p-4 sm:w-auto sm:min-w-[190px]">
                 <div className="flex items-center justify-between text-[11px]">
                   <span className="text-white/55">Prep progress</span>
-                  <span className="font-bold text-terracotta">
+                  <span className="font-bold text-cp-lime">
                     {practiced.length} of {totalQuestions} prompts
                   </span>
                 </div>
                 <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
                   <div
-                    className="h-full rounded-full bg-terracotta transition-all"
+                    className="h-full rounded-full bg-cp-lime transition-all"
                     style={{ width: `${progressPct}%` }}
                   />
                 </div>
@@ -538,7 +538,7 @@ function InterviewPrepPage() {
               )}
               {selectedCompany && !intel.companyResearched ? (
                 <span className="text-[11px] text-amber-300">
-                  “{selectedCompany}” is not researched yet — showing role-based interview prep, not company-specific standards.
+                  “{selectedCompany}” is not researched yet, so this shows role-based interview prep, not company-specific standards.
                 </span>
               ) : (
                 <span className="text-[11px] text-white/40">
@@ -556,7 +556,7 @@ function InterviewPrepPage() {
                 className={cn(
                   "whitespace-nowrap rounded-lg px-3 py-2 text-[11.5px] font-semibold transition-colors",
                   activeTab === tab.id
-                    ? "bg-terracotta text-white"
+                    ? "bg-cp-lime text-cp-ink"
                     : "text-white/55 hover:bg-white/10 hover:text-white",
                 )}
               >
@@ -589,7 +589,7 @@ function InterviewPrepPage() {
               },
             ].map(({ icon: Icon, label, value, note }) => (
               <div key={label} className="card-surface flex items-start gap-3 p-5">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-terracotta/10 text-terracotta">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cp-lime/10 text-cp-lime">
                   <Icon className="h-4 w-4" />
                 </div>
                 <div>
@@ -627,7 +627,7 @@ function InterviewPrepPage() {
             ) : activeTab === "answer_lab" ? (
               <div className="card-surface p-5 sm:p-6">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-terracotta/10 text-terracotta">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cp-lime/10 text-cp-lime">
                     <Mic2 className="h-5 w-5" />
                   </div>
                   <div>
@@ -639,7 +639,7 @@ function InterviewPrepPage() {
                   </div>
                 </div>
                 <div className="mt-5 rounded-2xl bg-secondary/60 p-4">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-terracotta">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-cp-lime">
                     Prompt
                   </p>
                   <p className="mt-2 text-[14px] font-semibold leading-relaxed">
@@ -651,7 +651,7 @@ function InterviewPrepPage() {
                   onChange={(event) => setAnswer(event.target.value)}
                   onBlur={saveDraft}
                   placeholder="Use: context, decision, evidence, result, reflection..."
-                  className="mt-4 min-h-40 w-full resize-y rounded-2xl border border-border bg-card p-4 text-[13px] leading-relaxed outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-terracotta"
+                  className="mt-4 min-h-40 w-full resize-y rounded-2xl border border-border bg-card p-4 text-[13px] leading-relaxed outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-cp-lime"
                 />
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                   <p className="text-[11px] text-muted-foreground">
@@ -676,7 +676,7 @@ function InterviewPrepPage() {
                       key={item}
                       className="rounded-xl border border-border p-3 text-[11px] font-semibold text-muted-foreground"
                     >
-                      <Target className="mb-2 h-4 w-4 text-terracotta" />
+                      <Target className="mb-2 h-4 w-4 text-cp-lime" />
                       {item}
                     </div>
                   ))}
@@ -716,7 +716,7 @@ function InterviewPrepPage() {
           <aside className="space-y-4">
             <div className="card-surface p-5">
               <div className="flex items-center gap-2">
-                <Award className="h-4 w-4 text-terracotta" />
+                <Award className="h-4 w-4 text-cp-lime" />
                 <h3 className="text-[14.5px] font-bold">Evidence to bring</h3>
               </div>
               <p className="mt-2 text-[11.5px] leading-relaxed text-muted-foreground">
@@ -739,7 +739,7 @@ function InterviewPrepPage() {
                       className={cn(
                         "flex h-5 w-5 items-center justify-center rounded-md border",
                         checklist.includes(item)
-                          ? "border-terracotta bg-terracotta text-white"
+                          ? "border-cp-lime bg-cp-lime text-cp-ink"
                           : "border-border text-transparent",
                       )}
                     >
@@ -761,7 +761,7 @@ function InterviewPrepPage() {
               <div className="mt-4 space-y-3">
                 {intel.stages.map((stage, index) => (
                   <div key={stage} className="flex items-start gap-3 text-[12px]">
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-terracotta/10 text-[10px] font-bold text-terracotta">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cp-lime/10 text-[10px] font-bold text-cp-lime">
                       {index + 1}
                     </span>
                     <span className="leading-relaxed text-muted-foreground">{stage}</span>
@@ -769,8 +769,8 @@ function InterviewPrepPage() {
                 ))}
               </div>
             </div>
-            <div className="card-surface bg-terracotta/5 p-5">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-terracotta">
+            <div className="card-surface bg-cp-lime/5 p-5">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-cp-lime">
                 Keep moving
               </p>
               <p className="mt-2 text-[13px] font-semibold leading-relaxed">

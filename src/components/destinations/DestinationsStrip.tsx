@@ -1,6 +1,6 @@
 /**
- * Destinations strip (Direction 3, Santorini pattern): the home screen
- * as a map of places to explore, with weather-style hiring signals.
+ * Destinations strip (Round 3, Flashlight / Lens): the home screen as a
+ * disciplined list of places to watch, with weather-style hiring signals.
  *
  * Destinations come ONLY from the student's own data already on the
  * dashboard: their target role, and the companies they applied to.
@@ -30,6 +30,7 @@ import { companyDashboardQueryKey } from "@/data/company";
 import { getCompanyDashboard } from "@/lib/company.functions";
 import { resolveAtsBoard } from "@/lib/jobs/ats-providers";
 import { cn } from "@/lib/utils";
+import { SpotlightCard } from "@/components/lens/SpotlightCard";
 import { DestinationScene } from "./DestinationScene";
 import {
   computeHiringWeather,
@@ -54,23 +55,23 @@ const SIGNAL_META: Record<
   busy: {
     label: "Busy",
     icon: Sun,
-    bubble: "bg-[var(--d3-mustard)] text-[var(--d3-choco)]",
+    bubble: "bg-cp-lime text-cp-ink",
   },
   steady: {
     label: "Steady",
     icon: CloudSun,
-    bubble: "bg-[var(--d3-sky)] text-[var(--d3-choco)]",
+    bubble: "bg-cp-lime2 text-cp-ink",
   },
   quiet: {
     label: "Quiet",
     icon: Cloud,
-    bubble: "bg-[var(--d3-peri)] text-[var(--d3-choco)]",
+    bubble: "bg-cp-stone text-cp-ink",
   },
   not_measured: {
     label: "Not measured",
     icon: Compass,
     bubble:
-      "border-2 border-dashed border-[var(--d3-choco)]/40 bg-[var(--d3-paper)] text-[var(--d3-choco)]",
+      "border-2 border-dashed border-cp-paper/40 bg-cp-panel text-cp-paper",
   },
 };
 
@@ -84,7 +85,7 @@ function WeatherBubble({
   if (loading) {
     return (
       <span
-        className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--d3-paper)] text-[var(--d3-choco)] shadow-md"
+        className="flex h-12 w-12 items-center justify-center rounded-full bg-cp-panel text-cp-paper shadow-md"
         title="Checking the live board"
       >
         <Loader2 className="h-5 w-5 animate-spin" />
@@ -119,7 +120,7 @@ function WeatherLine({
 }) {
   if (loading) {
     return (
-      <p className="text-[12px] font-medium text-[var(--d3-choco)]/70">
+      <p className="text-[12px] font-medium text-cp-paper/70">
         Checking the live board…
       </p>
     );
@@ -127,16 +128,16 @@ function WeatherLine({
   const meta = SIGNAL_META[weather.signal];
   if (weather.signal === "not_measured") {
     return (
-      <p className="text-[12px] font-medium text-[var(--d3-choco)]/70">
-        <span className="font-bold text-[var(--d3-choco)]">{meta.label}</span>
+      <p className="text-[12px] font-medium text-cp-paper/70">
+        <span className="font-bold text-cp-paper">{meta.label}</span>
         {weather.reason ? ` · ${weather.reason}` : ""}
       </p>
     );
   }
   const count = weather.newThisWeek ?? 0;
   return (
-    <p className="text-[12px] font-medium text-[var(--d3-choco)]/70">
-      <span className="font-bold text-[var(--d3-choco)]">{meta.label}</span>
+    <p className="text-[12px] font-medium text-cp-paper/70">
+      <span className="font-bold text-cp-paper">{meta.label}</span>
       {` · based on ${count} new ${scope} in the last 7 days`}
     </p>
   );
@@ -150,7 +151,6 @@ function DestinationCard({
   weather,
   loading,
   scope,
-  tilt,
 }: {
   to: string;
   name: string;
@@ -159,34 +159,29 @@ function DestinationCard({
   weather: HiringWeather;
   loading: boolean;
   scope: string;
-  tilt: "l" | "r";
 }) {
   return (
-    <Link
-      to={to}
-      className={cn(
-        "d3-card group block transition-transform hover:-translate-y-1",
-        tilt === "l" ? "d3-tilt-l" : "d3-tilt-r",
-      )}
-    >
-      <div className="relative overflow-hidden rounded-xl">
-        <DestinationScene name={name} className="h-28 w-full" />
-        <div className="absolute bottom-2 right-2">
-          <WeatherBubble weather={weather} loading={loading} />
+    <SpotlightCard className="card-surface group transition-transform hover:-translate-y-1">
+      <Link to={to} className="block">
+        <div className="relative overflow-hidden rounded-xl">
+          <DestinationScene name={name} className="h-28 w-full" />
+          <div className="absolute bottom-2 right-2">
+            <WeatherBubble weather={weather} loading={loading} />
+          </div>
         </div>
-      </div>
-      <div className="pt-3">
-        <span className="d3-chip bg-[var(--d3-mustard)]/40 text-[var(--d3-choco)]">{chip}</span>
-        <h4 className="d3-display mt-2 truncate text-[17px] leading-tight">{name}</h4>
-        <p className="mt-0.5 truncate text-[12.5px] text-[var(--d3-choco)]/70">{subtitle}</p>
-        <div className="mt-2">
-          <WeatherLine weather={weather} loading={loading} scope={scope} />
+        <div className="pt-3">
+          <span className="cp-chip bg-cp-lime/40 text-cp-paper">{chip}</span>
+          <h4 className="font-display mt-2 truncate text-[17px] leading-tight">{name}</h4>
+          <p className="mt-0.5 truncate text-[12.5px] text-cp-paper/70">{subtitle}</p>
+          <div className="mt-2">
+            <WeatherLine weather={weather} loading={loading} scope={scope} />
+          </div>
+          <p className="mt-3 text-[12px] font-bold text-cp-lime group-hover:underline">
+            Explore →
+          </p>
         </div>
-        <p className="mt-3 text-[12px] font-bold text-[var(--d3-flame)] group-hover:underline">
-          Explore →
-        </p>
-      </div>
-    </Link>
+      </Link>
+    </SpotlightCard>
   );
 }
 
@@ -247,16 +242,16 @@ export function DestinationsStrip({
     return (
       <section aria-label="Destinations">
         <div className="flex flex-wrap items-end justify-between gap-2">
-          <h3 className="d3-display text-[20px] leading-tight">Where hiring is warm</h3>
+          <h3 className="font-display text-[20px] leading-tight">Where hiring is warm</h3>
         </div>
-        <div className="d3-card mt-3 flex flex-wrap items-center justify-between gap-4">
+        <div className="card-surface mt-3 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--d3-mustard)] text-[var(--d3-choco)]">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-cp-lime text-cp-ink">
               <MapPin className="h-5 w-5" strokeWidth={1.8} />
             </span>
             <div>
               <p className="text-[14px] font-bold">Add a target role to see where hiring is warm</p>
-              <p className="mt-0.5 max-w-md text-[12.5px] leading-relaxed text-[var(--d3-choco)]/70">
+              <p className="mt-0.5 max-w-md text-[12.5px] leading-relaxed text-cp-paper/70">
                 Set a target role, or track an application, and this map fills in with live
                 hiring weather from real job boards.
               </p>
@@ -264,7 +259,7 @@ export function DestinationsStrip({
           </div>
           <Link
             to="/onboarding"
-            className="rounded-xl bg-[var(--d3-choco)] px-4 py-2.5 text-[12.5px] font-bold text-[var(--d3-cream)] transition-transform hover:-translate-y-0.5"
+            className="rounded-xl bg-cp-lime px-4 py-2.5 text-[12.5px] font-bold text-cp-ink transition-transform hover:-translate-y-0.5"
           >
             Set a target role →
           </Link>
@@ -277,15 +272,16 @@ export function DestinationsStrip({
     <section aria-label="Destinations">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <h3 className="d3-display text-[20px] leading-tight">Where hiring is warm</h3>
-          <p className="mt-1 text-[12.5px] text-[var(--d3-choco)]/70">
+          <p className="cp-eyebrow">Live hiring signals</p>
+          <h3 className="font-display mt-1 text-[20px] leading-tight">Where hiring is warm</h3>
+          <p className="mt-1 text-[12.5px] text-cp-paper/70">
             Weather comes from live job boards. Busy means 5 or more new postings in the last
             7 days.
           </p>
         </div>
         <Link
           to="/market"
-          className="text-[12px] font-bold text-[var(--d3-flame)] hover:underline"
+          className="text-[12px] font-bold text-cp-lime hover:underline"
         >
           See the market →
         </Link>
@@ -301,7 +297,6 @@ export function DestinationsStrip({
             weather={roleWeather}
             loading={anyBoardLoading}
             scope={`${role} postings, across your applications`}
-            tilt="l"
           />
         ) : null}
 
@@ -319,7 +314,6 @@ export function DestinationsStrip({
               weather={weather}
               loading={query?.isPending ?? false}
               scope="postings"
-              tilt={i % 2 === 0 ? "r" : "l"}
             />
           );
         })}

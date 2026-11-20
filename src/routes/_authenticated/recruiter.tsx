@@ -37,7 +37,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 
 import { AppLayout } from "@/components/app/AppLayout";
-import { PilotMascot, PilotSays, type PilotMood } from "@/components/mascot/PilotMascot";
+import { Flashlight } from "@/components/lens/Flashlight";
+import { SpotlightCard } from "@/components/lens/SpotlightCard";
 import { RecruiterDashboardWidgets } from "@/components/recruiter/RecruiterDashboardWidgets";
 import { RecruiterHeroCard } from "@/components/recruiter/RecruiterHeroCard";
 import { RecruiterPipelineStepper } from "@/components/recruiter/RecruiterPipelineStepper";
@@ -86,9 +87,9 @@ const LAYOUT_SUBTITLE =
 /* ------------------------------------------------------------------ */
 
 function CheckStatusIcon({ status }: { status: "pass" | "fail" | "warn" | "unknown" }) {
-  if (status === "pass") return <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />;
-  if (status === "fail") return <XCircle className="h-4 w-4 shrink-0 text-rose-600" />;
-  if (status === "warn") return <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />;
+  if (status === "pass") return <CheckCircle2 className="h-4 w-4 shrink-0 text-cp-lime2" />;
+  if (status === "fail") return <XCircle className="h-4 w-4 shrink-0 text-cp-ember" />;
+  if (status === "warn") return <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400" />;
   return <CircleHelp className="h-4 w-4 shrink-0 text-muted-foreground" />;
 }
 
@@ -119,11 +120,23 @@ function SectionHeading({
 }) {
   return (
     <div>
-      <h3 className="d3-display text-lg font-semibold flex items-center gap-2">
-        <Icon className="h-5 w-5 text-d3-flame" />
+      <h3 className="font-display text-lg font-semibold flex items-center gap-2">
+        <Icon className="h-5 w-5 text-cp-lime" />
         {title}
       </h3>
       {note && <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{note}</p>}
+    </div>
+  );
+}
+
+/** The coach's voice, in type: a lime-ruled note, no mascot. */
+function CoachNote({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl border border-cp-lime/30 bg-cp-lime/5 p-4">
+      <p className="cp-eyebrow">Coach</p>
+      <p className="mt-1.5 font-serif text-[14px] leading-relaxed text-cp-paper/85 italic">
+        {children}
+      </p>
     </div>
   );
 }
@@ -132,7 +145,7 @@ function LegacyAuditNotice() {
   return (
     <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-xs leading-relaxed text-foreground">
       <p className="font-bold flex items-center gap-2">
-        <AlertTriangle className="h-4 w-4 text-amber-600" />
+        <AlertTriangle className="h-4 w-4 text-amber-400" />
         This audit predates the staged screens
       </p>
       <p className="mt-1 text-muted-foreground">
@@ -167,18 +180,38 @@ function ScanningOverlay({ companyName }: { companyName: string }) {
 
   return (
     <motion.div
-      className="d3-card p-8 sm:p-12 text-center my-6 shadow-xl"
+      className="card-surface p-8 sm:p-12 text-center my-6 shadow-xl"
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.98 }}
     >
       <div className="mx-auto flex max-w-md flex-col items-center">
-        <PilotMascot mood="thinking" size={120} className="mb-2" />
+        {/* Scanning beam: a lime line sweeping a dark panel. */}
+        <div className="relative mb-2 h-24 w-full max-w-xs overflow-hidden rounded-2xl border border-border bg-cp-ink">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0"
+            style={{
+              backgroundImage:
+                "radial-gradient(rgba(244,241,234,0.09) 1px, transparent 1px)",
+              backgroundSize: "18px 18px",
+            }}
+          />
+          <motion.div
+            aria-hidden="true"
+            className="absolute inset-x-0 h-10 bg-gradient-to-b from-transparent via-cp-lime/25 to-transparent"
+            animate={{ y: [-40, 96] }}
+            transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Search className="h-8 w-8 text-cp-lime" strokeWidth={1.5} />
+          </div>
+        </div>
 
-        <p className="text-xs font-bold uppercase tracking-widest text-d3-flame mb-2">
+        <p className="text-xs font-bold uppercase tracking-widest text-cp-lime mb-2">
           {companyName} · Live Screening
         </p>
-        <h3 className="d3-display text-xl font-bold text-foreground">Recruiter Audit in Progress</h3>
+        <h3 className="font-display text-xl font-bold text-foreground">Recruiter Audit in Progress</h3>
 
         <div className="mt-6 w-full space-y-3">
           {SCAN_STEPS.map((text, i) => (
@@ -187,16 +220,16 @@ function ScanningOverlay({ companyName }: { companyName: string }) {
               className={cn(
                 "flex items-center gap-3 rounded-xl border p-3.5 text-xs font-medium transition-colors",
                 i < step
-                  ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-700"
+                  ? "border-emerald-500/20 bg-emerald-500/5 text-cp-lime2"
                   : i === step
-                    ? "border-d3-navy/30 bg-d3-flame/10 text-foreground font-semibold"
-                    : "border-border bg-d3-cream text-muted-foreground",
+                    ? "border-cp-lime/30 bg-cp-lime/10 text-foreground font-semibold"
+                    : "border-border bg-cp-ink text-muted-foreground",
               )}
             >
               {i < step ? (
                 <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
               ) : i === step ? (
-                <Loader2 className="h-4 w-4 shrink-0 animate-spin text-d3-flame" />
+                <Loader2 className="h-4 w-4 shrink-0 animate-spin text-cp-ember" />
               ) : (
                 <div className="h-4 w-4 shrink-0 rounded-full border border-border" />
               )}
@@ -219,8 +252,8 @@ function CompanyResearchPanel({ companyName }: { companyName: string }) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 rounded-2xl border border-border bg-d3-cream p-4 text-xs text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin text-d3-flame" />
+      <div className="flex items-center gap-2 rounded-2xl border border-border bg-cp-ink p-4 text-xs text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin text-cp-ember" />
         Checking what CareerPilot knows about {companyName}...
       </div>
     );
@@ -230,7 +263,7 @@ function CompanyResearchPanel({ companyName }: { companyName: string }) {
     return (
       <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-xs leading-relaxed">
         <p className="font-bold text-foreground flex items-center gap-2">
-          <Building2 className="h-4 w-4 text-amber-600" />
+          <Building2 className="h-4 w-4 text-amber-400" />
           {companyName} is not researched yet
         </p>
         <p className="mt-1 text-muted-foreground">
@@ -246,7 +279,7 @@ function CompanyResearchPanel({ companyName }: { companyName: string }) {
     return (
       <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-xs leading-relaxed">
         <p className="font-bold text-foreground flex items-center gap-2">
-          <Building2 className="h-4 w-4 text-amber-600" />
+          <Building2 className="h-4 w-4 text-amber-400" />
           {companyName} is not researched yet
         </p>
         <p className="mt-1 text-muted-foreground">
@@ -268,14 +301,14 @@ function CompanyResearchPanel({ companyName }: { companyName: string }) {
     : null;
 
   return (
-    <div className="rounded-2xl border border-border bg-d3-cream p-4 text-xs leading-relaxed">
+    <div className="rounded-2xl border border-border bg-cp-ink p-4 text-xs leading-relaxed">
       <div className="flex flex-wrap items-center gap-2">
         <span
           className={cn(
             "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold",
             researched
-              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700"
-              : "border-amber-500/30 bg-amber-500/10 text-amber-700",
+              ? "border-emerald-500/30 bg-emerald-500/10 text-cp-lime2"
+              : "border-amber-500/30 bg-amber-500/10 text-amber-400",
           )}
         >
           {researched ? <CheckCircle2 className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />}
@@ -300,7 +333,7 @@ function CompanyResearchPanel({ companyName }: { companyName: string }) {
                 href={s.url}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-0.5 font-semibold text-d3-flame hover:underline"
+                className="inline-flex items-center gap-0.5 font-semibold text-cp-ember hover:underline"
               >
                 {hostOf(s.url)}
                 <ExternalLink className="h-3 w-3" />
@@ -332,7 +365,7 @@ function CompanyResearchPanel({ companyName }: { companyName: string }) {
 function ResumeScreenSection({ stage }: { stage: ResumeScreenStage }) {
   if (!stage.available) {
     return (
-      <div className="d3-card p-6 sm:p-8 space-y-3">
+      <div className="card-surface p-6 sm:p-8 space-y-3">
         <SectionHeading
           icon={FileText}
           title="Stage 1: Resume Screen"
@@ -348,7 +381,7 @@ function ResumeScreenSection({ stage }: { stage: ResumeScreenStage }) {
   const passed = stage.skillChecks.filter((c) => c.status === "pass").length;
 
   return (
-    <div className="d3-card d3-tilt-r p-6 sm:p-8 space-y-6">
+    <div className="card-surface p-6 sm:p-8 space-y-6">
       <SectionHeading
         icon={FileText}
         title="Stage 1: Resume Screen"
@@ -379,7 +412,7 @@ function ResumeScreenSection({ stage }: { stage: ResumeScreenStage }) {
                 </div>
                 <p className="mt-0.5 text-xs text-muted-foreground">{check.detail}</p>
                 {check.lineRef && (
-                  <p className="mt-1 text-[11px] font-medium text-d3-flame">{check.lineRef}</p>
+                  <p className="mt-1 text-[11px] font-medium text-cp-ember">{check.lineRef}</p>
                 )}
               </div>
             </div>
@@ -452,16 +485,16 @@ const EVIDENCE_LEVEL_LABEL: Record<string, string> = {
 
 function EvidenceAuditSection({ stage }: { stage: EvidenceAuditStage }) {
   return (
-    <div className="d3-card d3-tilt-l p-6 sm:p-8 space-y-6">
+    <div className="card-surface p-6 sm:p-8 space-y-6">
       <SectionHeading
         icon={Search}
         title="Stage 2: Evidence Audit"
         note="Claimed vs demonstrated: for each skill your resume claims, the proof behind it: a project, a repo link, or nothing."
       />
 
-      <div className="flex flex-wrap items-center gap-4 rounded-2xl bg-d3-flame/5 border border-d3-navy/20 p-4">
+      <div className="flex flex-wrap items-center gap-4 rounded-2xl bg-cp-lime/5 border border-cp-lime/20 p-4">
         <div>
-          <p className="d3-display text-3xl font-black text-foreground">
+          <p className="font-display text-3xl font-black text-foreground">
             {stage.evidenceCoverage}%
           </p>
           <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
@@ -487,14 +520,14 @@ function EvidenceAuditSection({ stage }: { stage: EvidenceAuditStage }) {
               className="flex items-start gap-3 rounded-xl border border-border p-3.5"
             >
               {item.proof ? (
-                <Link2 className="h-4 w-4 shrink-0 text-emerald-600 mt-0.5" />
+                <Link2 className="h-4 w-4 shrink-0 text-cp-lime2 mt-0.5" />
               ) : (
                 <CircleHelp className="h-4 w-4 shrink-0 text-muted-foreground mt-0.5" />
               )}
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="text-xs font-bold text-foreground">{item.skill}</p>
-                  <span className="rounded-full bg-d3-cream px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
+                  <span className="rounded-full bg-cp-ink px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
                     {EVIDENCE_LEVEL_LABEL[item.level] ?? item.level}
                   </span>
                 </div>
@@ -507,7 +540,7 @@ function EvidenceAuditSection({ stage }: { stage: EvidenceAuditStage }) {
                         href={item.proof.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1 font-semibold text-d3-flame hover:underline"
+                        className="inline-flex items-center gap-1 font-semibold text-cp-ember hover:underline"
                       >
                         {item.proof.label}
                         <ExternalLink className="h-3 w-3" />
@@ -533,7 +566,7 @@ function EvidenceAuditSection({ stage }: { stage: EvidenceAuditStage }) {
 function BarComparisonSection({ stage }: { stage: BarComparisonStage }) {
   if (stage.state === "unknown") {
     return (
-      <div className="d3-card p-6 sm:p-8 space-y-3">
+      <div className="card-surface p-6 sm:p-8 space-y-3">
         <SectionHeading
           icon={Target}
           title="Stage 3: Bar Comparison"
@@ -541,7 +574,7 @@ function BarComparisonSection({ stage }: { stage: BarComparisonStage }) {
         />
         <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
           <p className="text-xs font-bold text-foreground flex items-center gap-2">
-            <CircleHelp className="h-4 w-4 text-amber-600" />
+            <CircleHelp className="h-4 w-4 text-amber-400" />
             Bar unknown, stage skipped
           </p>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{stage.reason}</p>
@@ -557,7 +590,7 @@ function BarComparisonSection({ stage }: { stage: BarComparisonStage }) {
   });
 
   return (
-    <div className="d3-card d3-tilt-r p-6 sm:p-8 space-y-6">
+    <div className="card-surface p-6 sm:p-8 space-y-6">
       <SectionHeading
         icon={Target}
         title={`Stage 3: Bar Comparison · ${stage.companyName}`}
@@ -570,11 +603,11 @@ function BarComparisonSection({ stage }: { stage: BarComparisonStage }) {
             className="flex items-start gap-3 rounded-xl border border-border p-3.5"
           >
             {item.status === "meets" ? (
-              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 mt-0.5" />
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-cp-lime2 mt-0.5" />
             ) : item.status === "partial" ? (
-              <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
+              <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400 mt-0.5" />
             ) : (
-              <XCircle className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" />
+              <XCircle className="h-4 w-4 shrink-0 text-cp-ember mt-0.5" />
             )}
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
@@ -582,9 +615,9 @@ function BarComparisonSection({ stage }: { stage: BarComparisonStage }) {
                 <span
                   className={cn(
                     "rounded-full px-2 py-0.5 text-[10px] font-bold",
-                    item.status === "meets" && "bg-emerald-500/10 text-emerald-700",
-                    item.status === "partial" && "bg-amber-500/10 text-amber-700",
-                    item.status === "missing" && "bg-rose-500/10 text-rose-700",
+                    item.status === "meets" && "bg-emerald-500/10 text-cp-lime2",
+                    item.status === "partial" && "bg-amber-500/10 text-amber-400",
+                    item.status === "missing" && "bg-rose-500/10 text-cp-ember",
                   )}
                 >
                   {item.status === "meets" ? "Meets" : item.status === "partial" ? "Partial" : "Missing"}
@@ -600,7 +633,7 @@ function BarComparisonSection({ stage }: { stage: BarComparisonStage }) {
                       href={item.sourceUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-0.5 font-semibold text-d3-flame hover:underline"
+                      className="inline-flex items-center gap-0.5 font-semibold text-cp-ember hover:underline"
                     >
                       {hostOf(item.sourceUrl)}
                       <ExternalLink className="h-3 w-3" />
@@ -636,17 +669,17 @@ const SEVERITY_BADGES: Record<
   fatal: {
     label: "Fatal",
     icon: ShieldX,
-    className: "border-rose-500/30 bg-rose-500/10 text-rose-700",
+    className: "border-rose-500/30 bg-rose-500/10 text-cp-ember",
   },
   critical: {
     label: "Critical",
     icon: ShieldAlert,
-    className: "border-amber-500/30 bg-amber-500/10 text-amber-700",
+    className: "border-amber-500/30 bg-amber-500/10 text-amber-400",
   },
   strong: {
     label: "Strong",
     icon: CheckCircle2,
-    className: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700",
+    className: "border-emerald-500/30 bg-emerald-500/10 text-cp-lime2",
   },
 };
 
@@ -657,13 +690,13 @@ function VerdictCard({ verdict }: { verdict: BrutalVerdict }) {
   const BadgeIcon = badge.icon;
 
   return (
-    <div className="d3-card overflow-hidden transition-all hover:border-d3-navy/30 shadow-xs">
+    <SpotlightCard className="card-surface overflow-hidden transition-all hover:border-cp-lime/30 shadow-xs">
       <button
         type="button"
         className="flex w-full items-center gap-3.5 p-5 text-left"
         onClick={() => setExpanded(!expanded)}
       >
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-d3-flame/10 text-d3-flame">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-cp-ember/10 text-cp-ember">
           <Icon className="h-5 w-5" strokeWidth={1.7} />
         </div>
         <div className="min-w-0 flex-1">
@@ -689,12 +722,12 @@ function VerdictCard({ verdict }: { verdict: BrutalVerdict }) {
       </button>
 
       {expanded && (
-        <div className="border-t border-border bg-d3-cream px-5 py-3.5 text-xs leading-relaxed">
-          <p className="font-bold uppercase tracking-wider text-d3-flame">Fix Prescription</p>
+        <div className="border-t border-border bg-cp-ink px-5 py-3.5 text-xs leading-relaxed">
+          <p className="font-bold uppercase tracking-wider text-cp-ember">Fix Prescription</p>
           <p className="mt-1 text-foreground font-medium">{verdict.whatToFix}</p>
         </div>
       )}
-    </div>
+    </SpotlightCard>
   );
 }
 
@@ -763,16 +796,16 @@ function MockInterviewSection({ session }: { session: RecruiterSession }) {
 
   if (!stage || stage.questions.length === 0) {
     return (
-      <div className="d3-card d3-tilt-l p-6 sm:p-8 space-y-3">
+      <div className="card-surface p-6 sm:p-8 space-y-3">
         <SectionHeading
           icon={Mic2}
           title="Stage 4: Mock Interview"
           note="Role- and company-specific questions, answered against a timed target and scored on a shown rubric."
         />
-        <PilotSays mood="thinking" size={88}>
-          No interview questions in this audit. Run a new audit and Pilot will draft your
+        <CoachNote>
+          No interview questions in this audit. Run a new audit and the coach will draft your
           questions from the job description and your evidence gaps.
-        </PilotSays>
+        </CoachNote>
         <LegacyAuditNotice />
       </div>
     );
@@ -815,7 +848,7 @@ function MockInterviewSection({ session }: { session: RecruiterSession }) {
 
   return (
     <div className="space-y-6">
-      <div className="d3-card d3-tilt-l p-6 sm:p-8 space-y-6">
+      <div className="card-surface p-6 sm:p-8 space-y-6">
         <SectionHeading
           icon={Mic2}
           title="Stage 4: Mock Interview"
@@ -826,10 +859,10 @@ function MockInterviewSection({ session }: { session: RecruiterSession }) {
           }
         />
 
-        <PilotSays mood="happy" size={88}>
+        <CoachNote>
           Ready for your first interview? Answer out loud first, then write what you said.
-          Pilot times you and scores the answer against the rubric below.
-        </PilotSays>
+          The coach times you and scores the answer against the rubric below.
+        </CoachNote>
 
         <div className="space-y-2">
           {stage.questions.map((q) => {
@@ -843,15 +876,15 @@ function MockInterviewSection({ session }: { session: RecruiterSession }) {
                 className={cn(
                   "w-full rounded-xl border p-3.5 text-left transition-colors",
                   isSelected
-                    ? "border-d3-navy bg-d3-flame/5"
-                    : "border-border hover:border-d3-navy/30",
+                    ? "border-cp-lime bg-cp-lime/5"
+                    : "border-border hover:border-cp-lime/30",
                 )}
               >
                 <div className="flex items-start gap-3">
                   <div
                     className={cn(
                       "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold",
-                      isSelected ? "bg-d3-navy text-white" : "bg-d3-cream text-muted-foreground",
+                      isSelected ? "bg-cp-lime text-cp-ink" : "bg-cp-ink text-muted-foreground",
                     )}
                   >
                     {q.id.replace("q", "")}
@@ -869,10 +902,10 @@ function MockInterviewSection({ session }: { session: RecruiterSession }) {
           })}
         </div>
 
-        <div className="rounded-2xl border border-border bg-d3-cream p-4">
+        <div className="rounded-2xl border border-border bg-cp-ink p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs font-bold text-foreground flex items-center gap-2">
-              <Timer className="h-4 w-4 text-d3-flame" />
+              <Timer className="h-4 w-4 text-cp-ember" />
               {overTime
                 ? `Over the ${MOCK_TARGET_SECONDS}-second target, but you can still submit`
                 : `${formatSeconds(Math.max(0, remaining))} left of the ${MOCK_TARGET_SECONDS}-second target`}
@@ -882,9 +915,9 @@ function MockInterviewSection({ session }: { session: RecruiterSession }) {
               {formatSeconds(elapsed)} elapsed
             </span>
           </div>
-          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-d3-cream">
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-cp-ink">
             <div
-              className={cn("h-full rounded-full transition-all", overTime ? "bg-amber-500" : "bg-d3-navy")}
+              className={cn("h-full rounded-full transition-all", overTime ? "bg-amber-500" : "bg-cp-lime")}
               style={{ width: `${Math.min(100, (elapsed / MOCK_TARGET_SECONDS) * 100)}%` }}
             />
           </div>
@@ -892,7 +925,7 @@ function MockInterviewSection({ session }: { session: RecruiterSession }) {
             value={answer}
             onChange={(e) => handleAnswerChange(e.target.value)}
             placeholder="Answer out loud first, then write what you said: situation, action, result, with a number and a project name."
-            className="mt-4 min-h-32 w-full resize-y rounded-2xl border border-border bg-card p-4 text-[13px] leading-relaxed outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-d3-navy"
+            className="mt-4 min-h-32 w-full resize-y rounded-2xl border border-border bg-card p-4 text-[13px] leading-relaxed outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-cp-lime"
           />
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
             <p className="text-[11px] text-muted-foreground">
@@ -901,7 +934,7 @@ function MockInterviewSection({ session }: { session: RecruiterSession }) {
             <Button
               onClick={handleSubmit}
               disabled={submit.isPending || !answer.trim()}
-              className="rounded-xl px-5 py-2.5 font-bold text-xs bg-d3-navy hover:bg-d3-navy/90 text-white"
+              className="rounded-xl px-5 py-2.5 font-bold text-xs bg-cp-lime hover:bg-cp-lime/90 text-cp-ink"
             >
               {submit.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -931,11 +964,11 @@ function MockInterviewSection({ session }: { session: RecruiterSession }) {
                     <p className="text-xs font-bold text-foreground">{row.criterion}</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">{row.rule}</p>
                     {scored && (
-                      <p className="mt-1 text-xs font-medium text-d3-flame">{scored.reason}</p>
+                      <p className="mt-1 text-xs font-medium text-cp-ember">{scored.reason}</p>
                     )}
                   </div>
                   {scored && (
-                    <span className="shrink-0 rounded-full bg-d3-flame/10 px-2.5 py-1 text-[11px] font-bold text-d3-flame">
+                    <span className="shrink-0 rounded-full bg-cp-ember/10 px-2.5 py-1 text-[11px] font-bold text-cp-ember">
                       {scored.score}/{scored.max}
                     </span>
                   )}
@@ -952,7 +985,7 @@ function MockInterviewSection({ session }: { session: RecruiterSession }) {
       </div>
 
       {summary && summary.totalAttempts > 0 && (
-        <div className="d3-card d3-tilt-r p-6 sm:p-8 space-y-4">
+        <div className="card-surface p-6 sm:p-8 space-y-4">
           <SectionHeading
             icon={TrendingUp}
             title="Your progress over time"
@@ -976,7 +1009,7 @@ function MockInterviewSection({ session }: { session: RecruiterSession }) {
                     · {formatSeconds(attempt.timeSpentSeconds)}
                   </p>
                 </div>
-                <span className="shrink-0 rounded-full bg-d3-cream px-2.5 py-1 text-[11px] font-bold text-foreground">
+                <span className="shrink-0 rounded-full bg-cp-ink px-2.5 py-1 text-[11px] font-bold text-foreground">
                   {attempt.totalScore}/6
                 </span>
               </div>
@@ -1030,9 +1063,11 @@ function CoachChat({ session, companyName }: { session: RecruiterSession; compan
   ];
 
   return (
-    <div className="d3-card d3-tilt-l overflow-hidden shadow-md">
-      <div className="flex items-center gap-3 border-b border-border bg-d3-cream px-6 py-4">
-        <PilotMascot mood="happy" size={44} className="shrink-0" />
+    <div className="card-surface overflow-hidden shadow-md">
+      <div className="flex items-center gap-3 border-b border-border bg-cp-ink px-6 py-4">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-cp-lime text-cp-ink">
+          <MessageCircle className="h-5 w-5" />
+        </div>
         <div>
           <h4 className="text-sm font-bold text-foreground">Practice with a recruiter-style coach</h4>
           <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5 font-medium">
@@ -1055,8 +1090,8 @@ function CoachChat({ session, companyName }: { session: RecruiterSession; compan
               className={cn(
                 "max-w-[85%] rounded-2xl px-4 py-3 text-xs leading-relaxed font-medium",
                 msg.role === "student"
-                  ? "rounded-br-xs bg-d3-navy text-white font-semibold"
-                  : "rounded-bl-xs bg-d3-cream text-foreground",
+                  ? "rounded-br-xs bg-cp-lime text-cp-ink font-semibold"
+                  : "rounded-bl-xs bg-cp-ink text-foreground",
               )}
             >
               {msg.content}
@@ -1065,9 +1100,9 @@ function CoachChat({ session, companyName }: { session: RecruiterSession; compan
         ))}
         {chat.isPending && (
           <div className="flex justify-start">
-            <div className="flex items-center gap-2 rounded-2xl rounded-bl-xs bg-d3-cream px-4 py-3 text-xs text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin text-d3-flame" />
-              Pilot is typing...
+            <div className="flex items-center gap-2 rounded-2xl rounded-bl-xs bg-cp-ink px-4 py-3 text-xs text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin text-cp-ember" />
+              Coach is typing...
             </div>
           </div>
         )}
@@ -1081,7 +1116,7 @@ function CoachChat({ session, companyName }: { session: RecruiterSession; compan
             type="button"
             onClick={() => handleSend(q)}
             disabled={chat.isPending}
-            className="rounded-full bg-d3-cream px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-d3-cream/70 hover:text-foreground disabled:opacity-40"
+            className="rounded-full bg-cp-ink px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-cp-paper/10 hover:text-foreground disabled:opacity-40"
           >
             {q}
           </button>
@@ -1094,15 +1129,15 @@ function CoachChat({ session, companyName }: { session: RecruiterSession; compan
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
-          placeholder="Ask Pilot..."
+          placeholder="Ask the coach..."
           disabled={chat.isPending}
-          className="flex-1 rounded-xl border border-border bg-background px-4 py-2.5 text-xs font-medium outline-none focus:border-d3-navy"
+          className="flex-1 rounded-xl border border-border bg-background px-4 py-2.5 text-xs font-medium outline-none focus:border-cp-lime"
         />
         <Button
           type="button"
           onClick={() => handleSend()}
           disabled={chat.isPending || !input.trim()}
-          className="rounded-xl px-4 bg-d3-navy hover:bg-d3-navy/90 text-white"
+          className="rounded-xl px-4 bg-cp-lime hover:bg-cp-lime/90 text-cp-ink"
         >
           <Send className="h-4 w-4" />
         </Button>
@@ -1115,18 +1150,106 @@ function CoachChat({ session, companyName }: { session: RecruiterSession; compan
 /* Stage 5: Verdict & next action                                     */
 /* ------------------------------------------------------------------ */
 
-/** Pilot's face for each readiness band (see the mood convention in PilotMascot). */
-const VERDICT_MOOD: Record<RecruiterVerdict["band"], PilotMood> = {
-  ready: "cheering",
-  one_gap: "encouraging",
-  not_yet: "thinking",
+/** Band label, tone, and panel tint for the verdict statement. */
+const VERDICT_BAND_LABEL: Record<RecruiterVerdict["band"], string> = {
+  ready: "Ready to apply",
+  one_gap: "One gap to close",
+  not_yet: "Not yet",
 };
 
-const VERDICT_PILOT_COPY: Record<RecruiterVerdict["band"], string> = {
-  ready: "Pilot found a match. You are ready to apply for this role.",
-  one_gap: "One gap to close. Fix it, then apply.",
-  not_yet: "Not yet, but every fix below is a real step. Pilot will keep score.",
+const VERDICT_BAND_TONE: Record<RecruiterVerdict["band"], string> = {
+  ready: "text-cp-lime2",
+  one_gap: "text-cp-lime",
+  not_yet: "text-cp-ember",
 };
+
+const VERDICT_BAND_PANEL: Record<RecruiterVerdict["band"], string> = {
+  ready: "border-cp-lime2/30 bg-cp-lime2/5",
+  one_gap: "border-cp-lime/30 bg-cp-lime/5",
+  not_yet: "border-cp-ember/30 bg-cp-ember/5",
+};
+
+/**
+ * The WHY behind the verdict, revealed inside the flashlight: one line
+ * per stage, all from the real staged outputs. Bar comparison shows
+ * "Bar unknown" when the company was never researched, never an
+ * invented bar. Nothing here is a probability.
+ */
+function VerdictWhy({
+  audit,
+  verdict,
+}: {
+  audit: RecruiterAudit;
+  verdict: RecruiterVerdict;
+}) {
+  const resume = audit.resumeScreen;
+  const evidence = audit.evidenceAudit;
+  const bar = audit.barComparison;
+  const mock = audit.mockInterview;
+
+  const resumePassed = resume?.available
+    ? resume.skillChecks.filter((c) => c.status === "pass").length
+    : null;
+  const resumeKnockoutFailed = resume?.available
+    ? resume.knockoutChecks.filter((c) => c.status === "fail").length
+    : 0;
+  const resumeLine =
+    !resume || !resume.available
+      ? "Screen unavailable"
+      : `${resumePassed} of ${resume.skillChecks.length} must-haves found${
+          resumeKnockoutFailed > 0
+            ? ` · ${resumeKnockoutFailed} knockout failed`
+            : " · no knockout failed"
+        }`;
+
+  const evidenceLine = !evidence
+    ? "No evidence recorded"
+    : `${evidence.evidenceCoverage}% coverage · ${evidence.skillsWithProof} of ${evidence.claimedSkills} skills with proof`;
+
+  const barLine =
+    !bar || bar.state === "unknown"
+      ? "Bar unknown"
+      : (() => {
+          const meets = bar.items.filter((i) => i.status === "meets").length;
+          const partial = bar.items.filter((i) => i.status === "partial").length;
+          const missing = bar.items.filter((i) => i.status === "missing").length;
+          return `${meets} meets · ${partial} partial · ${missing} missing`;
+        })();
+
+  const mockLine = !mock
+    ? "No questions drafted"
+    : `${mock.questions.length} question${mock.questions.length === 1 ? "" : "s"} drafted from your gaps`;
+
+  const biggestGap = verdict.topFixes[0]?.fix ?? "No gaps found. Apply.";
+
+  return (
+    <div className="flex h-full flex-col justify-center rounded-2xl border border-cp-lime/40 bg-cp-ink p-5">
+      <p className="cp-eyebrow">Why this verdict</p>
+      <dl className="mt-3 space-y-2 text-xs leading-relaxed">
+        <div className="flex items-baseline justify-between gap-3">
+          <dt className="shrink-0 font-bold text-cp-paper">Resume screen</dt>
+          <dd className="text-right text-cp-paper/70">{resumeLine}</dd>
+        </div>
+        <div className="flex items-baseline justify-between gap-3">
+          <dt className="shrink-0 font-bold text-cp-paper">Evidence audit</dt>
+          <dd className="text-right text-cp-paper/70">{evidenceLine}</dd>
+        </div>
+        <div className="flex items-baseline justify-between gap-3">
+          <dt className="shrink-0 font-bold text-cp-paper">Company bar</dt>
+          <dd className="text-right text-cp-paper/70">{barLine}</dd>
+        </div>
+        <div className="flex items-baseline justify-between gap-3">
+          <dt className="shrink-0 font-bold text-cp-paper">Mock interview</dt>
+          <dd className="text-right text-cp-paper/70">{mockLine}</dd>
+        </div>
+      </dl>
+      <p className="mt-3 border-t border-border pt-3 text-xs leading-relaxed">
+        <span className="font-bold text-cp-lime">Biggest gap: </span>
+        <span className="text-cp-paper/85 line-clamp-2">{biggestGap}</span>
+      </p>
+    </div>
+  );
+}
 
 function VerdictSection({
   audit,
@@ -1141,29 +1264,55 @@ function VerdictSection({
 }) {
   return (
     <div className="space-y-6">
-      <div className="d3-card d3-tilt-r p-6 sm:p-8 space-y-4">
+      <div className="card-surface p-6 sm:p-8 space-y-4">
         <SectionHeading
           icon={Flame}
           title="Stage 5: Verdict"
           note="Readiness in plain language. Every claim below traces to a stage output, with no percentages-as-probabilities."
         />
-        <PilotSays mood={VERDICT_MOOD[verdict.band]} size={88}>
-          {VERDICT_PILOT_COPY[verdict.band]}
-        </PilotSays>
+
+        {/* The verdict, always fully visible: band in display type,
+            headline in the reveal serif. */}
+        <div>
+          <p className="cp-eyebrow">Verdict</p>
+          <p
+            className={`font-display editorial-title mt-2 text-4xl sm:text-5xl ${VERDICT_BAND_TONE[verdict.band]}`}
+          >
+            {VERDICT_BAND_LABEL[verdict.band]}
+          </p>
+          <p className="mt-3 max-w-xl font-serif text-lg leading-relaxed text-cp-paper/85 italic">
+            {verdict.headline}
+          </p>
+        </div>
+
+        {/* The flashlight reveal: the why lives inside the light. The
+            teaser stays dimmed until the light (or the toggle) shows
+            the stage-by-stage evidence. */}
+        <Flashlight lit={<VerdictWhy audit={audit} verdict={verdict} />}>
+          <div className="flex min-h-[248px] flex-col items-center justify-center rounded-2xl border border-border bg-cp-ink px-6 py-8 text-center">
+            <p className="cp-eyebrow">Four stages ran against your real evidence</p>
+            <p className="mt-3 max-w-md text-sm leading-relaxed text-cp-paper/80">
+              The light shows which stages passed, which failed, and the gap
+              that matters most.
+            </p>
+            <p className="mt-2 font-mono text-[11px] tracking-[0.14em] text-cp-lime uppercase">
+              Move the light across this panel
+            </p>
+          </div>
+        </Flashlight>
+
         <div
           className={cn(
             "rounded-2xl border p-5",
-            verdict.band === "ready" && "border-emerald-500/30 bg-emerald-500/5",
-            verdict.band === "one_gap" && "border-amber-500/30 bg-amber-500/5",
-            verdict.band === "not_yet" && "border-d3-navy/30 bg-d3-flame/5",
+            VERDICT_BAND_PANEL[verdict.band],
           )}
         >
-          <p className="d3-display text-xl font-black text-foreground">{verdict.headline}</p>
+          <p className="font-display text-xl font-black text-foreground">{verdict.headline}</p>
           {verdict.topFixes.length > 0 && (
             <ol className="mt-3 space-y-2">
               {verdict.topFixes.map((fix, i) => (
                 <li key={i} className="flex items-start gap-2 text-xs leading-relaxed text-foreground">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-d3-flame/10 text-[10px] font-bold text-d3-flame">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cp-lime/10 text-[10px] font-bold text-cp-lime">
                     {i + 1}
                   </span>
                   <span>
@@ -1176,8 +1325,8 @@ function VerdictSection({
           )}
         </div>
 
-        <div className="rounded-2xl border border-d3-navy/20 bg-d3-flame/5 p-5">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-d3-flame">
+        <div className="rounded-2xl border border-cp-lime/30 bg-cp-lime/5 p-5">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-cp-lime">
             Your single highest-value next action
           </p>
           <p className="mt-2 text-sm font-bold text-foreground">{verdict.nextAction.label}</p>
@@ -1187,9 +1336,9 @@ function VerdictSection({
         </div>
       </div>
 
-      <div className="d3-card p-6 sm:p-8 space-y-3">
-        <h3 className="d3-display text-lg font-semibold flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-d3-flame" />
+      <div className="card-surface p-6 sm:p-8 space-y-3">
+        <h3 className="font-display text-lg font-semibold flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-cp-lime" />
           Recommended Proof Project to Build
         </h3>
         <h4 className="text-sm font-bold text-foreground">{audit.whatYouNeedToBuild.title}</h4>
@@ -1200,7 +1349,7 @@ function VerdictSection({
           {audit.whatYouNeedToBuild.techStack.map((t) => (
             <span
               key={t}
-              className="rounded-full bg-d3-flame/10 px-3 py-1 text-xs font-bold text-d3-flame"
+              className="rounded-full bg-cp-lime/10 px-3 py-1 text-xs font-bold text-cp-lime"
             >
               {t}
             </span>
@@ -1211,7 +1360,7 @@ function VerdictSection({
           <Button
             onClick={onAddToRoadmap}
             disabled={roadmapPending}
-            className="w-full rounded-xl py-3 font-bold text-xs bg-d3-navy hover:bg-d3-navy/90 text-white"
+            className="w-full rounded-xl py-3 font-bold text-xs bg-cp-lime hover:bg-cp-lime/90 text-cp-ink"
           >
             {roadmapPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -1357,10 +1506,10 @@ function RecruiterPage() {
             <motion.div key={activeStep} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
               {/* STEP 1: Define Role & Target Employer */}
               {activeStep === 1 && (
-                <div className="d3-card d3-tilt-l p-6 sm:p-8 space-y-6">
+                <div className="card-surface p-6 sm:p-8 space-y-6">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <h2 className="d3-display text-xl font-bold text-foreground sm:text-2xl">
+                      <h2 className="font-display text-xl font-bold text-foreground sm:text-2xl">
                         Select Target Employer
                       </h2>
                       <p className="mt-1 text-xs text-muted-foreground">
@@ -1374,15 +1523,15 @@ function RecruiterPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => setIsCustomCompany(!isCustomCompany)}
-                      className="rounded-xl border-d3-navy/30 text-xs font-bold text-d3-flame hover:bg-d3-flame/10"
+                      className="rounded-xl border-cp-lime/30 text-xs font-bold text-cp-lime hover:bg-cp-lime/10"
                     >
                       {isCustomCompany ? "← Choose Featured" : "+ Custom Company"}
                     </Button>
                   </div>
 
                   {isCustomCompany ? (
-                    <div className="space-y-3 rounded-2xl border border-d3-navy/20 bg-d3-cream p-5">
-                      <label className="text-xs font-bold uppercase tracking-wider text-d3-flame">
+                    <div className="space-y-3 rounded-2xl border border-cp-lime/20 bg-cp-ink p-5">
+                      <label className="text-xs font-bold uppercase tracking-wider text-cp-lime">
                         Enter Any Company Name
                       </label>
                       <input
@@ -1390,7 +1539,7 @@ function RecruiterPage() {
                         value={customCompanyInput}
                         onChange={(e) => setCustomCompanyInput(e.target.value)}
                         placeholder="e.g. Careem, Devsinc, Google, Arbitsoft, Folio3..."
-                        className="h-11 w-full rounded-xl border border-border bg-background px-4 text-xs font-semibold outline-none focus:border-d3-navy"
+                        className="h-11 w-full rounded-xl border border-border bg-background px-4 text-xs font-semibold outline-none focus:border-cp-lime"
                       />
                     </div>
                   ) : (
@@ -1405,11 +1554,11 @@ function RecruiterPage() {
                             className={cn(
                               "group relative flex items-start gap-3.5 rounded-2xl border p-4 text-left transition-all",
                               isSelected
-                                ? "border-d3-navy bg-d3-flame/5 ring-2 ring-d3-navy/40 shadow-xs"
-                                : "border-border bg-card hover:border-d3-navy/30",
+                                ? "border-cp-lime bg-cp-lime/5 ring-2 ring-cp-lime/40 shadow-xs"
+                                : "border-border bg-card hover:border-cp-lime/30",
                             )}
                           >
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-d3-cream font-extrabold text-xs text-foreground">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cp-ink font-extrabold text-xs text-foreground">
                               {co.shortName.slice(0, 2).toUpperCase()}
                             </div>
                             <div className="min-w-0 flex-1">
@@ -1417,7 +1566,7 @@ function RecruiterPage() {
                               <p className="truncate text-[11px] text-muted-foreground">{co.tier}</p>
                             </div>
                             {isSelected && (
-                              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-d3-navy text-white">
+                              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cp-lime text-cp-ink">
                                 <Check className="h-3 w-3" />
                               </div>
                             )}
@@ -1438,7 +1587,7 @@ function RecruiterPage() {
                       value={selectedRole}
                       onChange={(e) => setSelectedRole(e.target.value)}
                       placeholder="Associate Software Engineer"
-                      className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-4 text-xs font-semibold outline-none focus:border-d3-navy"
+                      className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-4 text-xs font-semibold outline-none focus:border-cp-lime"
                     />
                   </div>
 
@@ -1450,7 +1599,7 @@ function RecruiterPage() {
                       value={jobDescription}
                       onChange={(e) => setJobDescription(e.target.value)}
                       placeholder={"Paste the full job description here. The resume screen checks your resume against its must-have skills, and the mock interview questions are drafted from it.\n\nWithout a JD, the screen checks against the company bar instead."}
-                      className="mt-1.5 min-h-36 w-full resize-y rounded-xl border border-border bg-background px-4 py-3 text-xs leading-relaxed outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-d3-navy"
+                      className="mt-1.5 min-h-36 w-full resize-y rounded-xl border border-border bg-background px-4 py-3 text-xs leading-relaxed outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-cp-lime"
                     />
                     <p className="mt-1.5 text-[11px] text-muted-foreground">
                       {jobDescription.trim().length} characters · Only the extracted keywords are
@@ -1466,7 +1615,7 @@ function RecruiterPage() {
                         ? "The audit runs only for researched companies, so pick a featured company."
                         : undefined
                     }
-                    className="w-full rounded-xl py-3 font-bold text-xs bg-d3-navy hover:bg-d3-navy/90 text-white"
+                    className="w-full rounded-xl py-3 font-bold text-xs bg-cp-lime hover:bg-cp-lime/90 text-cp-ink"
                   >
                     {runAudit.isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -1482,9 +1631,11 @@ function RecruiterPage() {
 
               {/* Steps 2-5 need a session; the stepper disables them, this is defense in depth. */}
               {activeStep > 1 && !currentSession && (
-                <div className="d3-card d3-tilt-r p-8 text-center">
-                  <PilotMascot mood="sleeping" size={110} className="mx-auto" />
-                  <p className="d3-display text-lg font-bold text-foreground">Run an audit first</p>
+                <div className="card-surface p-8 text-center">
+                  <p className="cp-eyebrow">No audit yet</p>
+                  <p className="font-display editorial-title mt-3 text-2xl text-cp-paper sm:text-3xl">
+                    Run an audit first
+                  </p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     Pick a company and role on step 1, and the stage screens unlock once an audit
                     exists.
@@ -1492,7 +1643,7 @@ function RecruiterPage() {
                   <Button
                     type="button"
                     onClick={() => setActiveStep(1)}
-                    className="mt-4 rounded-xl bg-d3-navy px-5 py-2.5 text-xs font-bold text-white hover:bg-d3-navy/90"
+                    className="mt-4 rounded-xl bg-cp-lime px-5 py-2.5 text-xs font-bold text-cp-ink hover:bg-cp-lime/90"
                   >
                     Go to step 1
                   </Button>
@@ -1514,7 +1665,7 @@ function RecruiterPage() {
                   <div className="flex justify-end pt-4 border-t border-border mt-6">
                     <Button
                       onClick={() => setActiveStep(3)}
-                      className="rounded-xl px-6 py-2.5 font-bold text-xs bg-d3-navy hover:bg-d3-navy/90 text-white"
+                      className="rounded-xl px-6 py-2.5 font-bold text-xs bg-cp-lime hover:bg-cp-lime/90 text-cp-ink"
                     >
                       Continue to Evidence & Bar
                       <ArrowRight className="ml-2 h-4 w-4" />
@@ -1539,8 +1690,8 @@ function RecruiterPage() {
                   )}
 
                   <div>
-                    <h3 className="d3-display text-lg font-semibold mb-3 flex items-center gap-2">
-                      <Flame className="h-5 w-5 text-d3-flame" />
+                    <h3 className="font-display text-lg font-semibold mb-3 flex items-center gap-2">
+                      <Flame className="h-5 w-5 text-cp-lime" />
                       Evidence Rubric Detail
                     </h3>
                     <div className="grid gap-3 sm:grid-cols-2">
@@ -1561,7 +1712,7 @@ function RecruiterPage() {
                     </Button>
                     <Button
                       onClick={() => setActiveStep(4)}
-                      className="rounded-xl px-6 py-2.5 font-bold text-xs bg-d3-navy hover:bg-d3-navy/90 text-white"
+                      className="rounded-xl px-6 py-2.5 font-bold text-xs bg-cp-lime hover:bg-cp-lime/90 text-cp-ink"
                     >
                       Continue to Mock Interview
                       <ArrowRight className="ml-2 h-4 w-4" />
@@ -1576,8 +1727,8 @@ function RecruiterPage() {
                   <MockInterviewSection session={currentSession} />
 
                   <div>
-                    <h3 className="d3-display text-lg font-semibold mb-3 flex items-center gap-2">
-                      <MessageCircle className="h-5 w-5 text-d3-flame" />
+                    <h3 className="font-display text-lg font-semibold mb-3 flex items-center gap-2">
+                      <MessageCircle className="h-5 w-5 text-cp-lime" />
                       Practice with the Coach
                     </h3>
                     <CoachChat session={currentSession} companyName={currentSession.companyName} />
@@ -1594,7 +1745,7 @@ function RecruiterPage() {
                     </Button>
                     <Button
                       onClick={() => setActiveStep(5)}
-                      className="rounded-xl px-6 py-2.5 font-bold text-xs bg-d3-navy hover:bg-d3-navy/90 text-white"
+                      className="rounded-xl px-6 py-2.5 font-bold text-xs bg-cp-lime hover:bg-cp-lime/90 text-cp-ink"
                     >
                       Continue to Verdict
                       <ArrowRight className="ml-2 h-4 w-4" />
@@ -1616,9 +1767,9 @@ function RecruiterPage() {
                   ) : (
                     <div className="space-y-6">
                       <LegacyAuditNotice />
-                      <div className="d3-card p-6 sm:p-8 space-y-3">
-                        <h3 className="d3-display text-lg font-semibold flex items-center gap-2">
-                          <Sparkles className="h-5 w-5 text-d3-flame" />
+                      <div className="card-surface p-6 sm:p-8 space-y-3">
+                        <h3 className="font-display text-lg font-semibold flex items-center gap-2">
+                          <Sparkles className="h-5 w-5 text-cp-lime" />
                           Recommended Proof Project to Build
                         </h3>
                         <h4 className="text-sm font-bold text-foreground">
@@ -1631,7 +1782,7 @@ function RecruiterPage() {
                           {currentSession.auditResult.whatYouNeedToBuild.techStack.map((t) => (
                             <span
                               key={t}
-                              className="rounded-full bg-d3-flame/10 px-3 py-1 text-xs font-bold text-d3-flame"
+                              className="rounded-full bg-cp-lime/10 px-3 py-1 text-xs font-bold text-cp-lime"
                             >
                               {t}
                             </span>
@@ -1641,7 +1792,7 @@ function RecruiterPage() {
                           <Button
                             onClick={handleAddToRoadmap}
                             disabled={generateRoadmap.isPending}
-                            className="w-full rounded-xl py-3 font-bold text-xs bg-d3-navy hover:bg-d3-navy/90 text-white"
+                            className="w-full rounded-xl py-3 font-bold text-xs bg-cp-lime hover:bg-cp-lime/90 text-cp-ink"
                           >
                             {generateRoadmap.isPending ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
