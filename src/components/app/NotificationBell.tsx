@@ -65,7 +65,7 @@ export function NotificationBell() {
       >
         <Bell className="h-4 w-4 text-foreground" />
         {count > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-white">
+          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-terracotta px-1 text-[9px] font-bold text-white">
             {count > 9 ? "9+" : count}
           </span>
         )}
@@ -76,7 +76,7 @@ export function NotificationBell() {
           {/* Header */}
           <div className="border-b border-border p-3.5 bg-gradient-to-r from-card to-secondary/30">
             <div className="flex items-center gap-1.5">
-              <BellRing className="h-4 w-4 text-primary" />
+              <BellRing className="h-4 w-4 text-terracotta" />
               <p className="text-[13px] font-bold text-foreground">Notifications</p>
             </div>
           </div>
@@ -91,7 +91,7 @@ export function NotificationBell() {
               <div className="p-6 text-center">
                 <Bell className="mx-auto h-5 w-5 text-muted-foreground/40" />
                 <p className="mt-2 text-[12px] font-semibold text-foreground">You&apos;re all caught up</p>
-                <p className="mt-0.5 text-[11.5px] text-muted-foreground">
+                <p className="mt-0.5 text-[10.5px] text-muted-foreground">
                   New roadmap milestones and feedback will appear here.
                 </p>
               </div>
@@ -107,7 +107,7 @@ export function NotificationBell() {
                     }}
                     className={cn(
                       "flex w-full items-start gap-2.5 rounded-xl p-2.5 text-left transition-colors hover:bg-muted/50",
-                      !notification.read && "bg-primary/[0.04]"
+                      !notification.read && "bg-terracotta/[0.04]"
                     )}
                   >
                     <span
@@ -115,24 +115,24 @@ export function NotificationBell() {
                         "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs",
                         notification.read
                           ? "bg-secondary text-muted-foreground"
-                          : "bg-primary/10 text-primary"
+                          : "bg-terracotta/10 text-terracotta"
                       )}
                     >
                       <Icon className="h-3.5 w-3.5" />
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center justify-between gap-1">
-                        <span className="text-[12px] font-bold text-foreground truncate">
+                        <span className="text-[11px] font-bold text-foreground truncate">
                           {notification.title}
                         </span>
                         {!notification.read && (
-                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-terracotta" />
                         )}
                       </span>
-                      <span className="mt-0.5 block text-[11.5px] leading-relaxed text-muted-foreground line-clamp-2">
+                      <span className="mt-0.5 block text-[10.5px] leading-relaxed text-muted-foreground line-clamp-2">
                         {notification.message}
                       </span>
-                      <span className="mt-0.5 block text-[11px] text-muted-foreground/70">
+                      <span className="mt-0.5 block text-[9.5px] text-muted-foreground/70">
                         {notificationTime(notification.created_at)}
                       </span>
                     </span>
@@ -146,7 +146,7 @@ export function NotificationBell() {
             <Link
               to="/roadmap"
               onClick={() => setOpen(false)}
-              className="text-[12px] font-semibold text-primary hover:underline"
+              className="text-[11px] font-semibold text-terracotta hover:underline"
             >
               View full roadmap →
             </Link>
@@ -154,7 +154,7 @@ export function NotificationBell() {
               <button
                 type="button"
                 onClick={() => markAllRead.mutate()}
-                className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-muted-foreground hover:text-foreground"
+                className="inline-flex items-center gap-1 text-[10.5px] font-semibold text-muted-foreground hover:text-foreground"
               >
                 <CheckCheck className="h-3 w-3" /> Mark read
               </button>

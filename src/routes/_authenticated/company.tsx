@@ -54,7 +54,7 @@ type CompanyTab = "overview" | "skills" | "alignment" | "links";
 
 function UnverifiedBadge() {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold text-amber-400">
+    <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
       <TriangleAlert className="h-3 w-3" strokeWidth={2} />
       Unverified seed data — research date unknown
     </span>
@@ -72,7 +72,7 @@ function NotResearchedBadge() {
 
 function VerifiedBadge({ retrievedAt }: { retrievedAt: string | null }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-400">
+    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
       <ShieldCheck className="h-3 w-3" strokeWidth={2} />
       Researched
       {retrievedAt && <> · {new Date(retrievedAt).toLocaleDateString()}</>}
@@ -235,7 +235,7 @@ function OverviewSection({
       </div>
       <ProvenanceLine dashboard={dashboard} />
       {dashboard.provenance.sourceReviewNote && (
-        <p className="text-[11px] leading-5 text-amber-400">
+        <p className="text-[11px] leading-5 text-amber-700">
           Source review: {dashboard.provenance.sourceReviewNote}
         </p>
       )}
@@ -272,7 +272,7 @@ function LivePostingsSection({ dashboard }: { dashboard: CompanyDashboard }) {
         <Globe className="h-5 w-5 text-terracotta" strokeWidth={1.7} />
         Live postings
         {live.available && (
-          <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-400">
+          <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700">
             {live.postings.length} open now
           </span>
         )}
@@ -538,8 +538,8 @@ function AlignmentSection({ dashboard }: { dashboard: CompanyDashboard }) {
                   className={cn(
                     "rounded-full px-2 py-0.5 text-[11px] font-semibold",
                     c.level === "PROVEN" &&
-                      "bg-emerald-500/10 text-emerald-400",
-                    c.level === "MISSING" && "bg-red-500/10 text-red-400",
+                      "bg-emerald-500/10 text-emerald-700",
+                    c.level === "MISSING" && "bg-red-500/10 text-red-700",
                     !["PROVEN", "MISSING"].includes(c.level) &&
                       "bg-secondary text-muted-foreground",
                   )}

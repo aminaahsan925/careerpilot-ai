@@ -67,23 +67,23 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
         <p className="mt-3 text-[17px] font-extrabold tracking-[0.14em] text-sidebar-primary-foreground">
           CAREERPILOT
         </p>
-        <p className="text-[13px] font-semibold tracking-[0.16em] text-primary">AI</p>
+        <p className="text-[13px] font-semibold tracking-[0.16em] text-terracotta">AI</p>
       </div>
 
       <nav className="mt-8 flex-1 space-y-5 overflow-y-auto pr-1">
         {NAV_GROUPS.map((group) => (
           <div key={group.label}>
-            <p className="mb-2 px-3 text-xs font-bold uppercase tracking-[0.18em] text-sidebar-foreground/50">
+            <p className="mb-2 px-3 text-xs font-bold uppercase tracking-[0.18em] text-sidebar-foreground/35">
               {group.label}
             </p>
             <div className="space-y-0.5">
               {group.items.map(({ label, icon: Icon, to }) => {
                 const active = pathname === to;
                 const className = cn(
-                  "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[13.5px] font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                  "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[13.5px] font-medium transition-colors",
                   active
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-[0_0_20px_-6px_oklch(0.65_0.18_295/80%)]"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[inset_2px_0_0_0_oklch(0.65_0.18_295/70%)]",
+                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                 );
                 return (
                   <Link key={label} to={to} onClick={onNavigate} className={className}>
@@ -106,7 +106,7 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
             className="h-9 w-9 shrink-0 rounded-full bg-muted object-cover"
           />
         ) : (
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-[12px] font-bold text-primary-foreground">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-terracotta text-[12px] font-bold text-primary-foreground">
             {user?.fullName
               ? user.fullName
                   .split(" ")

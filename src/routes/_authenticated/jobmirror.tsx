@@ -234,7 +234,7 @@ function McqCheckpoint({
                       active
                         ? "bg-terracotta text-white"
                         : complete
-                          ? "bg-emerald-500/15 text-emerald-400"
+                          ? "bg-emerald-100 text-emerald-700"
                           : "bg-muted text-muted-foreground",
                     )}
                   >
@@ -273,7 +273,7 @@ function McqCheckpoint({
                     className={cn(
                       "rounded-xl border px-3 py-3 text-left text-[11.5px] transition-colors",
                       correct
-                        ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+                        ? "border-emerald-500 bg-emerald-50 text-emerald-800"
                         : incorrect
                           ? "border-rose-400 bg-rose-50 text-rose-800"
                           : selected
@@ -291,13 +291,13 @@ function McqCheckpoint({
                 className={cn(
                   "mt-4 rounded-xl border p-3 text-[11px] leading-relaxed",
                   selectedAnswer === currentQuestion.correctOption
-                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-900"
                     : "border-rose-200 bg-rose-50 text-rose-900",
                 )}
               >
                 <div className="flex items-start gap-2">
                   {selectedAnswer === currentQuestion.correctOption ? (
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
                   ) : (
                     <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
                   )}

@@ -4,7 +4,7 @@ type SparklineProps = {
   className?: string;
 };
 
-export function Sparkline({ data, color = "var(--primary)", className }: SparklineProps) {
+export function Sparkline({ data, color = "var(--terracotta)", className }: SparklineProps) {
   if (data.length === 0) return null;
 
   const w = 100;
@@ -45,7 +45,7 @@ export function Sparkline({ data, color = "var(--primary)", className }: Sparkli
     >
       <defs>
         <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.28" />
+          <stop offset="0%" stopColor={color} stopOpacity="0.18" />
           <stop offset="100%" stopColor={color} stopOpacity="0" />
         </linearGradient>
       </defs>
@@ -54,7 +54,7 @@ export function Sparkline({ data, color = "var(--primary)", className }: Sparkli
         d={d}
         fill="none"
         stroke={color}
-        strokeWidth="2"
+        strokeWidth="1.6"
         strokeLinecap="round"
         vectorEffect="non-scaling-stroke"
       />

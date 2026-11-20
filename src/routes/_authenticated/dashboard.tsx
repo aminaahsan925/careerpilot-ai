@@ -14,22 +14,24 @@ import {
   MapIcon,
   MessageCircle,
   Mic,
+  MoreVertical,
   RefreshCw,
   Search,
   Send,
   Sparkles,
   Target,
+  TrendingUp,
   type LucideIcon,
 } from "lucide-react";
 
 import motivationImg from "@/assets/motivation-architecture.jpg";
 import { AppLayout } from "@/components/app/AppLayout";
 import { CareerHero } from "@/components/app/CareerHero";
-import { KpiStat } from "@/components/analytics";
+import { Sparkline } from "@/components/app/Sparkline";
 import { greeting, useCurrentUser } from "@/data/user";
 import { useCareerOverview } from "@/data/career";
 import { useProjects } from "@/data/projects";
-import { AnimatedCard, Stagger, StaggerItem, Skeleton } from "@/lib/animation";
+import { AnimatedCard, AnimatedNumber, Stagger, StaggerItem, Skeleton } from "@/lib/animation";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -53,16 +55,16 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 const statusStyles: Record<string, string> = {
   "Under Review": "bg-secondary text-foreground",
-  Applied: "border border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
-  "Interview Scheduled": "border border-primary/30 bg-primary/15 text-primary",
-  Offer: "bg-primary text-primary-foreground",
+  Applied: "bg-emerald-50 text-emerald-700",
+  "Interview Scheduled": "bg-ink text-white",
+  Offer: "bg-terracotta text-primary-foreground",
 };
 
 const stateStyles: Record<string, string> = {
-  Active: "bg-primary/10 text-primary",
-  "In Progress": "bg-primary/10 text-primary",
+  Active: "bg-terracotta/10 text-terracotta",
+  "In Progress": "bg-terracotta/10 text-terracotta",
   Upcoming: "bg-secondary text-muted-foreground",
-  Completed: "border border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
+  Completed: "bg-emerald-50 text-emerald-700",
 };
 
 function SectionHead({ title, to }: { title: string; to?: string }) {
@@ -70,7 +72,7 @@ function SectionHead({ title, to }: { title: string; to?: string }) {
     <div className="flex items-center justify-between">
       <h3 className="text-[14.5px] font-bold tracking-[-0.01em]">{title}</h3>
       {to ? (
-        <Link to={to} className="text-[12px] font-semibold text-primary hover:underline">
+        <Link to={to} className="text-[12px] font-semibold text-terracotta hover:underline">
           View All →
         </Link>
       ) : null}
@@ -101,7 +103,7 @@ function CardEmpty({
       {cta ? (
         <Link
           to={cta.to}
-          className="mt-3 rounded-lg bg-primary px-3 py-1.5 text-[12px] font-semibold text-primary-foreground transition-all hover:-translate-y-0.5 hover:bg-primary/90"
+          className="mt-3 rounded-lg bg-terracotta px-3 py-1.5 text-[12px] font-semibold text-primary-foreground transition-transform hover:-translate-y-0.5"
         >
           {cta.label}
         </Link>
@@ -145,7 +147,7 @@ function DashboardPage() {
     return (
       <AppLayout title="Dashboard" subtitle="">
         <div className="card-surface mx-auto max-w-lg p-8 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-terracotta/10 text-terracotta">
             <AlertTriangle className="h-6 w-6" />
           </div>
           <h2 className="mt-4 text-[17px] font-bold text-foreground">
@@ -159,7 +161,7 @@ function DashboardPage() {
           <button
             type="button"
             onClick={() => void refetch()}
-            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-[13px] font-semibold text-primary-foreground transition-all hover:-translate-y-0.5 hover:bg-primary/90"
+            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-terracotta px-5 py-2.5 text-[13px] font-semibold text-primary-foreground transition-transform hover:-translate-y-0.5"
           >
             <RefreshCw className="h-4 w-4" /> Try again
           </button>
@@ -183,7 +185,7 @@ function DashboardPage() {
       title={
         <span>
           {greeting()}, {user.firstName}
-          <span className="ml-1 align-top text-sm text-primary">✳</span>
+          <span className="ml-1 align-top text-sm text-terracotta">✳</span>
         </span>
       }
       subtitle="Let's continue building your amazing career"
@@ -191,22 +193,51 @@ function DashboardPage() {
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_270px]">
         {/* LEFT COLUMN */}
         <div className="min-w-0 space-y-4">
-          {/* SCORE CARDS — KPI strip from the shared analytics kit. The
-              trend sparklines are gone: every trend is a single data point,
-              so a sparkline showed a flat line and said nothing. */}
+          {/* SCORE CARDS — staggered entrance with animated counters */}
           {user.scores.length ? (
             <Stagger className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" delay={0.08}>
               {user.scores.map((score, i) => {
                 const Icon = scoreIcons[i] ?? Target;
+                const dark = i % 2 === 1;
                 return (
                   <StaggerItem key={score.label}>
-                    <KpiStat
-                      label={score.label}
-                      value={`${Math.round(score.value)}/${score.max}`}
-                      sub={score.note}
-                      highlight={i === 0}
-                      icon={<Icon className="h-4 w-4" strokeWidth={1.8} />}
-                    />
+                    <div className={cn("card-surface p-5 transition-shadow hover:shadow-lift")}>
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <span
+                            className={cn(
+                              "flex h-8 w-8 items-center justify-center rounded-lg",
+                              dark ? "bg-ink text-white" : "bg-terracotta/12 text-terracotta",
+                            )}
+                          >
+                            <Icon className="h-4 w-4" strokeWidth={1.8} />
+                          </span>
+                          <p className="text-[13.5px] font-semibold">{score.label}</p>
+                        </div>
+                        <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                      </div>
+
+                      <div className="mt-6 flex items-end justify-between gap-3">
+                        <div>
+                          <p className="text-[34px] font-bold leading-none tracking-[-0.03em]">
+                            <AnimatedNumber value={score.value} duration={1.4} />
+                            <span className="ml-1 text-[13px] font-medium text-muted-foreground">
+                              /{score.max}
+                            </span>
+                          </p>
+                        </div>
+                        <Sparkline
+                          data={score.trend}
+                          color={dark ? "var(--ink)" : "var(--terracotta)"}
+                          className="h-10 w-[96px]"
+                        />
+                      </div>
+
+                      <p className="mt-3 flex items-center gap-1 text-[12px] text-muted-foreground">
+                        {i === 0 ? <TrendingUp className="h-3.5 w-3.5 text-terracotta" /> : null}
+                        {score.note}
+                      </p>
+                    </div>
                   </StaggerItem>
                 );
               })}
@@ -226,7 +257,7 @@ function DashboardPage() {
               </div>
               <Link
                 to="/diagnosis"
-                className="rounded-lg bg-primary px-3.5 py-2 text-[12.5px] font-semibold text-primary-foreground transition-all hover:-translate-y-0.5 hover:bg-primary/90"
+                className="rounded-lg bg-terracotta px-3.5 py-2 text-[12.5px] font-semibold text-primary-foreground transition-transform hover:-translate-y-0.5"
               >
                 Run diagnosis →
               </Link>
@@ -247,7 +278,7 @@ function DashboardPage() {
 
               <div className="mt-5 flex-1 space-y-4">
                 <div className="flex gap-3">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-deep text-white">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-ink text-white">
                     <Sparkles className="h-4 w-4" />
                   </span>
                   <p className="rounded-xl rounded-tl-sm bg-secondary px-4 py-3 text-[12.5px] leading-relaxed">
@@ -257,13 +288,13 @@ function DashboardPage() {
                 </div>
 
                 <div className="flex justify-end">
-                  <p className="rounded-xl rounded-tr-sm bg-primary px-4 py-2.5 text-[12.5px] font-medium text-primary-foreground">
+                  <p className="rounded-xl rounded-tr-sm bg-terracotta px-4 py-2.5 text-[12.5px] font-medium text-primary-foreground">
                     {mainBlocker}
                   </p>
                 </div>
 
                 <div className="flex gap-3">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-deep text-white">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-ink text-white">
                     <Sparkles className="h-4 w-4" />
                   </span>
                   <div>
@@ -273,7 +304,7 @@ function DashboardPage() {
                     </p>
                     <Link
                       to="/diagnosis"
-                      className="mt-3 inline-block rounded-lg border border-primary px-3 py-1.5 text-[12px] font-semibold text-primary transition-colors hover:bg-primary/10"
+                      className="mt-3 inline-block rounded-lg border border-terracotta px-3 py-1.5 text-[12px] font-semibold text-terracotta transition-colors hover:bg-terracotta/8"
                     >
                       Run full diagnosis
                     </Link>
@@ -288,7 +319,7 @@ function DashboardPage() {
                 <motion.span
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground"
+                  className="flex h-10 w-10 items-center justify-center rounded-xl bg-terracotta text-primary-foreground"
                 >
                   <Send className="h-4 w-4" />
                 </motion.span>
@@ -297,14 +328,14 @@ function DashboardPage() {
           </div>
 
           {/* TECH EVENTS & BACKGROUND INTEL PROMO BANNER */}
-          <div className="card-surface flex flex-col gap-4 rounded-2xl border border-primary/25 bg-gradient-to-r from-card via-card to-primary/10 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+          <div className="card-surface flex flex-col gap-4 rounded-2xl border border-terracotta/20 bg-gradient-to-r from-card via-card to-terracotta/5 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
             <div className="flex items-center gap-3.5">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-terracotta/15 text-terracotta">
                 <Flame className="h-5 w-5" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="rounded bg-primary/15 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-primary">
+                  <span className="rounded bg-terracotta/15 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-terracotta">
                     Live Tech Ecosystem
                   </span>
                   <span className="text-[11px] font-semibold text-muted-foreground">
@@ -318,7 +349,7 @@ function DashboardPage() {
             </div>
             <Link
               to="/events"
-              className="inline-flex shrink-0 items-center justify-center rounded-xl bg-primary px-4 py-2 text-xs font-bold text-white shadow-xs transition-all hover:bg-primary/90"
+              className="inline-flex shrink-0 items-center justify-center rounded-xl bg-terracotta px-4 py-2 text-xs font-bold text-white shadow-xs transition-all hover:bg-terracotta/90"
             >
               Explore Tech Events →
             </Link>
@@ -355,7 +386,7 @@ function DashboardPage() {
                               initial={{ width: 0 }}
                               animate={{ width: `${step.progress}%` }}
                               transition={{ duration: 0.8, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                              className="block h-full rounded-full bg-gradient-to-r from-violet-deep to-primary"
+                              className="block h-full rounded-full bg-terracotta"
                             />
                           </span>
                           <span className="text-[12px] font-semibold">{step.progress}%</span>
@@ -447,7 +478,7 @@ function DashboardPage() {
                             delay: 0.4 + i * 0.06,
                             ease: [0.22, 1, 0.36, 1],
                           }}
-                          className="block h-full rounded-full bg-gradient-to-r from-violet-deep to-primary"
+                          className="block h-full rounded-full bg-terracotta"
                         />
                       </span>
                       <span className="w-9 shrink-0 text-right text-[12px] font-semibold">
@@ -468,11 +499,11 @@ function DashboardPage() {
           </div>
 
           {/* MARKET REALITY BANNER — urgent CTA */}
-          <AnimatedCard className="border-primary/20" delay={0.15}>
+          <AnimatedCard className="border-terracotta/15" delay={0.15}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                  <BarChart3 className="h-4 w-4 text-primary" strokeWidth={1.8} />
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-terracotta/10">
+                  <BarChart3 className="h-4 w-4 text-terracotta" strokeWidth={1.8} />
                 </span>
                 <div>
                   <h3 className="text-[14px] font-bold">Market Reality</h3>
@@ -491,7 +522,7 @@ function DashboardPage() {
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Link
                   to="/market"
-                  className="shrink-0 rounded-lg bg-primary px-3 py-1.5 text-[12px] font-semibold text-primary-foreground"
+                  className="shrink-0 rounded-lg bg-terracotta px-3 py-1.5 text-[12px] font-semibold text-primary-foreground"
                 >
                   See the truth →
                 </Link>
@@ -501,10 +532,10 @@ function DashboardPage() {
 
           {/* EVIDENCE CTA — brutal honesty */}
           {!hasResume && !hasProjects && (
-            <AnimatedCard className="border-primary/25 bg-primary/[0.05]" delay={0.2}>
+            <AnimatedCard className="border-terracotta/20 bg-terracotta/[0.03]" delay={0.2}>
               <div className="flex items-start gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                  <FolderOpen className="h-4 w-4 text-primary" strokeWidth={1.8} />
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-terracotta/10">
+                  <FolderOpen className="h-4 w-4 text-terracotta" strokeWidth={1.8} />
                 </span>
                 <div className="flex-1">
                   <h3 className="text-[14px] font-bold">You have zero evidence</h3>
@@ -516,7 +547,7 @@ function DashboardPage() {
                     <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                       <Link
                         to="/onboarding"
-                        className="rounded-lg bg-primary px-3 py-1.5 text-[12px] font-semibold text-primary-foreground"
+                        className="rounded-lg bg-terracotta px-3 py-1.5 text-[12px] font-semibold text-primary-foreground"
                       >
                         Add projects now →
                       </Link>
@@ -524,7 +555,7 @@ function DashboardPage() {
                     <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                       <Link
                         to="/resume"
-                        className="rounded-lg border border-border px-3 py-1.5 text-[12px] font-semibold text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                        className="rounded-lg border border-border px-3 py-1.5 text-[12px] font-semibold text-muted-foreground transition-colors hover:border-terracotta hover:text-terracotta"
                       >
                         Upload resume
                       </Link>
@@ -546,13 +577,13 @@ function DashboardPage() {
 
             <div className="relative mt-3 flex items-end justify-between px-5">
               <div className="pb-4">
-                <p className="numeral text-[34px] leading-none">
+                <p className="text-[34px] font-bold leading-none tracking-[-0.03em]">
                   {user.planDate.day}
                 </p>
                 <p className="mt-1 text-[12.5px] text-muted-foreground">{user.planDate.month}</p>
               </div>
               <div className="relative h-[120px] w-[130px] shrink-0">
-                <span className="absolute bottom-0 right-0 h-[86px] w-[86px] rounded-full bg-gradient-to-br from-primary to-magenta shadow-[0_0_36px_-6px_oklch(0.65_0.18_295/70%)]" />
+                <span className="absolute bottom-0 right-0 h-[86px] w-[86px] rounded-full bg-terracotta" />
                 <img
                   src={user.planImage}
                   alt=""
@@ -567,7 +598,7 @@ function DashboardPage() {
                 {user.plan.map((item) => (
                   <StaggerItem key={item.id} className="flex items-center gap-2.5">
                     {item.done ? (
-                      <CheckCircle2 className="h-[18px] w-[18px] shrink-0 text-primary" />
+                      <CheckCircle2 className="h-[18px] w-[18px] shrink-0 text-ink" />
                     ) : (
                       <Circle className="h-[18px] w-[18px] shrink-0 text-muted-foreground/50" />
                     )}
@@ -583,7 +614,7 @@ function DashboardPage() {
                 ))}
                 <Link
                   to="/roadmap"
-                  className="inline-block pt-1 text-[12px] font-semibold text-primary hover:underline"
+                  className="inline-block pt-1 text-[12px] font-semibold text-terracotta hover:underline"
                 >
                   View Full Plan →
                 </Link>
@@ -600,14 +631,14 @@ function DashboardPage() {
             )}
           </AnimatedCard>
 
-          <AnimatedCard className="border-primary/30 bg-gradient-to-br from-violet-deep/50 via-card to-card text-white" delay={0.25}>
+          <AnimatedCard className="border-ink bg-ink text-white" delay={0.25}>
             <div className="flex items-start gap-3">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10">
                 <FileText className="h-4 w-4" />
               </span>
               <div>
                 <h3 className="text-[14px] font-bold">AI Resume Review</h3>
-                <p className="mt-1.5 text-[12.5px] leading-relaxed text-white/70">
+                <p className="mt-1.5 text-[12.5px] leading-relaxed text-white/60">
                   {!hasResume
                     ? "You haven't uploaded a resume yet. Without one, you're invisible to ATS systems."
                     : "Get your resume analyzed and find out exactly where it falls short."}
@@ -617,7 +648,7 @@ function DashboardPage() {
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Link
                 to="/resume"
-                className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-[13px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-terracotta px-4 py-2.5 text-[13px] font-semibold text-primary-foreground"
               >
                 {hasResume ? "Re-analyze Resume →" : "Upload Resume →"}
               </Link>
@@ -638,7 +669,7 @@ function DashboardPage() {
                 <StaggerItem key={label}>
                   <Link
                     to={to}
-                    className="flex flex-col items-center gap-2 rounded-xl border border-border px-2 py-4 text-center transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lift"
+                    className="flex flex-col items-center gap-2 rounded-xl border border-border px-2 py-4 text-center transition-all hover:-translate-y-0.5 hover:border-terracotta/40 hover:shadow-lift"
                   >
                     <Icon className="h-4 w-4" strokeWidth={1.7} />
                     <span className="text-[10.5px] leading-tight text-muted-foreground">
@@ -657,15 +688,15 @@ function DashboardPage() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-        className="mt-4 grid overflow-hidden rounded-2xl border border-border bg-gradient-to-r from-violet-deep/40 via-ink to-ink text-white lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_260px]"
+        className="mt-4 grid overflow-hidden rounded-2xl bg-ink text-white lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_260px]"
       >
         <div className="flex items-start gap-4 p-8">
-          <span className="text-4xl leading-none text-primary">"</span>
+          <span className="text-4xl leading-none text-terracotta">"</span>
           <p className="max-w-md">
             <span className="text-[19px] font-semibold leading-snug">
               The only way to do great work is to love what you do.
             </span>
-            <span className="mt-3 block text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+            <span className="mt-3 block text-[11px] font-semibold uppercase tracking-[0.18em] text-terracotta">
               Steve Jobs
             </span>
           </p>
@@ -673,7 +704,7 @@ function DashboardPage() {
 
         <div className="flex flex-col justify-center gap-2 border-white/10 p-8 lg:border-l">
           <p className="text-[13.5px] font-semibold">
-            Daily <span className="text-primary">Reality Check</span>
+            Daily <span className="text-terracotta">Reality Check</span>
           </p>
           <p className="text-[13px] leading-relaxed text-white/60">
             The market doesn't care about your feelings. Build proof or get left behind.
