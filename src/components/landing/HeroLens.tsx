@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Lens } from "@/components/lens/Lens";
 import { Flashlight } from "@/components/lens/Flashlight";
@@ -9,7 +9,6 @@ import {
   HeroSignalsStrip,
   useHeroOrbitData,
 } from "@/components/landing/HeroOrbit";
-import type { HeroOrbitData } from "@/components/landing/hero-orbit-data";
 
 /**
  * Round 3 hero (Direction 2, Cursor as Flashlight / Lens).
@@ -46,14 +45,21 @@ const DATA_STRIP = [
   },
 ];
 
-export function HeroLens({ dataOverride }: { dataOverride?: HeroOrbitData } = {}) {
+export function HeroLens() {
   // Live orbit data (stored postings + resume state, real or honestly
-  // empty). dataOverride exists only for the temporary proof route,
-  // which renders the hero with labelled sample data; the live hero
-  // never passes it.
-  const liveData = useHeroOrbitData();
-  const data = dataOverride ?? liveData;
+  // empty).
+  const data = useHeroOrbitData();
   const heroRef = useRef<HTMLElement>(null);
+  // Touch devices have no cursor: the micro-label says tap and drag
+  // instead. Defaults to the cursor wording until the pointer is known.
+  const [coarsePointer, setCoarsePointer] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(pointer: coarse)");
+    const update = () => setCoarsePointer(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
 
   return (
     <section
@@ -99,7 +105,7 @@ export function HeroLens({ dataOverride }: { dataOverride?: HeroOrbitData } = {}
           <span>CareerPilot AI</span>
           <span className="hidden md:inline">Resume / Roadmap / Market / Recruiter</span>
           <span style={{ color: "var(--cp-lime, #e1f10d)" }}>
-            Move your cursor to look closer
+            {coarsePointer ? "Tap and drag to look closer" : "Move your cursor to look closer"}
           </span>
         </div>
 

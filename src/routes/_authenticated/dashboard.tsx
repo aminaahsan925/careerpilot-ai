@@ -35,6 +35,7 @@ import { CareerHero } from "@/components/app/CareerHero";
 import { Sparkline } from "@/components/app/Sparkline";
 import { DestinationsStrip } from "@/components/destinations/DestinationsStrip";
 import { SpotlightCard } from "@/components/lens/SpotlightCard";
+import { MagneticCTA } from "@/components/magnetic-cta";
 import { greeting, useCurrentUser } from "@/data/user";
 import { useCareerOverview } from "@/data/career";
 import { useProjects } from "@/data/projects";
@@ -149,12 +150,12 @@ function CardEmpty({
         {hint}
       </p>
       {cta ? (
-        <Link
-          to={cta.to}
-          className="mt-3 rounded-lg bg-cp-lime px-3 py-1.5 text-[12px] font-bold text-cp-ink transition-transform hover:-translate-y-0.5"
+        <MagneticCTA
+          href={cta.to}
+          className="mt-3 rounded-lg bg-cp-lime px-3 py-1.5 text-[12px] font-bold text-cp-ink transition-colors hover:bg-cp-lime/90"
         >
           {cta.label}
-        </Link>
+        </MagneticCTA>
       ) : null}
     </div>
   );
@@ -287,13 +288,12 @@ function DashboardPage() {
               ? error.message
               : "Something went wrong while loading your profile. This is usually temporary."}
           </p>
-          <button
-            type="button"
+          <MagneticCTA
             onClick={() => void refetch()}
-            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-cp-lime px-5 py-2.5 text-[13px] font-bold text-cp-ink transition-transform hover:-translate-y-0.5"
+            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-cp-lime px-5 py-2.5 text-[13px] font-bold text-cp-ink transition-colors hover:bg-cp-lime/90"
           >
             <RefreshCw className="h-4 w-4" /> Try again
-          </button>
+          </MagneticCTA>
         </div>
       </AppLayout>
     );
@@ -384,12 +384,12 @@ function DashboardPage() {
                 </p>
               </div>
             </div>
-            <Link
-              to="/diagnosis"
-              className="rounded-lg bg-cp-lime px-3.5 py-2 text-[12.5px] font-bold text-cp-ink transition-transform hover:-translate-y-0.5"
+            <MagneticCTA
+              href="/diagnosis"
+              className="rounded-lg bg-cp-lime px-3.5 py-2 text-[12.5px] font-bold text-cp-ink transition-colors hover:bg-cp-lime/90"
             >
               Run diagnosis →
-            </Link>
+            </MagneticCTA>
           </div>
         )}
 
@@ -488,12 +488,13 @@ function DashboardPage() {
                     </p>
                   </div>
                 </div>
-                <Link
-                  to="/events"
-                  className="inline-flex shrink-0 items-center justify-center rounded-xl bg-cp-lime px-4 py-2 text-xs font-bold text-cp-ink shadow-xs transition-all hover:bg-cp-lime/90"
+                <MagneticCTA
+                  href="/events"
+                  wrapperClassName="shrink-0"
+                  className="inline-flex shrink-0 items-center justify-center rounded-xl bg-cp-lime px-4 py-2 text-xs font-bold text-cp-ink shadow-xs transition-colors hover:bg-cp-lime/90"
                 >
                   Explore Tech Events →
-                </Link>
+                </MagneticCTA>
               </div>
             </DashCard>
 
@@ -679,12 +680,12 @@ function DashboardPage() {
                   </div>
                 </div>
                 <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-                  <Link
-                    to="/market"
+                  <MagneticCTA
+                    href="/market"
                     className="shrink-0 rounded-lg bg-cp-lime px-3 py-1.5 text-[12px] font-bold text-cp-ink"
                   >
                     See the truth →
-                  </Link>
+                  </MagneticCTA>
                 </motion.div>
               </div>
             </DashCard>
@@ -704,12 +705,12 @@ function DashboardPage() {
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-                        <Link
-                          to="/onboarding"
+                        <MagneticCTA
+                          href="/onboarding"
                           className="rounded-lg bg-cp-lime px-3 py-1.5 text-[12px] font-bold text-cp-ink"
                         >
                           Add projects now →
-                        </Link>
+                        </MagneticCTA>
                       </motion.div>
                       <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                         <Link
@@ -812,12 +813,13 @@ function DashboardPage() {
                   </div>
                 </div>
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Link
-                    to="/resume"
+                  <MagneticCTA
+                    href="/resume"
+                    fullWidth
                     className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-cp-lime px-4 py-2.5 text-[13px] font-bold text-cp-ink"
                   >
                     {hasResume ? "Re-analyze Resume →" : "Upload Resume →"}
-                  </Link>
+                  </MagneticCTA>
                 </motion.div>
               </motion.div>
             </div>

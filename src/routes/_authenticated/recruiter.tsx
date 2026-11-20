@@ -39,6 +39,7 @@ import { toast } from "sonner";
 import { AppLayout } from "@/components/app/AppLayout";
 import { Flashlight } from "@/components/lens/Flashlight";
 import { SpotlightCard } from "@/components/lens/SpotlightCard";
+import { MagneticCTA } from "@/components/magnetic-cta";
 import { RecruiterDashboardWidgets } from "@/components/recruiter/RecruiterDashboardWidgets";
 import { RecruiterHeroCard } from "@/components/recruiter/RecruiterHeroCard";
 import { RecruiterPipelineStepper } from "@/components/recruiter/RecruiterPipelineStepper";
@@ -931,7 +932,7 @@ function MockInterviewSection({ session }: { session: RecruiterSession }) {
             <p className="text-[11px] text-muted-foreground">
               {answer.trim().length} characters · The timer starts when you begin typing.
             </p>
-            <Button
+            <MagneticCTA
               onClick={handleSubmit}
               disabled={submit.isPending || !answer.trim()}
               className="rounded-xl px-5 py-2.5 font-bold text-xs bg-cp-lime hover:bg-cp-lime/90 text-cp-ink"
@@ -944,7 +945,7 @@ function MockInterviewSection({ session }: { session: RecruiterSession }) {
                   <Send className="ml-2 h-4 w-4" />
                 </>
               )}
-            </Button>
+            </MagneticCTA>
           </div>
         </div>
 
@@ -1357,9 +1358,10 @@ function VerdictSection({
         </div>
 
         <div className="pt-4">
-          <Button
+          <MagneticCTA
             onClick={onAddToRoadmap}
             disabled={roadmapPending}
+            fullWidth
             className="w-full rounded-xl py-3 font-bold text-xs bg-cp-lime hover:bg-cp-lime/90 text-cp-ink"
           >
             {roadmapPending ? (
@@ -1370,7 +1372,7 @@ function VerdictSection({
                 Add Fixes & Project to My Roadmap
               </>
             )}
-          </Button>
+          </MagneticCTA>
         </div>
       </div>
     </div>
@@ -1607,7 +1609,7 @@ function RecruiterPage() {
                     </p>
                   </div>
 
-                  <Button
+                  <MagneticCTA
                     onClick={handleRunAudit}
                     disabled={runAudit.isPending || !selectedRole.trim() || !isFeaturedCompany}
                     title={
@@ -1615,6 +1617,7 @@ function RecruiterPage() {
                         ? "The audit runs only for researched companies, so pick a featured company."
                         : undefined
                     }
+                    fullWidth
                     className="w-full rounded-xl py-3 font-bold text-xs bg-cp-lime hover:bg-cp-lime/90 text-cp-ink"
                   >
                     {runAudit.isPending ? (
@@ -1625,7 +1628,7 @@ function RecruiterPage() {
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </>
                     )}
-                  </Button>
+                  </MagneticCTA>
                 </div>
               )}
 
@@ -1640,13 +1643,12 @@ function RecruiterPage() {
                     Pick a company and role on step 1, and the stage screens unlock once an audit
                     exists.
                   </p>
-                  <Button
-                    type="button"
+                  <MagneticCTA
                     onClick={() => setActiveStep(1)}
                     className="mt-4 rounded-xl bg-cp-lime px-5 py-2.5 text-xs font-bold text-cp-ink hover:bg-cp-lime/90"
                   >
                     Go to step 1
-                  </Button>
+                  </MagneticCTA>
                 </div>
               )}
 
@@ -1710,13 +1712,13 @@ function RecruiterPage() {
                       <ArrowLeft className="mr-2 h-4 w-4" />
                       Back to Resume Screen
                     </Button>
-                    <Button
+                    <MagneticCTA
                       onClick={() => setActiveStep(4)}
                       className="rounded-xl px-6 py-2.5 font-bold text-xs bg-cp-lime hover:bg-cp-lime/90 text-cp-ink"
                     >
                       Continue to Mock Interview
                       <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
+                    </MagneticCTA>
                   </div>
                 </div>
               )}
@@ -1743,13 +1745,13 @@ function RecruiterPage() {
                       <ArrowLeft className="mr-2 h-4 w-4" />
                       Back to Evidence & Bar
                     </Button>
-                    <Button
+                    <MagneticCTA
                       onClick={() => setActiveStep(5)}
                       className="rounded-xl px-6 py-2.5 font-bold text-xs bg-cp-lime hover:bg-cp-lime/90 text-cp-ink"
                     >
                       Continue to Verdict
                       <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
+                    </MagneticCTA>
                   </div>
                 </div>
               )}
@@ -1789,9 +1791,10 @@ function RecruiterPage() {
                           ))}
                         </div>
                         <div className="pt-4">
-                          <Button
+                          <MagneticCTA
                             onClick={handleAddToRoadmap}
                             disabled={generateRoadmap.isPending}
+                            fullWidth
                             className="w-full rounded-xl py-3 font-bold text-xs bg-cp-lime hover:bg-cp-lime/90 text-cp-ink"
                           >
                             {generateRoadmap.isPending ? (
@@ -1802,7 +1805,7 @@ function RecruiterPage() {
                                 Add Fixes & Project to My Roadmap
                               </>
                             )}
-                          </Button>
+                          </MagneticCTA>
                         </div>
                       </div>
                     </div>

@@ -1,0 +1,36 @@
+/* Pricing page (Round 3, Direction 2, Cursor as Flashlight / Lens).
+ * The motion is restrained: cards rise in once, staggered, and the
+ * spotlight borders + magnetic CTAs do the cursor work. No lens or
+ * flashlight over the prices: figures must read instantly, never
+ * through an effect. Under reduced motion the entrance completes
+ * effectively instantly and the content is fully visible.
+ */
+
+.cp-pricing-rise {
+  animation: cp-pricing-rise 0.55s ease-out both;
+}
+
+.cp-pricing-rise-1 {
+  animation-delay: 0.08s;
+}
+
+.cp-pricing-rise-2 {
+  animation-delay: 0.16s;
+}
+
+@keyframes cp-pricing-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cp-pricing-rise {
+    animation: none;
+  }
+}

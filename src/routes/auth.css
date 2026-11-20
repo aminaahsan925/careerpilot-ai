@@ -1,0 +1,54 @@
+/* Auth page (Round 3, Direction 2, Cursor as Flashlight / Lens).
+ * Quiet by design: this is a form, so motion never touches the inputs.
+ * The panel glow drifts slowly, the card and headline carry the lens
+ * engine, and the submit button is magnetic. All keyframes are
+ * decorative only; with reduced motion everything sits still and the
+ * form stays fully usable (the global reduced-motion rule also kills
+ * these durations, this is belt and braces).
+ */
+
+/* Faint dot grid on the editorial panel: texture, not decoration that
+ * competes with the headline. */
+.cp-auth-dots {
+  background-image: radial-gradient(rgba(244, 241, 234, 0.07) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+
+/* The panel's lime glow drifts slowly across the corner. */
+.cp-auth-glow-drift {
+  animation: cp-auth-glow-drift 22s ease-in-out infinite alternate;
+}
+
+@keyframes cp-auth-glow-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(-30px, 24px, 0) scale(1.12);
+  }
+}
+
+/* The form card rises in once, then stays put. Content is visible by
+ * default: the animation starts from opacity 0 only while it runs, and
+ * under reduced motion it completes effectively instantly. */
+.cp-auth-rise {
+  animation: cp-auth-rise 0.55s ease-out both;
+}
+
+@keyframes cp-auth-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cp-auth-glow-drift,
+  .cp-auth-rise {
+    animation: none;
+  }
+}
