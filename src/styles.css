@@ -19,8 +19,9 @@
  * The @theme inline block maps CSS custom properties to Tailwind utility
  * classes (e.g. --color-primary -> bg-primary, text-primary).
  *
- * The :root block defines the actual color values using oklch.
- * All colors MUST use oklch format.
+ * The :root block defines the actual color values. Direction 3 (Character-Led
+ * / Living World) tokens are hex, per the Direction 3 token contract; the
+ * older semantic tokens below are mapped onto them.
  *
  * To add a new semantic color:
  * 1. Add the variable to :root (light value)
@@ -36,7 +37,7 @@
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
   --font-sans: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Plus Jakarta Sans", "Inter", sans-serif;
+  --font-display: var(--font-display);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -60,6 +61,21 @@
   --color-ink: var(--ink);
   --color-terracotta: var(--terracotta);
   --color-clay: var(--clay);
+  /* Direction 3 palette (token contract): bg-d3-cream, text-d3-choco, ... */
+  --color-d3-cream: var(--d3-cream);
+  --color-d3-paper: var(--d3-paper);
+  --color-d3-choco: var(--d3-choco);
+  --color-d3-ink: var(--d3-ink);
+  --color-d3-mustard: var(--d3-mustard);
+  --color-d3-flame: var(--d3-flame);
+  --color-d3-leaf: var(--d3-leaf);
+  --color-d3-lime: var(--d3-lime);
+  --color-d3-navy: var(--d3-navy);
+  --color-d3-peri: var(--d3-peri);
+  --color-d3-sky: var(--d3-sky);
+  --color-d3-teal: var(--d3-teal);
+  --color-d3-koi: var(--d3-koi);
+  --color-d3-gold: var(--d3-gold);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -68,42 +84,72 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --shadow-card: 0 1px 2px rgba(18, 18, 18, 0.04), 0 8px 24px -16px rgba(18, 18, 18, 0.12);
-  --shadow-lift: 0 2px 6px rgba(18, 18, 18, 0.05), 0 18px 40px -22px rgba(18, 18, 18, 0.25);
+  --shadow-card: 0 1px 2px rgba(59, 35, 20, 0.05), 0 10px 28px -18px rgba(59, 35, 20, 0.18);
+  --shadow-lift: 0 2px 6px rgba(59, 35, 20, 0.06), 0 20px 44px -24px rgba(59, 35, 20, 0.3);
+  --shadow-d3-chunky: 0 3px 0 rgba(36, 20, 7, 0.06), 0 18px 36px -18px rgba(59, 35, 20, 0.28);
 }
 
 :root {
   --radius: 0.875rem;
-  --background: oklch(0.976 0.005 85);
-  --foreground: oklch(0.185 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.185 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.185 0 0);
-  --primary: oklch(0.505 0.109 40.5);
-  --primary-foreground: oklch(0.99 0.003 85);
-  --secondary: oklch(0.955 0.008 80);
-  --secondary-foreground: oklch(0.185 0 0);
-  --muted: oklch(0.958 0.005 85);
-  --muted-foreground: oklch(0.52 0.008 70);
-  --accent: oklch(0.6 0.106 44);
-  --accent-foreground: oklch(0.99 0.003 85);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.99 0.003 85);
-  --border: oklch(0.185 0 0 / 8%);
-  --input: oklch(0.185 0 0 / 10%);
-  --ring: oklch(0.505 0.109 40.5);
-  --ink: oklch(0.155 0.004 60);
-  --terracotta: oklch(0.505 0.109 40.5);
-  --clay: oklch(0.6 0.106 44);
-  --sidebar: oklch(0.16 0.004 60);
-  --sidebar-foreground: oklch(0.87 0.004 80);
-  --sidebar-primary: oklch(0.505 0.109 40.5);
-  --sidebar-primary-foreground: oklch(0.99 0.003 85);
-  --sidebar-accent: oklch(0.24 0.006 60);
-  --sidebar-accent-foreground: oklch(0.97 0.003 85);
-  --sidebar-border: oklch(1 0 0 / 8%);
-  --sidebar-ring: oklch(0.505 0.109 40.5);
+
+  /*
+   * Direction 3 (Character-Led / Living World) token contract.
+   * These exact variable names are shared across workers; do not rename.
+   * Toy-bright palette on a cream ground (never dark).
+   */
+  --d3-cream: #fff6e3;
+  --d3-paper: #fffdf6;
+  --d3-choco: #3b2314;
+  --d3-ink: #241407;
+  --d3-mustard: #e4b41c;
+  --d3-flame: #d83b0f;
+  --d3-leaf: #528f38;
+  --d3-lime: #a7d13d;
+  --d3-navy: #1f2a5a;
+  --d3-peri: #aab8f5;
+  --d3-sky: #7fb8e8;
+  --d3-teal: #0e7c7b;
+  --d3-koi: #f58220;
+  --d3-gold: #f2b705;
+
+  /* Chunky rounded display font (Baloo 2, loaded in __root.tsx). */
+  --font-display: "Baloo 2", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+
+  /* Semantic tokens, mapped onto the Direction 3 palette. */
+  --background: var(--d3-cream);
+  --foreground: var(--d3-ink);
+  --card: var(--d3-paper);
+  --card-foreground: var(--d3-ink);
+  --popover: var(--d3-paper);
+  --popover-foreground: var(--d3-ink);
+  --primary: var(--d3-choco);
+  --primary-foreground: var(--d3-paper);
+  --secondary: #fbeed3;
+  --secondary-foreground: var(--d3-choco);
+  --muted: #f7eac6;
+  --muted-foreground: #7c5b3a;
+  --accent: var(--d3-mustard);
+  --accent-foreground: var(--d3-ink);
+  --destructive: #b92e0b;
+  --destructive-foreground: var(--d3-paper);
+  --border: oklch(0.35 0.03 60 / 12%);
+  --input: oklch(0.35 0.03 60 / 16%);
+  --ring: var(--d3-flame);
+  /*
+   * Legacy names, remapped onto the Direction 3 palette so screens that
+   * still use them land in the new palette until they are re-skinned.
+   */
+  --ink: var(--d3-ink);
+  --terracotta: var(--d3-flame);
+  --clay: var(--d3-koi);
+  --sidebar: var(--d3-cream);
+  --sidebar-foreground: var(--d3-choco);
+  --sidebar-primary: var(--d3-mustard);
+  --sidebar-primary-foreground: var(--d3-ink);
+  --sidebar-accent: #fbeed3;
+  --sidebar-accent-foreground: var(--d3-ink);
+  --sidebar-border: oklch(0.35 0.03 60 / 12%);
+  --sidebar-ring: var(--d3-flame);
 }
 
 @layer base {
@@ -146,6 +192,101 @@
   letter-spacing: -0.045em;
   line-height: 0.92;
   text-transform: uppercase;
+}
+
+/*
+ * Direction 3 (Character-Led / Living World) shared utilities.
+ * Token contract: these class names are shared across workers.
+ */
+
+/* Chunky toy card: 2rem radius, soft chunky shadow, paper surface. */
+@utility d3-card {
+  background-color: var(--d3-paper);
+  border: 1px solid oklch(0.35 0.03 60 / 10%);
+  border-radius: 2rem;
+  box-shadow: var(--shadow-d3-chunky);
+}
+
+/*
+ * Tilted collage cards. Tiles straighten on hover, keyboard focus, or
+ * focus-within so tilted content never traps a keyboard user at an angle.
+ * The global prefers-reduced-motion rule below makes the straightening
+ * effectively instant for users who asked for reduced motion.
+ */
+@utility d3-tilt-l {
+  rotate: -1.5deg;
+  transition:
+    rotate 0.25s ease,
+    transform 0.25s ease;
+
+  &:hover,
+  &:focus-visible,
+  &:focus-within {
+    rotate: 0deg;
+  }
+}
+
+@utility d3-tilt-r {
+  rotate: 1.5deg;
+  transition:
+    rotate 0.25s ease,
+    transform 0.25s ease;
+
+  &:hover,
+  &:focus-visible,
+  &:focus-within {
+    rotate: 0deg;
+  }
+}
+
+/* Rounded-full bold pill. Colour comes from the call site. */
+@utility d3-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 9999px;
+  padding: 0.375rem 0.875rem;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+/* Chunky rounded display type (Baloo 2). */
+@utility d3-display {
+  font-family: var(--font-display);
+}
+
+/* Gentle float for decorative landing elements (mascot friends, koi). */
+@keyframes d3-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@utility animate-d3-bob {
+  animation: d3-bob 3.2s ease-in-out infinite;
+}
+
+/*
+ * Koi drift across the pond strip. The element keeps a base `left` from
+ * its classes, so under reduced motion (animation completes instantly and
+ * returns to base) the fish stays visible instead of swimming offscreen.
+ */
+@keyframes d3-swim {
+  from {
+    left: -12%;
+  }
+  to {
+    left: 104%;
+  }
+}
+
+@utility animate-d3-swim {
+  animation: d3-swim 26s linear infinite;
 }
 
 /*

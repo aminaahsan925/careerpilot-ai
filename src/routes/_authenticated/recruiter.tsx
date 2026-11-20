@@ -31,13 +31,13 @@ import {
   Target,
   Timer,
   TrendingUp,
-  UserCheck,
   XCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 
 import { AppLayout } from "@/components/app/AppLayout";
+import { PilotMascot, PilotSays, type PilotMood } from "@/components/mascot/PilotMascot";
 import { RecruiterDashboardWidgets } from "@/components/recruiter/RecruiterDashboardWidgets";
 import { RecruiterHeroCard } from "@/components/recruiter/RecruiterHeroCard";
 import { RecruiterPipelineStepper } from "@/components/recruiter/RecruiterPipelineStepper";
@@ -66,7 +66,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/recruiter")({
   head: () => ({
     meta: [
-      { title: "Recruiter Audit — CareerPilot AI" },
+      { title: "Recruiter Audit | CareerPilot AI" },
       {
         name: "description",
         content:
@@ -79,7 +79,7 @@ export const Route = createFileRoute("/_authenticated/recruiter")({
 
 const LAYOUT_TITLE = "Recruiter Audit";
 const LAYOUT_SUBTITLE =
-  "A staged screening against real evidence — resume screen, evidence audit, company bar, mock interview. No scores from the AI, no hiring probabilities.";
+  "A staged screening against real evidence: resume screen, evidence audit, company bar, mock interview. No scores from the AI, no hiring probabilities.";
 
 /* ------------------------------------------------------------------ */
 /* Shared bits                                                         */
@@ -119,8 +119,8 @@ function SectionHeading({
 }) {
   return (
     <div>
-      <h3 className="font-display text-lg font-semibold flex items-center gap-2">
-        <Icon className="h-5 w-5 text-terracotta" />
+      <h3 className="d3-display text-lg font-semibold flex items-center gap-2">
+        <Icon className="h-5 w-5 text-d3-flame" />
         {title}
       </h3>
       {note && <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{note}</p>}
@@ -167,20 +167,18 @@ function ScanningOverlay({ companyName }: { companyName: string }) {
 
   return (
     <motion.div
-      className="card-surface p-8 sm:p-12 text-center my-6 shadow-xl"
+      className="d3-card p-8 sm:p-12 text-center my-6 shadow-xl"
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.98 }}
     >
       <div className="mx-auto flex max-w-md flex-col items-center">
-        <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-terracotta/10 text-terracotta">
-          <UserCheck className="h-10 w-10 animate-pulse" strokeWidth={1.7} />
-        </div>
+        <PilotMascot mood="thinking" size={120} className="mb-2" />
 
-        <p className="text-xs font-bold uppercase tracking-widest text-terracotta mb-2">
+        <p className="text-xs font-bold uppercase tracking-widest text-d3-flame mb-2">
           {companyName} · Live Screening
         </p>
-        <h3 className="font-display text-xl font-bold text-foreground">Recruiter Audit in Progress</h3>
+        <h3 className="d3-display text-xl font-bold text-foreground">Recruiter Audit in Progress</h3>
 
         <div className="mt-6 w-full space-y-3">
           {SCAN_STEPS.map((text, i) => (
@@ -191,14 +189,14 @@ function ScanningOverlay({ companyName }: { companyName: string }) {
                 i < step
                   ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-700"
                   : i === step
-                    ? "border-terracotta/30 bg-terracotta/10 text-foreground font-semibold"
-                    : "border-border bg-secondary/30 text-muted-foreground",
+                    ? "border-d3-navy/30 bg-d3-flame/10 text-foreground font-semibold"
+                    : "border-border bg-d3-cream text-muted-foreground",
               )}
             >
               {i < step ? (
                 <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
               ) : i === step ? (
-                <Loader2 className="h-4 w-4 shrink-0 animate-spin text-terracotta" />
+                <Loader2 className="h-4 w-4 shrink-0 animate-spin text-d3-flame" />
               ) : (
                 <div className="h-4 w-4 shrink-0 rounded-full border border-border" />
               )}
@@ -221,8 +219,8 @@ function CompanyResearchPanel({ companyName }: { companyName: string }) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 rounded-2xl border border-border bg-secondary/30 p-4 text-xs text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin text-terracotta" />
+      <div className="flex items-center gap-2 rounded-2xl border border-border bg-d3-cream p-4 text-xs text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin text-d3-flame" />
         Checking what CareerPilot knows about {companyName}...
       </div>
     );
@@ -253,7 +251,7 @@ function CompanyResearchPanel({ companyName }: { companyName: string }) {
         </p>
         <p className="mt-1 text-muted-foreground">
           No researched hiring profile exists for this company
-          {data.researchError ? ` — ${data.researchError}` : ""}. Pick one of the researched
+          {data.researchError ? `: ${data.researchError}` : ""}. Pick one of the researched
           companies below, or open the Company page to research it first.
         </p>
       </div>
@@ -270,7 +268,7 @@ function CompanyResearchPanel({ companyName }: { companyName: string }) {
     : null;
 
   return (
-    <div className="rounded-2xl border border-border bg-secondary/30 p-4 text-xs leading-relaxed">
+    <div className="rounded-2xl border border-border bg-d3-cream p-4 text-xs leading-relaxed">
       <div className="flex flex-wrap items-center gap-2">
         <span
           className={cn(
@@ -302,7 +300,7 @@ function CompanyResearchPanel({ companyName }: { companyName: string }) {
                 href={s.url}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-0.5 font-semibold text-terracotta hover:underline"
+                className="inline-flex items-center gap-0.5 font-semibold text-d3-flame hover:underline"
               >
                 {hostOf(s.url)}
                 <ExternalLink className="h-3 w-3" />
@@ -313,7 +311,7 @@ function CompanyResearchPanel({ companyName }: { companyName: string }) {
       </p>
       {!isFeatured && (
         <p className="mt-2 font-medium text-foreground">
-          The audit itself runs only for the researched companies below — this company&apos;s
+          The audit itself runs only for the researched companies below, so this company&apos;s
           hiring profile is not in the audit dataset yet.
         </p>
       )}
@@ -334,10 +332,10 @@ function CompanyResearchPanel({ companyName }: { companyName: string }) {
 function ResumeScreenSection({ stage }: { stage: ResumeScreenStage }) {
   if (!stage.available) {
     return (
-      <div className="card-surface p-6 sm:p-8 space-y-3">
+      <div className="d3-card p-6 sm:p-8 space-y-3">
         <SectionHeading
           icon={FileText}
-          title="Stage 1 — Resume Screen"
+          title="Stage 1: Resume Screen"
           note="The 6-second scan: must-have skills, knockout checks, and formatting gates."
         />
         <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-xs leading-relaxed text-muted-foreground">
@@ -350,14 +348,14 @@ function ResumeScreenSection({ stage }: { stage: ResumeScreenStage }) {
   const passed = stage.skillChecks.filter((c) => c.status === "pass").length;
 
   return (
-    <div className="card-surface p-6 sm:p-8 space-y-6">
+    <div className="d3-card d3-tilt-r p-6 sm:p-8 space-y-6">
       <SectionHeading
         icon={FileText}
-        title="Stage 1 — Resume Screen"
+        title="Stage 1: Resume Screen"
         note={
           stage.source === "job-description"
-            ? `Checked against the job description you pasted — ${passed} of ${stage.skillChecks.length} must-have skills found in your resume.`
-            : `No job description was pasted, so the must-have list comes from the company bar — ${passed} of ${stage.skillChecks.length} found in your resume.`
+            ? `Checked against the job description you pasted: ${passed} of ${stage.skillChecks.length} must-have skills found in your resume.`
+            : `No job description was pasted, so the must-have list comes from the company bar: ${passed} of ${stage.skillChecks.length} found in your resume.`
         }
       />
 
@@ -381,7 +379,7 @@ function ResumeScreenSection({ stage }: { stage: ResumeScreenStage }) {
                 </div>
                 <p className="mt-0.5 text-xs text-muted-foreground">{check.detail}</p>
                 {check.lineRef && (
-                  <p className="mt-1 text-[11px] font-medium text-terracotta">{check.lineRef}</p>
+                  <p className="mt-1 text-[11px] font-medium text-d3-flame">{check.lineRef}</p>
                 )}
               </div>
             </div>
@@ -454,16 +452,16 @@ const EVIDENCE_LEVEL_LABEL: Record<string, string> = {
 
 function EvidenceAuditSection({ stage }: { stage: EvidenceAuditStage }) {
   return (
-    <div className="card-surface p-6 sm:p-8 space-y-6">
+    <div className="d3-card d3-tilt-l p-6 sm:p-8 space-y-6">
       <SectionHeading
         icon={Search}
-        title="Stage 2 — Evidence Audit"
-        note="Claimed vs demonstrated: for each skill your resume claims, the proof behind it — a project, a repo link, or nothing."
+        title="Stage 2: Evidence Audit"
+        note="Claimed vs demonstrated: for each skill your resume claims, the proof behind it: a project, a repo link, or nothing."
       />
 
-      <div className="flex flex-wrap items-center gap-4 rounded-2xl bg-terracotta/5 border border-terracotta/20 p-4">
+      <div className="flex flex-wrap items-center gap-4 rounded-2xl bg-d3-flame/5 border border-d3-navy/20 p-4">
         <div>
-          <p className="font-display text-3xl font-black text-foreground">
+          <p className="d3-display text-3xl font-black text-foreground">
             {stage.evidenceCoverage}%
           </p>
           <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
@@ -496,7 +494,7 @@ function EvidenceAuditSection({ stage }: { stage: EvidenceAuditStage }) {
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="text-xs font-bold text-foreground">{item.skill}</p>
-                  <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
+                  <span className="rounded-full bg-d3-cream px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
                     {EVIDENCE_LEVEL_LABEL[item.level] ?? item.level}
                   </span>
                 </div>
@@ -509,7 +507,7 @@ function EvidenceAuditSection({ stage }: { stage: EvidenceAuditStage }) {
                         href={item.proof.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1 font-semibold text-terracotta hover:underline"
+                        className="inline-flex items-center gap-1 font-semibold text-d3-flame hover:underline"
                       >
                         {item.proof.label}
                         <ExternalLink className="h-3 w-3" />
@@ -535,16 +533,16 @@ function EvidenceAuditSection({ stage }: { stage: EvidenceAuditStage }) {
 function BarComparisonSection({ stage }: { stage: BarComparisonStage }) {
   if (stage.state === "unknown") {
     return (
-      <div className="card-surface p-6 sm:p-8 space-y-3">
+      <div className="d3-card p-6 sm:p-8 space-y-3">
         <SectionHeading
           icon={Target}
-          title="Stage 3 — Bar Comparison"
+          title="Stage 3: Bar Comparison"
           note="Your evidence profile against the company's researched hiring bar."
         />
         <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
           <p className="text-xs font-bold text-foreground flex items-center gap-2">
             <CircleHelp className="h-4 w-4 text-amber-600" />
-            Bar unknown — stage skipped
+            Bar unknown, stage skipped
           </p>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{stage.reason}</p>
         </div>
@@ -559,10 +557,10 @@ function BarComparisonSection({ stage }: { stage: BarComparisonStage }) {
   });
 
   return (
-    <div className="card-surface p-6 sm:p-8 space-y-6">
+    <div className="d3-card d3-tilt-r p-6 sm:p-8 space-y-6">
       <SectionHeading
         icon={Target}
-        title={`Stage 3 — Bar Comparison · ${stage.companyName}`}
+        title={`Stage 3: Bar Comparison · ${stage.companyName}`}
         note={`Compared against the researched hiring bar (researched ${retrievedDate}). Every item cites its source.`}
       />
       <div className="space-y-2">
@@ -602,7 +600,7 @@ function BarComparisonSection({ stage }: { stage: BarComparisonStage }) {
                       href={item.sourceUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-0.5 font-semibold text-terracotta hover:underline"
+                      className="inline-flex items-center gap-0.5 font-semibold text-d3-flame hover:underline"
                     >
                       {hostOf(item.sourceUrl)}
                       <ExternalLink className="h-3 w-3" />
@@ -659,13 +657,13 @@ function VerdictCard({ verdict }: { verdict: BrutalVerdict }) {
   const BadgeIcon = badge.icon;
 
   return (
-    <div className="card-surface overflow-hidden transition-all hover:border-terracotta/30 shadow-xs">
+    <div className="d3-card overflow-hidden transition-all hover:border-d3-navy/30 shadow-xs">
       <button
         type="button"
         className="flex w-full items-center gap-3.5 p-5 text-left"
         onClick={() => setExpanded(!expanded)}
       >
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-terracotta/10 text-terracotta">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-d3-flame/10 text-d3-flame">
           <Icon className="h-5 w-5" strokeWidth={1.7} />
         </div>
         <div className="min-w-0 flex-1">
@@ -691,8 +689,8 @@ function VerdictCard({ verdict }: { verdict: BrutalVerdict }) {
       </button>
 
       {expanded && (
-        <div className="border-t border-border bg-secondary/40 px-5 py-3.5 text-xs leading-relaxed">
-          <p className="font-bold uppercase tracking-wider text-terracotta">Fix Prescription</p>
+        <div className="border-t border-border bg-d3-cream px-5 py-3.5 text-xs leading-relaxed">
+          <p className="font-bold uppercase tracking-wider text-d3-flame">Fix Prescription</p>
           <p className="mt-1 text-foreground font-medium">{verdict.whatToFix}</p>
         </div>
       )}
@@ -709,7 +707,7 @@ const MOCK_TARGET_SECONDS = 90;
 /**
  * The scoring rubric, shown next to every answer. These rules are the
  * deterministic rubric implemented in recruiter.server.ts
- * (scoreMockAnswer) — the LLM never scores an answer.
+ * (scoreMockAnswer). The LLM never scores an answer.
  */
 const MOCK_RUBRIC: Array<{
   key: "structure" | "specificity" | "evidence";
@@ -765,12 +763,16 @@ function MockInterviewSection({ session }: { session: RecruiterSession }) {
 
   if (!stage || stage.questions.length === 0) {
     return (
-      <div className="card-surface p-6 sm:p-8 space-y-3">
+      <div className="d3-card d3-tilt-l p-6 sm:p-8 space-y-3">
         <SectionHeading
           icon={Mic2}
-          title="Stage 4 — Mock Interview"
+          title="Stage 4: Mock Interview"
           note="Role- and company-specific questions, answered against a timed target and scored on a shown rubric."
         />
+        <PilotSays mood="thinking" size={88}>
+          No interview questions in this audit. Run a new audit and Pilot will draft your
+          questions from the job description and your evidence gaps.
+        </PilotSays>
         <LegacyAuditNotice />
       </div>
     );
@@ -813,16 +815,21 @@ function MockInterviewSection({ session }: { session: RecruiterSession }) {
 
   return (
     <div className="space-y-6">
-      <div className="card-surface p-6 sm:p-8 space-y-6">
+      <div className="d3-card d3-tilt-l p-6 sm:p-8 space-y-6">
         <SectionHeading
           icon={Mic2}
-          title="Stage 4 — Mock Interview"
+          title="Stage 4: Mock Interview"
           note={
             stage.generatedBy === "ai"
               ? "Questions drafted by the coach from your job description, the company bar, and your evidence gaps."
               : "AI question drafting was unavailable, so these are template questions built from your job description and evidence gaps."
           }
         />
+
+        <PilotSays mood="happy" size={88}>
+          Ready for your first interview? Answer out loud first, then write what you said.
+          Pilot times you and scores the answer against the rubric below.
+        </PilotSays>
 
         <div className="space-y-2">
           {stage.questions.map((q) => {
@@ -836,15 +843,15 @@ function MockInterviewSection({ session }: { session: RecruiterSession }) {
                 className={cn(
                   "w-full rounded-xl border p-3.5 text-left transition-colors",
                   isSelected
-                    ? "border-terracotta bg-terracotta/5"
-                    : "border-border hover:border-terracotta/30",
+                    ? "border-d3-navy bg-d3-flame/5"
+                    : "border-border hover:border-d3-navy/30",
                 )}
               >
                 <div className="flex items-start gap-3">
                   <div
                     className={cn(
                       "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold",
-                      isSelected ? "bg-terracotta text-white" : "bg-secondary text-muted-foreground",
+                      isSelected ? "bg-d3-navy text-white" : "bg-d3-cream text-muted-foreground",
                     )}
                   >
                     {q.id.replace("q", "")}
@@ -862,12 +869,12 @@ function MockInterviewSection({ session }: { session: RecruiterSession }) {
           })}
         </div>
 
-        <div className="rounded-2xl border border-border bg-secondary/30 p-4">
+        <div className="rounded-2xl border border-border bg-d3-cream p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs font-bold text-foreground flex items-center gap-2">
-              <Timer className="h-4 w-4 text-terracotta" />
+              <Timer className="h-4 w-4 text-d3-flame" />
               {overTime
-                ? `Over the ${MOCK_TARGET_SECONDS}-second target — you can still submit`
+                ? `Over the ${MOCK_TARGET_SECONDS}-second target, but you can still submit`
                 : `${formatSeconds(Math.max(0, remaining))} left of the ${MOCK_TARGET_SECONDS}-second target`}
             </p>
             <span className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
@@ -875,17 +882,17 @@ function MockInterviewSection({ session }: { session: RecruiterSession }) {
               {formatSeconds(elapsed)} elapsed
             </span>
           </div>
-          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-secondary">
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-d3-cream">
             <div
-              className={cn("h-full rounded-full transition-all", overTime ? "bg-amber-500" : "bg-terracotta")}
+              className={cn("h-full rounded-full transition-all", overTime ? "bg-amber-500" : "bg-d3-navy")}
               style={{ width: `${Math.min(100, (elapsed / MOCK_TARGET_SECONDS) * 100)}%` }}
             />
           </div>
           <textarea
             value={answer}
             onChange={(e) => handleAnswerChange(e.target.value)}
-            placeholder="Answer out loud first, then write what you said: situation, action, result — with a number and a project name."
-            className="mt-4 min-h-32 w-full resize-y rounded-2xl border border-border bg-card p-4 text-[13px] leading-relaxed outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-terracotta"
+            placeholder="Answer out loud first, then write what you said: situation, action, result, with a number and a project name."
+            className="mt-4 min-h-32 w-full resize-y rounded-2xl border border-border bg-card p-4 text-[13px] leading-relaxed outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-d3-navy"
           />
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
             <p className="text-[11px] text-muted-foreground">
@@ -894,7 +901,7 @@ function MockInterviewSection({ session }: { session: RecruiterSession }) {
             <Button
               onClick={handleSubmit}
               disabled={submit.isPending || !answer.trim()}
-              className="rounded-xl px-5 py-2.5 font-bold text-xs bg-terracotta hover:bg-terracotta/90 text-white"
+              className="rounded-xl px-5 py-2.5 font-bold text-xs bg-d3-navy hover:bg-d3-navy/90 text-white"
             >
               {submit.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -910,7 +917,7 @@ function MockInterviewSection({ session }: { session: RecruiterSession }) {
 
         <div>
           <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
-            How answers are scored (rubric shown — the AI never scores)
+            How answers are scored (rubric shown, the AI never scores)
           </h4>
           <div className="space-y-2">
             {MOCK_RUBRIC.map((row) => {
@@ -924,11 +931,11 @@ function MockInterviewSection({ session }: { session: RecruiterSession }) {
                     <p className="text-xs font-bold text-foreground">{row.criterion}</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">{row.rule}</p>
                     {scored && (
-                      <p className="mt-1 text-xs font-medium text-terracotta">{scored.reason}</p>
+                      <p className="mt-1 text-xs font-medium text-d3-flame">{scored.reason}</p>
                     )}
                   </div>
                   {scored && (
-                    <span className="shrink-0 rounded-full bg-terracotta/10 px-2.5 py-1 text-[11px] font-bold text-terracotta">
+                    <span className="shrink-0 rounded-full bg-d3-flame/10 px-2.5 py-1 text-[11px] font-bold text-d3-flame">
                       {scored.score}/{scored.max}
                     </span>
                   )}
@@ -945,11 +952,11 @@ function MockInterviewSection({ session }: { session: RecruiterSession }) {
       </div>
 
       {summary && summary.totalAttempts > 0 && (
-        <div className="card-surface p-6 sm:p-8 space-y-4">
+        <div className="d3-card d3-tilt-r p-6 sm:p-8 space-y-4">
           <SectionHeading
             icon={TrendingUp}
             title="Your progress over time"
-            note={`${summary.totalAttempts} attempt${summary.totalAttempts === 1 ? "" : "s"} on this audit · Average ${summary.averageTotal ?? "—"}/6 · Best ${summary.bestTotal ?? "—"}/6`}
+            note={`${summary.totalAttempts} attempt${summary.totalAttempts === 1 ? "" : "s"} on this audit · Average ${summary.averageTotal ?? "n/a"}/6 · Best ${summary.bestTotal ?? "n/a"}/6`}
           />
           <div className="space-y-2">
             {[...summary.attempts].reverse().slice(0, 5).map((attempt) => (
@@ -969,7 +976,7 @@ function MockInterviewSection({ session }: { session: RecruiterSession }) {
                     · {formatSeconds(attempt.timeSpentSeconds)}
                   </p>
                 </div>
-                <span className="shrink-0 rounded-full bg-secondary px-2.5 py-1 text-[11px] font-bold text-foreground">
+                <span className="shrink-0 rounded-full bg-d3-cream px-2.5 py-1 text-[11px] font-bold text-foreground">
                   {attempt.totalScore}/6
                 </span>
               </div>
@@ -1023,16 +1030,14 @@ function CoachChat({ session, companyName }: { session: RecruiterSession; compan
   ];
 
   return (
-    <div className="card-surface overflow-hidden shadow-md">
-      <div className="flex items-center gap-3 border-b border-border bg-secondary/30 px-6 py-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-terracotta text-white font-bold">
-          <UserCheck className="h-5 w-5" />
-        </div>
+    <div className="d3-card d3-tilt-l overflow-hidden shadow-md">
+      <div className="flex items-center gap-3 border-b border-border bg-d3-cream px-6 py-4">
+        <PilotMascot mood="happy" size={44} className="shrink-0" />
         <div>
           <h4 className="text-sm font-bold text-foreground">Practice with a recruiter-style coach</h4>
           <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5 font-medium">
             <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            Coaching for {companyName} — a practice coach, not their hiring team
+            Coaching for {companyName}, a practice coach, not their hiring team
           </p>
         </div>
       </div>
@@ -1050,8 +1055,8 @@ function CoachChat({ session, companyName }: { session: RecruiterSession; compan
               className={cn(
                 "max-w-[85%] rounded-2xl px-4 py-3 text-xs leading-relaxed font-medium",
                 msg.role === "student"
-                  ? "rounded-br-xs bg-terracotta text-white font-semibold"
-                  : "rounded-bl-xs bg-secondary text-foreground",
+                  ? "rounded-br-xs bg-d3-navy text-white font-semibold"
+                  : "rounded-bl-xs bg-d3-cream text-foreground",
               )}
             >
               {msg.content}
@@ -1060,9 +1065,9 @@ function CoachChat({ session, companyName }: { session: RecruiterSession; compan
         ))}
         {chat.isPending && (
           <div className="flex justify-start">
-            <div className="flex items-center gap-2 rounded-2xl rounded-bl-xs bg-secondary px-4 py-3 text-xs text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin text-terracotta" />
-              Coach is typing...
+            <div className="flex items-center gap-2 rounded-2xl rounded-bl-xs bg-d3-cream px-4 py-3 text-xs text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin text-d3-flame" />
+              Pilot is typing...
             </div>
           </div>
         )}
@@ -1076,7 +1081,7 @@ function CoachChat({ session, companyName }: { session: RecruiterSession; compan
             type="button"
             onClick={() => handleSend(q)}
             disabled={chat.isPending}
-            className="rounded-full bg-secondary px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground disabled:opacity-40"
+            className="rounded-full bg-d3-cream px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-d3-cream/70 hover:text-foreground disabled:opacity-40"
           >
             {q}
           </button>
@@ -1089,15 +1094,15 @@ function CoachChat({ session, companyName }: { session: RecruiterSession; compan
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
-          placeholder="Ask the coach..."
+          placeholder="Ask Pilot..."
           disabled={chat.isPending}
-          className="flex-1 rounded-xl border border-border bg-background px-4 py-2.5 text-xs font-medium outline-none focus:border-terracotta"
+          className="flex-1 rounded-xl border border-border bg-background px-4 py-2.5 text-xs font-medium outline-none focus:border-d3-navy"
         />
         <Button
           type="button"
           onClick={() => handleSend()}
           disabled={chat.isPending || !input.trim()}
-          className="rounded-xl px-4 bg-terracotta hover:bg-terracotta/90 text-white"
+          className="rounded-xl px-4 bg-d3-navy hover:bg-d3-navy/90 text-white"
         >
           <Send className="h-4 w-4" />
         </Button>
@@ -1107,8 +1112,21 @@ function CoachChat({ session, companyName }: { session: RecruiterSession; compan
 }
 
 /* ------------------------------------------------------------------ */
-/* Stage 5 — Verdict & next action                                     */
+/* Stage 5: Verdict & next action                                     */
 /* ------------------------------------------------------------------ */
+
+/** Pilot's face for each readiness band (see the mood convention in PilotMascot). */
+const VERDICT_MOOD: Record<RecruiterVerdict["band"], PilotMood> = {
+  ready: "cheering",
+  one_gap: "encouraging",
+  not_yet: "thinking",
+};
+
+const VERDICT_PILOT_COPY: Record<RecruiterVerdict["band"], string> = {
+  ready: "Pilot found a match. You are ready to apply for this role.",
+  one_gap: "One gap to close. Fix it, then apply.",
+  not_yet: "Not yet, but every fix below is a real step. Pilot will keep score.",
+};
 
 function VerdictSection({
   audit,
@@ -1123,26 +1141,29 @@ function VerdictSection({
 }) {
   return (
     <div className="space-y-6">
-      <div className="card-surface p-6 sm:p-8 space-y-4">
+      <div className="d3-card d3-tilt-r p-6 sm:p-8 space-y-4">
         <SectionHeading
           icon={Flame}
-          title="Stage 5 — Verdict"
-          note="Readiness in plain language. Every claim below traces to a stage output — no percentages-as-probabilities."
+          title="Stage 5: Verdict"
+          note="Readiness in plain language. Every claim below traces to a stage output, with no percentages-as-probabilities."
         />
+        <PilotSays mood={VERDICT_MOOD[verdict.band]} size={88}>
+          {VERDICT_PILOT_COPY[verdict.band]}
+        </PilotSays>
         <div
           className={cn(
             "rounded-2xl border p-5",
             verdict.band === "ready" && "border-emerald-500/30 bg-emerald-500/5",
             verdict.band === "one_gap" && "border-amber-500/30 bg-amber-500/5",
-            verdict.band === "not_yet" && "border-terracotta/30 bg-terracotta/5",
+            verdict.band === "not_yet" && "border-d3-navy/30 bg-d3-flame/5",
           )}
         >
-          <p className="font-display text-xl font-black text-foreground">{verdict.headline}</p>
+          <p className="d3-display text-xl font-black text-foreground">{verdict.headline}</p>
           {verdict.topFixes.length > 0 && (
             <ol className="mt-3 space-y-2">
               {verdict.topFixes.map((fix, i) => (
                 <li key={i} className="flex items-start gap-2 text-xs leading-relaxed text-foreground">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-terracotta/10 text-[10px] font-bold text-terracotta">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-d3-flame/10 text-[10px] font-bold text-d3-flame">
                     {i + 1}
                   </span>
                   <span>
@@ -1155,8 +1176,8 @@ function VerdictSection({
           )}
         </div>
 
-        <div className="rounded-2xl border border-terracotta/20 bg-terracotta/5 p-5">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-terracotta">
+        <div className="rounded-2xl border border-d3-navy/20 bg-d3-flame/5 p-5">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-d3-flame">
             Your single highest-value next action
           </p>
           <p className="mt-2 text-sm font-bold text-foreground">{verdict.nextAction.label}</p>
@@ -1166,9 +1187,9 @@ function VerdictSection({
         </div>
       </div>
 
-      <div className="card-surface p-6 sm:p-8 space-y-3">
-        <h3 className="font-display text-lg font-semibold flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-terracotta" />
+      <div className="d3-card p-6 sm:p-8 space-y-3">
+        <h3 className="d3-display text-lg font-semibold flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-d3-flame" />
           Recommended Proof Project to Build
         </h3>
         <h4 className="text-sm font-bold text-foreground">{audit.whatYouNeedToBuild.title}</h4>
@@ -1179,7 +1200,7 @@ function VerdictSection({
           {audit.whatYouNeedToBuild.techStack.map((t) => (
             <span
               key={t}
-              className="rounded-full bg-terracotta/10 px-3 py-1 text-xs font-bold text-terracotta"
+              className="rounded-full bg-d3-flame/10 px-3 py-1 text-xs font-bold text-d3-flame"
             >
               {t}
             </span>
@@ -1190,7 +1211,7 @@ function VerdictSection({
           <Button
             onClick={onAddToRoadmap}
             disabled={roadmapPending}
-            className="w-full rounded-xl py-3 font-bold text-xs bg-terracotta hover:bg-terracotta/90 text-white"
+            className="w-full rounded-xl py-3 font-bold text-xs bg-d3-navy hover:bg-d3-navy/90 text-white"
           >
             {roadmapPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -1320,6 +1341,7 @@ function RecruiterPage() {
               ? currentSession.overallScore
               : null
           }
+          verdictBand={currentSession?.auditResult.verdict?.band ?? null}
         />
 
         <RecruiterPipelineStepper
@@ -1335,10 +1357,10 @@ function RecruiterPage() {
             <motion.div key={activeStep} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
               {/* STEP 1: Define Role & Target Employer */}
               {activeStep === 1 && (
-                <div className="card-surface p-6 sm:p-8 space-y-6">
+                <div className="d3-card d3-tilt-l p-6 sm:p-8 space-y-6">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <h2 className="font-display text-xl font-bold text-foreground sm:text-2xl">
+                      <h2 className="d3-display text-xl font-bold text-foreground sm:text-2xl">
                         Select Target Employer
                       </h2>
                       <p className="mt-1 text-xs text-muted-foreground">
@@ -1352,15 +1374,15 @@ function RecruiterPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => setIsCustomCompany(!isCustomCompany)}
-                      className="rounded-xl border-terracotta/30 text-xs font-bold text-terracotta hover:bg-terracotta/10"
+                      className="rounded-xl border-d3-navy/30 text-xs font-bold text-d3-flame hover:bg-d3-flame/10"
                     >
                       {isCustomCompany ? "← Choose Featured" : "+ Custom Company"}
                     </Button>
                   </div>
 
                   {isCustomCompany ? (
-                    <div className="space-y-3 rounded-2xl border border-terracotta/20 bg-secondary/30 p-5">
-                      <label className="text-xs font-bold uppercase tracking-wider text-terracotta">
+                    <div className="space-y-3 rounded-2xl border border-d3-navy/20 bg-d3-cream p-5">
+                      <label className="text-xs font-bold uppercase tracking-wider text-d3-flame">
                         Enter Any Company Name
                       </label>
                       <input
@@ -1368,7 +1390,7 @@ function RecruiterPage() {
                         value={customCompanyInput}
                         onChange={(e) => setCustomCompanyInput(e.target.value)}
                         placeholder="e.g. Careem, Devsinc, Google, Arbitsoft, Folio3..."
-                        className="h-11 w-full rounded-xl border border-border bg-background px-4 text-xs font-semibold outline-none focus:border-terracotta"
+                        className="h-11 w-full rounded-xl border border-border bg-background px-4 text-xs font-semibold outline-none focus:border-d3-navy"
                       />
                     </div>
                   ) : (
@@ -1383,11 +1405,11 @@ function RecruiterPage() {
                             className={cn(
                               "group relative flex items-start gap-3.5 rounded-2xl border p-4 text-left transition-all",
                               isSelected
-                                ? "border-terracotta bg-terracotta/5 ring-2 ring-terracotta/40 shadow-xs"
-                                : "border-border bg-card hover:border-terracotta/30",
+                                ? "border-d3-navy bg-d3-flame/5 ring-2 ring-d3-navy/40 shadow-xs"
+                                : "border-border bg-card hover:border-d3-navy/30",
                             )}
                           >
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-secondary font-extrabold text-xs text-foreground">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-d3-cream font-extrabold text-xs text-foreground">
                               {co.shortName.slice(0, 2).toUpperCase()}
                             </div>
                             <div className="min-w-0 flex-1">
@@ -1395,7 +1417,7 @@ function RecruiterPage() {
                               <p className="truncate text-[11px] text-muted-foreground">{co.tier}</p>
                             </div>
                             {isSelected && (
-                              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-terracotta text-white">
+                              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-d3-navy text-white">
                                 <Check className="h-3 w-3" />
                               </div>
                             )}
@@ -1416,19 +1438,19 @@ function RecruiterPage() {
                       value={selectedRole}
                       onChange={(e) => setSelectedRole(e.target.value)}
                       placeholder="Associate Software Engineer"
-                      className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-4 text-xs font-semibold outline-none focus:border-terracotta"
+                      className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-4 text-xs font-semibold outline-none focus:border-d3-navy"
                     />
                   </div>
 
                   <div>
                     <label className="text-xs font-bold text-foreground">
-                      Job Description <span className="text-muted-foreground font-medium">(paste the real posting — recommended)</span>
+                      Job Description <span className="text-muted-foreground font-medium">(paste the real posting, recommended)</span>
                     </label>
                     <textarea
                       value={jobDescription}
                       onChange={(e) => setJobDescription(e.target.value)}
                       placeholder={"Paste the full job description here. The resume screen checks your resume against its must-have skills, and the mock interview questions are drafted from it.\n\nWithout a JD, the screen checks against the company bar instead."}
-                      className="mt-1.5 min-h-36 w-full resize-y rounded-xl border border-border bg-background px-4 py-3 text-xs leading-relaxed outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-terracotta"
+                      className="mt-1.5 min-h-36 w-full resize-y rounded-xl border border-border bg-background px-4 py-3 text-xs leading-relaxed outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-d3-navy"
                     />
                     <p className="mt-1.5 text-[11px] text-muted-foreground">
                       {jobDescription.trim().length} characters · Only the extracted keywords are
@@ -1441,10 +1463,10 @@ function RecruiterPage() {
                     disabled={runAudit.isPending || !selectedRole.trim() || !isFeaturedCompany}
                     title={
                       !isFeaturedCompany
-                        ? "The audit runs only for researched companies — pick a featured company."
+                        ? "The audit runs only for researched companies, so pick a featured company."
                         : undefined
                     }
-                    className="w-full rounded-xl py-3 font-bold text-xs bg-terracotta hover:bg-terracotta/90 text-white"
+                    className="w-full rounded-xl py-3 font-bold text-xs bg-d3-navy hover:bg-d3-navy/90 text-white"
                   >
                     {runAudit.isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -1460,16 +1482,17 @@ function RecruiterPage() {
 
               {/* Steps 2-5 need a session; the stepper disables them, this is defense in depth. */}
               {activeStep > 1 && !currentSession && (
-                <div className="card-surface p-8 text-center">
-                  <p className="font-display text-lg font-bold text-foreground">Run an audit first</p>
+                <div className="d3-card d3-tilt-r p-8 text-center">
+                  <PilotMascot mood="sleeping" size={110} className="mx-auto" />
+                  <p className="d3-display text-lg font-bold text-foreground">Run an audit first</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Pick a company and role on step 1 — the stage screens unlock once an audit
+                    Pick a company and role on step 1, and the stage screens unlock once an audit
                     exists.
                   </p>
                   <Button
                     type="button"
                     onClick={() => setActiveStep(1)}
-                    className="mt-4 rounded-xl bg-terracotta px-5 py-2.5 text-xs font-bold text-white hover:bg-terracotta/90"
+                    className="mt-4 rounded-xl bg-d3-navy px-5 py-2.5 text-xs font-bold text-white hover:bg-d3-navy/90"
                   >
                     Go to step 1
                   </Button>
@@ -1491,7 +1514,7 @@ function RecruiterPage() {
                   <div className="flex justify-end pt-4 border-t border-border mt-6">
                     <Button
                       onClick={() => setActiveStep(3)}
-                      className="rounded-xl px-6 py-2.5 font-bold text-xs bg-terracotta hover:bg-terracotta/90 text-white"
+                      className="rounded-xl px-6 py-2.5 font-bold text-xs bg-d3-navy hover:bg-d3-navy/90 text-white"
                     >
                       Continue to Evidence & Bar
                       <ArrowRight className="ml-2 h-4 w-4" />
@@ -1516,8 +1539,8 @@ function RecruiterPage() {
                   )}
 
                   <div>
-                    <h3 className="font-display text-lg font-semibold mb-3 flex items-center gap-2">
-                      <Flame className="h-5 w-5 text-terracotta" />
+                    <h3 className="d3-display text-lg font-semibold mb-3 flex items-center gap-2">
+                      <Flame className="h-5 w-5 text-d3-flame" />
                       Evidence Rubric Detail
                     </h3>
                     <div className="grid gap-3 sm:grid-cols-2">
@@ -1538,7 +1561,7 @@ function RecruiterPage() {
                     </Button>
                     <Button
                       onClick={() => setActiveStep(4)}
-                      className="rounded-xl px-6 py-2.5 font-bold text-xs bg-terracotta hover:bg-terracotta/90 text-white"
+                      className="rounded-xl px-6 py-2.5 font-bold text-xs bg-d3-navy hover:bg-d3-navy/90 text-white"
                     >
                       Continue to Mock Interview
                       <ArrowRight className="ml-2 h-4 w-4" />
@@ -1553,8 +1576,8 @@ function RecruiterPage() {
                   <MockInterviewSection session={currentSession} />
 
                   <div>
-                    <h3 className="font-display text-lg font-semibold mb-3 flex items-center gap-2">
-                      <MessageCircle className="h-5 w-5 text-terracotta" />
+                    <h3 className="d3-display text-lg font-semibold mb-3 flex items-center gap-2">
+                      <MessageCircle className="h-5 w-5 text-d3-flame" />
                       Practice with the Coach
                     </h3>
                     <CoachChat session={currentSession} companyName={currentSession.companyName} />
@@ -1571,7 +1594,7 @@ function RecruiterPage() {
                     </Button>
                     <Button
                       onClick={() => setActiveStep(5)}
-                      className="rounded-xl px-6 py-2.5 font-bold text-xs bg-terracotta hover:bg-terracotta/90 text-white"
+                      className="rounded-xl px-6 py-2.5 font-bold text-xs bg-d3-navy hover:bg-d3-navy/90 text-white"
                     >
                       Continue to Verdict
                       <ArrowRight className="ml-2 h-4 w-4" />
@@ -1593,9 +1616,9 @@ function RecruiterPage() {
                   ) : (
                     <div className="space-y-6">
                       <LegacyAuditNotice />
-                      <div className="card-surface p-6 sm:p-8 space-y-3">
-                        <h3 className="font-display text-lg font-semibold flex items-center gap-2">
-                          <Sparkles className="h-5 w-5 text-terracotta" />
+                      <div className="d3-card p-6 sm:p-8 space-y-3">
+                        <h3 className="d3-display text-lg font-semibold flex items-center gap-2">
+                          <Sparkles className="h-5 w-5 text-d3-flame" />
                           Recommended Proof Project to Build
                         </h3>
                         <h4 className="text-sm font-bold text-foreground">
@@ -1608,7 +1631,7 @@ function RecruiterPage() {
                           {currentSession.auditResult.whatYouNeedToBuild.techStack.map((t) => (
                             <span
                               key={t}
-                              className="rounded-full bg-terracotta/10 px-3 py-1 text-xs font-bold text-terracotta"
+                              className="rounded-full bg-d3-flame/10 px-3 py-1 text-xs font-bold text-d3-flame"
                             >
                               {t}
                             </span>
@@ -1618,7 +1641,7 @@ function RecruiterPage() {
                           <Button
                             onClick={handleAddToRoadmap}
                             disabled={generateRoadmap.isPending}
-                            className="w-full rounded-xl py-3 font-bold text-xs bg-terracotta hover:bg-terracotta/90 text-white"
+                            className="w-full rounded-xl py-3 font-bold text-xs bg-d3-navy hover:bg-d3-navy/90 text-white"
                           >
                             {generateRoadmap.isPending ? (
                               <Loader2 className="h-4 w-4 animate-spin" />

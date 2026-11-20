@@ -59,7 +59,7 @@ const GLOBAL_REGIONS: CountryRegion[] = [
     ],
     opportunityForStudents:
       "Master Agent Orchestration (LangGraph, AutoGen) and high-context System Design to command top-tier remote engineering compensation.",
-    badgeColor: "bg-terracotta/10 text-terracotta border-terracotta/20",
+    badgeColor: "bg-d3-flame/10 text-d3-flame border-d3-flame/20",
   },
   {
     id: "china",
@@ -209,33 +209,33 @@ export function FutureTechRadar({
   return (
     <div className="space-y-6">
       {/* GLOBAL TECH TRENDS BANNER */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-ink via-neutral-900 to-ink p-7 sm:p-9 text-white border border-terracotta/30 shadow-2xl">
-        <div className="pointer-events-none absolute -right-16 -top-16 h-80 w-80 rounded-full bg-terracotta/15 blur-[90px]" />
+      <div className="relative overflow-hidden rounded-3xl bg-d3-navy p-7 sm:p-9 text-d3-paper border border-d3-flame/30 shadow-2xl">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-80 w-80 rounded-full bg-d3-mustard/20 blur-[90px]" />
         
         <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-3 max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-terracotta/40 bg-terracotta/10 px-3.5 py-1 text-[11.5px] font-semibold text-terracotta">
+            <div className="inline-flex items-center gap-2 rounded-full border border-d3-mustard/50 bg-d3-mustard/15 px-3.5 py-1 text-[11.5px] font-semibold text-d3-mustard">
               <Flame className="h-3.5 w-3.5 animate-bounce" /> Global Tech Industry Intelligence • 2026–2030 Horizon
             </div>
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl text-white">
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl text-d3-paper">
               The 2030 Tech Industry Radar
             </h2>
-            <p className="text-[13.5px] leading-relaxed text-white/75">
+            <p className="text-[13.5px] leading-relaxed text-d3-paper/75">
               Explore how global regions (US, China, EU, Pakistan) are shaping the software landscape, what AI model paradigms are emerging, and what skills students must master to lead the next era.
             </p>
           </div>
 
-          <div className="flex shrink-0 flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 p-4 text-[12.5px]">
+          <div className="flex shrink-0 flex-col gap-2 rounded-2xl border border-d3-paper/15 bg-d3-paper/10 p-4 text-[12.5px]">
             <div className="flex items-center gap-2 text-emerald-400 font-semibold">
               <CheckCircle2 className="h-4 w-4" /> Live Market Intelligence
             </div>
-            <p className="text-white/70 text-[11.5px]">Target Role: <strong className="text-white">{targetRole}</strong></p>
-            <p className="text-[11px] text-white/50">Updated Daily for Student Career Preparedness</p>
+            <p className="text-d3-paper/70 text-[11.5px]">Target Role: <strong className="text-d3-paper">{targetRole}</strong></p>
+            <p className="text-[11px] text-d3-paper/50">Updated Daily for Student Career Preparedness</p>
           </div>
         </div>
 
         {/* TABS NAVIGATION */}
-        <div className="mt-8 flex flex-wrap gap-2 border-t border-white/10 pt-6">
+        <div className="mt-8 flex flex-wrap gap-2 border-t border-d3-paper/15 pt-6">
           {[
             { id: "global_landscape", label: "Global Regions & Geopolitics", icon: Globe2 },
             { id: "emerging_models", label: "Emerging AI Model Paradigms", icon: Brain },
@@ -252,8 +252,8 @@ export function FutureTechRadar({
                 className={cn(
                   "flex items-center gap-2 rounded-xl px-4 py-2.5 text-[12.5px] font-semibold transition-all duration-200",
                   isActive
-                    ? "bg-terracotta text-white shadow-lift"
-                    : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
+                    ? "bg-d3-flame text-d3-paper shadow-lift"
+                    : "bg-d3-paper/10 text-d3-paper/70 hover:bg-d3-paper/20 hover:text-d3-paper"
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -276,7 +276,7 @@ export function FutureTechRadar({
             transition={{ duration: 0.25 }}
             className="space-y-6"
           >
-            <div className="card-surface p-6 sm:p-8">
+            <div className="d3-card p-6 sm:p-8">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-bold text-foreground">Global Tech Landscape Breakdown</h3>
@@ -290,7 +290,7 @@ export function FutureTechRadar({
                 {GLOBAL_REGIONS.map((reg) => (
                   <div
                     key={reg.id}
-                    className="card-surface group p-6 transition-all hover:border-terracotta/40 hover:shadow-lift flex flex-col justify-between"
+                    className="d3-card group p-6 transition-all hover:border-d3-flame/40 hover:shadow-lift flex flex-col justify-between"
                   >
                     <div>
                       <div className="flex items-center justify-between">
@@ -305,13 +305,13 @@ export function FutureTechRadar({
                       </p>
 
                       <div className="mt-4 space-y-2 border-t border-border/60 pt-4">
-                        <span className="text-xs font-bold uppercase tracking-wider text-terracotta">
+                        <span className="text-xs font-bold uppercase tracking-wider text-d3-flame">
                           Key Regional Initiatives:
                         </span>
                         <ul className="space-y-1.5">
                           {reg.keyInitiatives.map((item, idx) => (
                             <li key={idx} className="flex items-start gap-2 text-[12px] text-muted-foreground">
-                              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-terracotta" />
+                              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-d3-flame" />
                               {item}
                             </li>
                           ))}
@@ -342,7 +342,7 @@ export function FutureTechRadar({
             transition={{ duration: 0.25 }}
             className="space-y-6"
           >
-            <div className="card-surface p-6 sm:p-8">
+            <div className="d3-card p-6 sm:p-8">
               <h3 className="text-lg font-bold text-foreground">Emerging AI Model Paradigms</h3>
               <p className="text-[13px] text-muted-foreground mt-1">
                 The core model architectures driving the next decade of software engineering.
@@ -350,10 +350,10 @@ export function FutureTechRadar({
 
               <div className="mt-6 grid gap-5 sm:grid-cols-2">
                 {EMERGING_MODELS.map((model) => (
-                  <div key={model.title} className="card-surface p-6 transition-all hover:border-terracotta/40 hover:shadow-lift flex flex-col justify-between">
+                  <div key={model.title} className="d3-card p-6 transition-all hover:border-d3-flame/40 hover:shadow-lift flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase tracking-wider text-terracotta">
+                        <span className="text-xs font-bold uppercase tracking-wider text-d3-flame">
                           Pioneers: {model.pioneerCompanies}
                         </span>
                       </div>
@@ -386,7 +386,7 @@ export function FutureTechRadar({
                                 "flex items-center gap-1 rounded-md px-2.5 py-1 text-[11.5px] font-medium transition",
                                 isSaved
                                   ? "bg-emerald-500/10 text-emerald-600"
-                                  : "bg-terracotta/10 text-terracotta hover:bg-terracotta hover:text-white"
+                                  : "bg-d3-flame/10 text-d3-flame hover:bg-d3-flame hover:text-d3-paper"
                               )}
                             >
                               {isSaved ? <Check className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
@@ -413,7 +413,7 @@ export function FutureTechRadar({
             transition={{ duration: 0.25 }}
             className="space-y-6"
           >
-            <div className="card-surface p-6 sm:p-8">
+            <div className="d3-card p-6 sm:p-8">
               <h3 className="text-lg font-bold text-foreground">2030 Industry Paradigm Shifts</h3>
               <p className="text-[13px] text-muted-foreground mt-1">
                 How everyday software engineering contracts are evolving over the next 5 years.
@@ -423,9 +423,9 @@ export function FutureTechRadar({
                 {PARADIGM_SHIFTS_2030.map((shift) => {
                   const Icon = shift.icon;
                   return (
-                    <div key={shift.title} className="card-surface p-6 transition-all hover:border-terracotta/40">
+                    <div key={shift.title} className="d3-card p-6 transition-all hover:border-d3-flame/40">
                       <div className="flex items-start gap-4">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-terracotta/10 text-terracotta">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-d3-flame/10 text-d3-flame">
                           <Icon className="h-5 w-5" />
                         </div>
                         <div className="space-y-2 flex-1">
@@ -440,7 +440,7 @@ export function FutureTechRadar({
                               <p className="mt-1 text-muted-foreground">{shift.era2030}</p>
                             </div>
                           </div>
-                          <div className="pt-2 text-[12px] font-semibold text-terracotta">
+                          <div className="pt-2 text-[12px] font-semibold text-d3-flame">
                             Critical Skills Needed: {shift.criticalSkill}
                           </div>
                         </div>
@@ -463,9 +463,9 @@ export function FutureTechRadar({
             transition={{ duration: 0.25 }}
             className="space-y-6"
           >
-            <div className="card-surface p-6 sm:p-8 space-y-6">
+            <div className="d3-card p-6 sm:p-8 space-y-6">
               <div className="flex items-center gap-3 border-b border-border pb-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-terracotta/10 text-terracotta">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-d3-flame/10 text-d3-flame">
                   <Compass className="h-5 w-5" />
                 </div>
                 <div>
@@ -475,24 +475,24 @@ export function FutureTechRadar({
               </div>
 
               <div className="grid gap-6 md:grid-cols-3">
-                <div className="card-surface p-5 space-y-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-terracotta">Rule 1: Don't Just Write Code</span>
+                <div className="d3-card p-5 space-y-3">
+                  <span className="text-xs font-bold uppercase tracking-wider text-d3-flame">Rule 1: Don't Just Write Code</span>
                   <h4 className="text-[15px] font-bold text-foreground">Master System Architecture</h4>
                   <p className="text-[13px] text-muted-foreground leading-relaxed">
                     AI models generate basic code syntax instantly. Your superpower as an engineer will be system decomposition, state validation, and edge-case contracts.
                   </p>
                 </div>
 
-                <div className="card-surface p-5 space-y-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-terracotta">Rule 2: Embrace MCP & Tooling</span>
+                <div className="d3-card p-5 space-y-3">
+                  <span className="text-xs font-bold uppercase tracking-wider text-d3-flame">Rule 2: Embrace MCP & Tooling</span>
                   <h4 className="text-[15px] font-bold text-foreground">Connect AI to Real Systems</h4>
                   <p className="text-[13px] text-muted-foreground leading-relaxed">
                     Learn to build Model Context Protocol (MCP) servers that connect AI agents to databases, git repositories, and production APIs safely.
                   </p>
                 </div>
 
-                <div className="card-surface p-5 space-y-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-terracotta">Rule 3: Build Proven Portfolio Projects</span>
+                <div className="d3-card p-5 space-y-3">
+                  <span className="text-xs font-bold uppercase tracking-wider text-d3-flame">Rule 3: Build Proven Portfolio Projects</span>
                   <h4 className="text-[15px] font-bold text-foreground">Ship Agentic Workflows</h4>
                   <p className="text-[13px] text-muted-foreground leading-relaxed">
                     Instead of another generic weather app, build a self-healing agentic workflow or an open-model serving pipeline that recruiters can inspect.
@@ -500,7 +500,7 @@ export function FutureTechRadar({
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-terracotta/30 bg-terracotta/5 p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="rounded-2xl border border-d3-flame/30 bg-d3-flame/5 p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div>
                   <h4 className="text-[15px] font-bold text-foreground">Ready to update your target roadmap?</h4>
                   <p className="text-[13px] text-muted-foreground mt-1">
@@ -509,7 +509,7 @@ export function FutureTechRadar({
                 </div>
                 <Button
                   onClick={() => handleAddSkill("Model Context Protocol (MCP)")}
-                  className="rounded-xl bg-terracotta text-white px-6 font-semibold shrink-0"
+                  className="rounded-xl bg-d3-flame text-d3-paper px-6 font-semibold shrink-0"
                 >
                   Add MCP & Agent Skills to Blueprint
                 </Button>

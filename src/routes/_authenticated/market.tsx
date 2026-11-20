@@ -42,12 +42,15 @@ import {
   X,
   Zap,
 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { AppLayout } from "@/components/app/AppLayout";
+import { KoiPond, type PondKoi } from "@/components/market/KoiPond";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useStoredJobsWithCoverage } from "@/data/job-intel";
 import {
   useMarketReality,
   useRefreshMarketReality,
@@ -61,7 +64,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/market")({
   head: () => ({
     meta: [
-      { title: "Market Reality & Future Tech — CareerPilot AI" },
+      { title: "Market Reality and Future Tech | CareerPilot AI" },
       {
         name: "description",
         content:
@@ -107,6 +110,10 @@ function MarketRealityPage() {
   const { data: user } = useCurrentUser();
   const { data: market, isLoading, error, refetch } = useMarketReality();
   const { data: outdatedData } = useOutdatedTech();
+  // The pond's koi: the student's stored real postings, newest first,
+  // annotated with deterministic per-posting coverage.
+  const { data: storedJobs, isLoading: jobsLoading } = useStoredJobsWithCoverage();
+  const queryClient = useQueryClient();
   const refreshMutation = useRefreshMarketReality();
   const updateRole = useUpdateTargetRole();
   const generateRoadmap = useGenerateRoadmapV2();
@@ -279,6 +286,9 @@ function MarketRealityPage() {
   const handleRefresh = async () => {
     try {
       await refreshMutation.mutateAsync();
+      // The fresh market pass re-runs job research, which stores new real
+      // postings; refill the pond from them.
+      await queryClient.invalidateQueries({ queryKey: ["job-intel", "stored-jobs"] });
       toast.success("Market reality data refreshed from latest research pass!");
     } catch {
       toast.error("Couldn't refresh data right now.");
@@ -341,6 +351,33 @@ function MarketRealityPage() {
           : "Beginner / building proof";
   const profileSkills = user?.skills?.map((skill) => skill.name).slice(0, 5) ?? [];
   const firstOutdatedItem = outdatedData?.outdatedItems[0];
+
+  // The pond's koi: one real stored posting each. "Matched" reuses the
+  // SavedPostings 70% bar: deterministic coverage of the posting's
+  // requirements by the student's saved evidence. Null coverage means
+  // "not measured yet", never a default.
+  const pondKoi: PondKoi[] = (storedJobs ?? []).map((job) => {
+    const location = [job.locationCity, job.locationCountry].filter(Boolean).join(", ");
+    const workMode =
+      job.remoteType === "remote"
+        ? "Remote"
+        : job.remoteType === "hybrid"
+          ? "Hybrid"
+          : job.remoteType === "onsite"
+            ? "On-site"
+            : null;
+    return {
+      id: job.id,
+      title: job.title,
+      company: job.company,
+      location: location || workMode,
+      url: job.url,
+      retrievedAt: job.retrievedAt,
+      sourceName: job.sourceName,
+      coveragePct: job.coveragePct,
+      matched: job.coveragePct !== null && job.coveragePct >= 70,
+    };
+  });
   const localDemandSummary = market.pakistanMarket?.demand?.trim() ?? "";
   const globalDemandSummary = market.globalMarket?.demand?.trim() ?? "";
   const localDemandIsLong = localDemandSummary.length > 52;
@@ -351,7 +388,7 @@ function MarketRealityPage() {
     <AppLayout
       title={
         <span>
-          Market Reality & Future Tech <Sparkles className="inline h-5 w-5 text-terracotta" />
+          Market Reality & Future Tech <Sparkles className="inline h-5 w-5 text-d3-flame" />
         </span>
       }
       subtitle="The worldwide hiring bar for your target role, with optional local context and live emerging tech signals."
@@ -373,10 +410,10 @@ function MarketRealityPage() {
             <Button
               variant="outline"
               size="sm"
-              className="rounded-xl text-xs font-semibold border-terracotta/30 hover:bg-terracotta/10 hover:text-terracotta"
+              className="rounded-xl border-d3-flame/30 text-xs font-semibold hover:bg-d3-flame/10 hover:text-d3-flame"
               onClick={() => setShowRoleDialog(true)}
             >
-              <Pencil className="mr-1.5 h-3.5 w-3.5 text-terracotta" />
+              <Pencil className="mr-1.5 h-3.5 w-3.5 text-d3-flame" />
               Change Role: <strong className="ml-1 text-foreground">{market.targetRole}</strong>
             </Button>
             <Button
@@ -388,7 +425,7 @@ function MarketRealityPage() {
             >
               <RefreshCw
                 className={cn(
-                  "mr-1.5 h-3.5 w-3.5 text-terracotta",
+                  "mr-1.5 h-3.5 w-3.5 text-d3-flame",
                   refreshMutation.isPending && "animate-spin",
                 )}
               />
@@ -398,13 +435,13 @@ function MarketRealityPage() {
         </div>
 
         {/* Target selector: visible before the report so every section has clear context. */}
-        <section className="card-surface flex flex-col gap-4 border-terracotta/20 bg-gradient-to-r from-card to-terracotta/5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+        <section className="d3-card d3-tilt-l flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
           <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-terracotta/10 text-terracotta">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-d3-mustard/25 text-d3-choco">
               <Target className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-terracotta">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-d3-flame">
                 Your target career
               </p>
               <h2 className="mt-1 text-lg font-bold tracking-tight text-foreground">
@@ -417,243 +454,139 @@ function MarketRealityPage() {
           </div>
           <Button
             variant="outline"
-            className="rounded-xl border-terracotta/30 font-bold hover:bg-terracotta/10 hover:text-terracotta"
+            className="rounded-xl border-d3-flame/30 font-bold hover:bg-d3-flame/10 hover:text-d3-flame"
             onClick={() => setShowRoleDialog(true)}
           >
-            <Pencil className="mr-2 h-4 w-4 text-terracotta" />
+            <Pencil className="mr-2 h-4 w-4 text-d3-flame" />
             Search or change target
           </Button>
         </section>
 
         {/* ═══════════════════════════════════════════════════════════════ */}
-        {/* PREMIUM LANDING HERO — Market Reality                          */}
+        {/* THE MARKET POND: live postings as koi (Direction 3)            */}
         {/* ═══════════════════════════════════════════════════════════════ */}
         {activeStep === 1 && (
-          <section className="relative overflow-hidden rounded-3xl border border-terracotta/20 bg-ink shadow-2xl">
-            {/* Decorative ambient glows */}
-            <div className="pointer-events-none absolute -top-16 -right-16 h-80 w-80 rounded-full bg-terracotta/10 blur-[100px]" />
-            <div className="pointer-events-none absolute -bottom-16 -left-16 h-80 w-80 rounded-full bg-terracotta/8 blur-[100px]" />
+          <section className="space-y-4">
+            <KoiPond
+              koi={pondKoi}
+              isLoading={jobsLoading}
+              targetRole={market.targetRole}
+              onRefresh={handleRefresh}
+              refreshPending={refreshMutation.isPending}
+              onDropResume={() => navigate({ to: "/resume" })}
+            />
 
-            {/* ── Top Row: Illustration + Hero Copy ─────────────────── */}
-            <div className="relative z-10 grid min-w-0 items-stretch lg:grid-cols-[1.1fr_0.9fr]">
-              {/* Left: Illustration Panel */}
-              <div className="relative order-2 flex min-w-0 min-h-[360px] items-center justify-center overflow-hidden bg-gradient-to-br from-background via-secondary to-terracotta/20 p-0 sm:min-h-[440px] lg:order-2 lg:-ml-8 lg:min-h-[560px] lg:rounded-r-3xl lg:pl-8">
-                {/* Subtle corner badge */}
-                <motion.div
-                  initial={{ opacity: 0, y: -12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="absolute top-4 left-8 z-20 flex items-center gap-2 rounded-full border border-terracotta/25 bg-background/85 px-3 py-1.5 shadow-sm backdrop-blur"
+            {/* Scope switcher, kept from the old hero: Step 2 reads it. */}
+            <div className="d3-card flex flex-wrap items-center gap-2 p-4 sm:p-5">
+              <span className="mr-1 text-xs font-bold uppercase tracking-widest text-d3-choco/50">
+                Scope:
+              </span>
+              {[
+                { id: "global", label: "Global", icon: Globe },
+                { id: "both", label: "Global + Local", icon: Globe2 },
+                { id: "pakistan", label: "Local", icon: Building2 },
+              ].map((scope) => (
+                <button
+                  key={scope.id}
+                  type="button"
+                  onClick={() => setMarketScope(scope.id as typeof marketScope)}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-xl border px-3.5 py-1.5 text-xs font-bold transition-all",
+                    marketScope === scope.id
+                      ? "border-d3-teal bg-d3-teal text-white shadow-md"
+                      : "border-d3-choco/15 bg-d3-paper text-d3-choco/60 hover:bg-d3-cream hover:text-d3-choco",
+                  )}
                 >
-                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-terracotta text-white">
-                    <BarChart3 className="h-3 w-3" />
-                  </div>
-                  <span className="text-xs font-bold text-ink">Market Reality</span>
-                </motion.div>
-
-                <motion.img
-                  src="/market-reality-hero.png"
-                  alt="Market Reality — woman presenting market data on a whiteboard"
-                  className="relative z-10 block h-full min-h-[360px] w-full min-w-0 max-w-full object-contain object-center mix-blend-multiply opacity-[0.94] sm:min-h-[440px] lg:min-h-[560px]"
-                  initial={{ opacity: 0, scale: 0.96 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.6, ease: "easeOut" }}
-                />
-              </div>
-
-              {/* Right: Editorial Copy & CTA */}
-              <div className="order-1 flex flex-col justify-center gap-6 p-7 text-white sm:p-10 lg:order-1 lg:p-12">
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5, delay: 0.15 }}
-                  className="space-y-4"
-                >
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-terracotta/15 px-3.5 py-1 text-xs font-extrabold uppercase tracking-widest text-terracotta border border-terracotta/25">
-                    <Sparkles className="h-3.5 w-3.5" /> Live Market Intelligence
-                  </span>
-
-                  <h1 className="font-display text-3xl font-black sm:text-4xl xl:text-5xl leading-[1.1] tracking-tight">
-                    Know What <br />
-                    <span className="text-terracotta">Employers Want.</span>
-                  </h1>
-
-                  <p className="text-sm leading-relaxed text-white/70 max-w-lg">
-                    See the <strong className="text-white">brutal truth</strong> of what hiring
-                    managers demand for{" "}
-                    <strong className="text-terracotta">{market.targetRole}</strong> — salaries in
-                    global compensation, skill demand heatmaps, and future tech trends. Zero fluff.
-                  </p>
-                </motion.div>
-
-                {/* Quick Feature Pills */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.35 }}
-                  className="grid grid-cols-2 gap-3"
-                >
-                  {[
-                    { icon: DollarSign, title: "Salary Benchmarks", sub: "PKR & USD ranges" },
-                    { icon: Target, title: "Skill Demand Map", sub: "What's hot vs cold" },
-                    { icon: TrendingUp, title: "Future Tech Signals", sub: "AI, Cloud & more" },
-                    { icon: Globe2, title: "Global Market Lens", sub: "Worldwide signals" },
-                  ].map((f) => (
-                    <div
-                      key={f.title}
-                      className="flex items-center gap-2.5 rounded-2xl border border-white/10 bg-white/5 p-3"
-                    >
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-terracotta/15 text-terracotta">
-                        <f.icon className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-white">{f.title}</p>
-                        <p className="text-xs text-white/50">{f.sub}</p>
-                      </div>
-                    </div>
-                  ))}
-                </motion.div>
-
-                {/* Scope Switcher */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 }}
-                  className="flex flex-wrap items-center gap-2 pt-1"
-                >
-                  <span className="text-xs text-white/40 font-bold uppercase tracking-widest mr-1">
-                    Scope:
-                  </span>
-                  {[
-                    { id: "global", label: "Global", icon: Globe },
-                    { id: "both", label: "Global + Local", icon: Globe2 },
-                    { id: "pakistan", label: "Local", icon: Building2 },
-                  ].map((scope) => (
-                    <button
-                      key={scope.id}
-                      type="button"
-                      onClick={() => setMarketScope(scope.id as typeof marketScope)}
-                      className={cn(
-                        "flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all border",
-                        marketScope === scope.id
-                          ? "border-terracotta bg-terracotta text-white shadow-lg"
-                          : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white",
-                      )}
-                    >
-                      <scope.icon className="h-3.5 w-3.5" />
-                      {scope.label}
-                    </button>
-                  ))}
-                </motion.div>
-              </div>
+                  <scope.icon className="h-3.5 w-3.5" />
+                  {scope.label}
+                </button>
+              ))}
             </div>
 
-            {/* ── Bottom Strip: Live Stats Bar ────────────────────── */}
-            <div className="relative z-10 border-t border-white/10 bg-white/[0.03] px-7 py-5 sm:px-10">
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                {/* Stat 1: Match Score Gauge */}
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6 }}
-                  className="flex items-center gap-3"
-                >
-                  <div className="relative flex h-14 w-14 shrink-0 items-center justify-center">
-                    <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r="40"
-                        fill="none"
-                        stroke="rgba(255,255,255,0.1)"
-                        strokeWidth="7"
-                      />
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r="40"
-                        fill="none"
-                        className="stroke-terracotta"
-                        strokeWidth="7"
-                        strokeDasharray="251.2"
-                        strokeDashoffset={
-                          localMatchPct === null ? 251.2 : 251.2 - (251.2 * localMatchPct) / 100
-                        }
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                    <span className="absolute text-sm font-black text-white">
-                      {localMatchPct === null ? "—" : `${localMatchPct}%`}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-white">Your Match</p>
-                    <p className="text-xs text-white/50">
-                      {localMatchPct === null
-                        ? "Not assessed yet"
-                        : localMatchPct >= 70
-                          ? "Competitive"
-                          : "Needs work"}
-                    </p>
-                  </div>
-                </motion.div>
+            {/* Live stats strip: the same four stats as the old hero, re-skinned. */}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {/* Stat 1: Match Score Gauge */}
+              <div className="d3-card d3-tilt-l flex items-center gap-3 p-4">
+                <div className="relative flex h-14 w-14 shrink-0 items-center justify-center">
+                  <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="40"
+                      fill="none"
+                      stroke="rgba(59,35,20,0.12)"
+                      strokeWidth="7"
+                    />
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="40"
+                      fill="none"
+                      className="stroke-d3-flame"
+                      strokeWidth="7"
+                      strokeDasharray="251.2"
+                      strokeDashoffset={
+                        localMatchPct === null ? 251.2 : 251.2 - (251.2 * localMatchPct) / 100
+                      }
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <span className="absolute text-sm font-black text-d3-choco">
+                    {localMatchPct === null ? "?" : `${localMatchPct}%`}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-d3-choco">Your Match</p>
+                  <p className="text-xs text-d3-choco/60">
+                    {localMatchPct === null
+                      ? "Not assessed yet"
+                      : localMatchPct >= 70
+                        ? "Competitive"
+                        : "Needs work"}
+                  </p>
+                </div>
+              </div>
 
-                {/* Stat 2: Entry-Level Filter */}
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.7 }}
-                  className="flex items-center gap-3"
-                >
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-terracotta/10 text-terracotta">
-                    <ShieldAlert className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-white">Entry-Level Filter</p>
-                    <p className="text-xs text-white/50">{"70-85%"} rejected</p>
-                  </div>
-                </motion.div>
+              {/* Stat 2: Entry-Level Filter */}
+              <div className="d3-card d3-tilt-r flex items-center gap-3 p-4">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-d3-flame/10 text-d3-flame">
+                  <ShieldAlert className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-d3-choco">Entry-Level Filter</p>
+                  <p className="text-xs text-d3-choco/60">Not measured yet</p>
+                </div>
+              </div>
 
-                {/* Stat 3: Pakistan Salary */}
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.8 }}
-                  className="flex items-center gap-3"
-                >
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-terracotta/10 text-terracotta">
-                    <DollarSign className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-white">Pakistan Salary</p>
-                    <p className="text-xs text-white/50">{"PKR 40-80k"}/mo</p>
-                  </div>
-                </motion.div>
+              {/* Stat 3: Pakistan Salary */}
+              <div className="d3-card d3-tilt-l flex items-center gap-3 p-4">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-d3-flame/10 text-d3-flame">
+                  <DollarSign className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-d3-choco">Pakistan Salary</p>
+                  <p className="text-xs text-d3-choco/60">Not measured yet</p>
+                </div>
+              </div>
 
-                {/* Stat 4: Demanded Skills */}
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.9 }}
-                  className="flex items-center gap-3"
-                >
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-terracotta/10 text-terracotta">
-                    <Zap className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-white">Top Skills</p>
-                    <p className="text-xs text-white/50 truncate max-w-[120px]">
-                      {highDemandSkills.slice(0, 3).join(", ") || "Loading…"}
-                    </p>
-                  </div>
-                </motion.div>
+              {/* Stat 4: Demanded Skills */}
+              <div className="d3-card d3-tilt-r flex items-center gap-3 p-4">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-d3-flame/10 text-d3-flame">
+                  <Zap className="h-6 w-6" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-d3-choco">Top Skills</p>
+                  <p className="truncate text-xs text-d3-choco/60">
+                    {highDemandSkills.slice(0, 3).join(", ") || "Loading…"}
+                  </p>
+                </div>
               </div>
             </div>
           </section>
         )}
 
         {/* Step-by-Step Progressive Navigation Rail */}
-        <div className="card-surface p-3 sm:p-4">
+        <div className="d3-card p-3 sm:p-4">
           <div className="grid grid-cols-2 gap-2 md:grid-cols-3 2xl:grid-cols-6">
             {STEPS.map((s) => {
               const isCurrent = activeStep === s.id;
@@ -666,9 +599,9 @@ function MarketRealityPage() {
                   className={cn(
                     "flex min-w-0 items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left transition-all border sm:px-3.5",
                     isCurrent
-                      ? "border-terracotta/40 bg-ink text-white shadow-md scale-102"
+                      ? "border-d3-flame/40 bg-d3-choco text-d3-paper shadow-md scale-102"
                       : isPassed
-                        ? "border-emerald-500/20 bg-secondary/70 text-foreground hover:bg-secondary"
+                        ? "border-d3-leaf/25 bg-d3-leaf/10 text-foreground hover:bg-d3-leaf/15"
                         : "border-transparent text-muted-foreground hover:bg-secondary/40 hover:text-foreground",
                   )}
                 >
@@ -676,9 +609,9 @@ function MarketRealityPage() {
                     className={cn(
                       "flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-xs font-bold",
                       isCurrent
-                        ? "bg-terracotta text-white shadow-xs"
+                        ? "bg-d3-flame text-d3-paper shadow-xs"
                         : isPassed
-                          ? "bg-emerald-100 text-emerald-800"
+                          ? "bg-d3-leaf/15 text-d3-leaf"
                           : "bg-secondary text-muted-foreground",
                     )}
                   >

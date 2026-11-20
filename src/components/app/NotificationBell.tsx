@@ -22,8 +22,8 @@ import { cn } from "@/lib/utils";
 /**
  * In-app notifications only (DB-backed roadmap_notifications).
  *
- * NOTE (2026-11-20 rebuild): the old "Offline Alerts" tab was removed —
- * it was a push-notification facade (a localStorage "subscribed" flag and
+ * NOTE (2026-11-20 rebuild): the old "Offline Alerts" tab was removed.
+ * It was a push-notification facade (a localStorage "subscribed" flag and
  * a toggle promising daily updates "even when closed") with no push
  * system behind it. CareerPilot has no push notifications; this bell
  * shows only the real in-app activity feed.
@@ -61,23 +61,23 @@ export function NotificationBell() {
         aria-label={`Notifications${count ? `, ${count} unread` : ""}`}
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
-        className="relative rounded-xl border border-border bg-card p-2.5 shadow-card transition-transform hover:-translate-y-0.5"
+        className="relative rounded-2xl border border-border bg-card p-2.5 shadow-card transition-transform hover:-translate-y-0.5"
       >
         <Bell className="h-4 w-4 text-foreground" />
         {count > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-terracotta px-1 text-[9px] font-bold text-white">
+          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-d3-flame px-1 text-[9px] font-bold text-white">
             {count > 9 ? "9+" : count}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 top-12 z-50 w-[min(380px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
+        <div className="absolute right-0 top-12 z-50 w-[min(380px,calc(100vw-2rem))] overflow-hidden rounded-[2rem] border border-border bg-card shadow-d3-chunky">
           {/* Header */}
-          <div className="border-b border-border p-3.5 bg-gradient-to-r from-card to-secondary/30">
+          <div className="border-b border-border bg-d3-mustard/15 p-3.5">
             <div className="flex items-center gap-1.5">
-              <BellRing className="h-4 w-4 text-terracotta" />
-              <p className="text-[13px] font-bold text-foreground">Notifications</p>
+              <BellRing className="h-4 w-4 text-d3-flame" />
+              <p className="d3-display text-[13px] font-extrabold text-foreground">Notifications</p>
             </div>
           </div>
 
@@ -106,16 +106,16 @@ export function NotificationBell() {
                       if (!notification.read) markRead.mutate({ notificationId: notification.id });
                     }}
                     className={cn(
-                      "flex w-full items-start gap-2.5 rounded-xl p-2.5 text-left transition-colors hover:bg-muted/50",
-                      !notification.read && "bg-terracotta/[0.04]"
+                      "flex w-full items-start gap-2.5 rounded-2xl p-2.5 text-left transition-colors hover:bg-muted/50",
+                      !notification.read && "bg-d3-mustard/10"
                     )}
                   >
                     <span
                       className={cn(
-                        "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs",
+                        "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-xl text-xs",
                         notification.read
                           ? "bg-secondary text-muted-foreground"
-                          : "bg-terracotta/10 text-terracotta"
+                          : "bg-d3-mustard/25 text-d3-choco"
                       )}
                     >
                       <Icon className="h-3.5 w-3.5" />
@@ -126,7 +126,7 @@ export function NotificationBell() {
                           {notification.title}
                         </span>
                         {!notification.read && (
-                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-terracotta" />
+                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-d3-flame" />
                         )}
                       </span>
                       <span className="mt-0.5 block text-[10.5px] leading-relaxed text-muted-foreground line-clamp-2">
@@ -142,11 +142,11 @@ export function NotificationBell() {
             )}
           </div>
 
-          <div className="flex items-center justify-between border-t border-border px-3.5 py-2.5 bg-secondary/15">
+          <div className="flex items-center justify-between border-t border-border bg-secondary/40 px-3.5 py-2.5">
             <Link
               to="/roadmap"
               onClick={() => setOpen(false)}
-              className="text-[11px] font-semibold text-terracotta hover:underline"
+              className="text-[11px] font-bold text-d3-flame hover:underline"
             >
               View full roadmap →
             </Link>

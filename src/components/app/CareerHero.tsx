@@ -1,10 +1,18 @@
+/**
+ * CareerHero, Direction 3 (Character-Led / Living World).
+ *
+ * A bright illustrated scene, drawn entirely as hand-written inline
+ * SVG: sun, hills, a winding path and a paper plane. No photography,
+ * no generated imagery. The copy frames the student's personality as
+ * the hireable part (Bold Personality pattern); the roadmap is how
+ * that personality turns into proof.
+ */
 import { type Variants, motion } from "motion/react";
 import { useNavigate } from "@tanstack/react-router";
 
 import { cn } from "@/lib/utils";
 
 type CareerHeroProps = {
-  personImage?: string;
   className?: string;
   compact?: boolean;
 };
@@ -23,7 +31,68 @@ const wordVariants: Variants = {
   }),
 };
 
-export function CareerHero({ personImage, className, compact }: CareerHeroProps) {
+function HeroScene() {
+  return (
+    <svg
+      viewBox="0 0 640 360"
+      preserveAspectRatio="xMidYMax slice"
+      className="absolute inset-0 h-full w-full"
+      aria-hidden
+    >
+      {/* Sun */}
+      <circle cx="548" cy="62" r="52" fill="var(--d3-mustard)" opacity="0.3" />
+      <circle cx="548" cy="62" r="34" fill="var(--d3-mustard)" />
+      {/* Clouds */}
+      <g fill="#ffffff" opacity="0.9">
+        <ellipse cx="420" cy="48" rx="42" ry="14" />
+        <ellipse cx="448" cy="38" rx="28" ry="12" />
+        <ellipse cx="120" cy="36" rx="30" ry="10" />
+      </g>
+      {/* Back hills */}
+      <path d="M0 300 Q 140 190 320 262 T 640 230 L640 360 L0 360 Z" fill="var(--d3-leaf)" />
+      {/* Front hills */}
+      <path d="M0 330 Q 180 258 360 316 T 640 300 L640 360 L0 360 Z" fill="var(--d3-lime)" />
+      {/* Winding path */}
+      <path
+        d="M470 360 C 440 330 400 326 380 306 S 330 262 300 252"
+        stroke="var(--d3-paper)"
+        strokeWidth="10"
+        fill="none"
+        strokeLinecap="round"
+        strokeDasharray="1 20"
+      />
+      {/* Trees */}
+      <g>
+        <rect x="86" y="272" width="10" height="38" rx="3" fill="var(--d3-choco)" />
+        <circle cx="91" cy="262" r="26" fill="var(--d3-navy)" />
+        <circle cx="72" cy="276" r="15" fill="var(--d3-navy)" />
+        <rect x="560" y="282" width="10" height="38" rx="3" fill="var(--d3-choco)" />
+        <circle cx="565" cy="272" r="24" fill="var(--d3-navy)" />
+      </g>
+      {/* Flowers */}
+      <g fill="var(--d3-flame)">
+        <circle cx="210" cy="330" r="7" />
+        <circle cx="520" cy="338" r="7" />
+      </g>
+      <g fill="var(--d3-peri)">
+        <circle cx="250" cy="342" r="6" />
+        <circle cx="600" cy="326" r="6" />
+      </g>
+      {/* Paper plane */}
+      <g transform="rotate(14 300 120)">
+        <path d="M300 120 L360 132 L308 146 Z" fill="var(--d3-paper)" />
+        <path d="M300 120 L308 146 L322 136 Z" fill="var(--d3-flame)" />
+      </g>
+      {/* Birds */}
+      <g stroke="var(--d3-choco)" strokeWidth="3" strokeLinecap="round" fill="none">
+        <path d="M180 84 q9 -9 18 0 q9 -9 18 0" />
+        <path d="M230 108 q7 -7 14 0 q7 -7 14 0" />
+      </g>
+    </svg>
+  );
+}
+
+export function CareerHero({ className, compact }: CareerHeroProps) {
   const navigate = useNavigate();
 
   return (
@@ -32,47 +101,29 @@ export function CareerHero({ personImage, className, compact }: CareerHeroProps)
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6 }}
       className={cn(
-        "relative overflow-hidden rounded-2xl bg-ink text-white",
+        "d3-card relative overflow-hidden",
         compact ? "min-h-[300px]" : "min-h-[360px]",
         className,
       )}
     >
-      {/* Radial gradient overlay */}
-      <div className="absolute inset-0 bg-[radial-gradient(120%_100%_at_20%_0%,rgba(255,255,255,0.08),transparent_60%)]" />
+      <div className="absolute inset-0 bg-[var(--d3-sky)]">
+        <HeroScene />
+      </div>
 
-      {/* Floating nav keywords */}
+      {/* Floating keywords */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8, duration: 0.6 }}
-        className="absolute right-5 top-5 z-20 hidden gap-6 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/60 sm:flex"
+        className="absolute right-5 top-5 z-20 hidden gap-2 sm:flex"
       >
-        <span>Focus</span>
-        <span>Learn</span>
-        <span>Grow</span>
+        <span className="d3-chip bg-[var(--d3-paper)]/90 text-[var(--d3-choco)]">Focus</span>
+        <span className="d3-chip bg-[var(--d3-paper)]/90 text-[var(--d3-choco)]">Learn</span>
+        <span className="d3-chip bg-[var(--d3-paper)]/90 text-[var(--d3-choco)]">Grow</span>
       </motion.div>
 
-      {/* Terracotta circle with parallax-like float */}
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.1, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-        className="absolute bottom-0 right-[6%] aspect-square w-[46%] max-w-[380px] translate-y-[30%] rounded-full bg-terracotta"
-      />
-
-      {personImage ? (
-        <motion.img
-          initial={{ opacity: 0, x: 30 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.3, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          src={personImage}
-          alt="Career hero"
-          className="absolute bottom-0 right-[4%] z-10 hidden h-[86%] w-auto object-contain object-bottom grayscale contrast-110 drop-shadow-[0_30px_40px_rgba(0,0,0,0.45)] sm:block"
-        />
-      ) : null}
-
-      <div className="relative z-20 max-w-full px-7 py-8 sm:max-w-[62%] sm:px-10 sm:py-10">
-        <h2 className="editorial-title text-[clamp(2.1rem,5.4vw,4rem)]">
+      <div className="relative z-20 max-w-full px-7 py-8 sm:max-w-[64%] sm:px-10 sm:py-10">
+        <h2 className="d3-display text-[clamp(2.1rem,5.4vw,4rem)] leading-[0.95] text-[var(--d3-choco)]">
           <motion.span
             custom={0}
             initial="hidden"
@@ -96,14 +147,14 @@ export function CareerHero({ personImage, className, compact }: CareerHeroProps)
             initial="hidden"
             animate="visible"
             variants={wordVariants}
-            className="relative inline-block text-terracotta"
+            className="relative inline-block text-[var(--d3-flame)]"
           >
             Future
             <motion.span
               initial={{ scale: 0, rotate: -90 }}
               animate={{ scale: 1, rotate: 0 }}
               transition={{ delay: 0.7, type: "spring", stiffness: 400, damping: 15 }}
-              className="absolute -right-4 top-1 text-base text-terracotta"
+              className="absolute -right-4 top-1 text-base text-[var(--d3-flame)]"
               aria-hidden
             >
               ✳
@@ -115,9 +166,10 @@ export function CareerHero({ personImage, className, compact }: CareerHeroProps)
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.65, duration: 0.5, ease: "easeOut" }}
-          className="mt-5 max-w-[240px] text-[13px] leading-relaxed text-white/70"
+          className="mt-5 max-w-[280px] text-[13.5px] font-medium leading-relaxed text-[var(--d3-choco)]"
         >
-          Your career is a journey. We&apos;re here to guide you every step of the way.
+          Your personality is the hireable part. The roadmap turns it into proof recruiters
+          can see.
         </motion.p>
 
         <motion.button
@@ -128,7 +180,7 @@ export function CareerHero({ personImage, className, compact }: CareerHeroProps)
           whileTap={{ scale: 0.98 }}
           type="button"
           onClick={() => navigate({ to: "/roadmap" })}
-          className="mt-6 inline-flex items-center gap-2 rounded-lg bg-terracotta px-5 py-3 text-[13px] font-semibold text-primary-foreground"
+          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[var(--d3-choco)] px-5 py-3 text-[13px] font-bold text-[var(--d3-cream)]"
         >
           Start Roadmap <span aria-hidden>→</span>
         </motion.button>
