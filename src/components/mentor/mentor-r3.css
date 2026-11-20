@@ -1,0 +1,56 @@
+/* AI Career Mentor (Round 3, Direction 2). Ambient motion only: the
+ * mentor's live dot and the thinking beam under the typing indicator.
+ * The signature moment (flashlight over a suggestion revealing why it
+ * fits, from real data) lives in the shared lens engine; this file
+ * holds the quiet layer. All keyframes are gated by
+ * prefers-reduced-motion, and the global styles.css rule kills
+ * animations under reduced motion too.
+ */
+
+/* The mentor header's live dot breathes, same rhythm as the hero hub. */
+.cp-mentor-live-dot {
+  animation: cp-mentor-live-dot 2.4s ease-in-out infinite;
+}
+
+@keyframes cp-mentor-live-dot {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.55;
+  }
+}
+
+/* A thin lime beam sweeping under the thinking bubble while the
+ * mentor reads the student's evidence. */
+.cp-thinking-beam {
+  height: 2px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--cp-lime, #e1f10d),
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: cp-thinking-beam 1.6s linear infinite;
+}
+
+@keyframes cp-thinking-beam {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cp-mentor-live-dot,
+  .cp-thinking-beam {
+    animation: none;
+  }
+}

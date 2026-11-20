@@ -1,0 +1,60 @@
+/* Flight Plan (Round 3, Direction 2). Ambient motion for the hero's
+ * evidence panel: a dashed flight path with one lime dot travelling
+ * it, and the verified chip's live pulse. The signature moments (lens
+ * over the coverage fraction, flashlight over the evidence rows) live
+ * in the shared lens engine; this file only holds the quiet ambient
+ * layer. All keyframes are gated by prefers-reduced-motion, and the
+ * global styles.css rule kills animations under reduced motion too.
+ */
+
+/* Dashed rule with a travelling dot: the route, still being flown. */
+.cp-flight-dash {
+  position: relative;
+  height: 1px;
+  border-top: 1px dashed rgb(244 241 234 / 0.18);
+}
+
+.cp-flight-dot {
+  position: absolute;
+  top: -4px;
+  left: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  background: var(--cp-lime, #e1f10d);
+  box-shadow: 0 0 12px rgba(225, 241, 13, 0.8);
+  animation: cp-flight-dot 9s ease-in-out infinite alternate;
+}
+
+@keyframes cp-flight-dot {
+  from {
+    left: 0;
+  }
+  to {
+    left: calc(100% - 7px);
+  }
+}
+
+/* The verified chip's live dot breathes, same rhythm as the hero hub. */
+.cp-verify-pulse {
+  animation: cp-verify-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes cp-verify-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cp-flight-dot,
+  .cp-verify-pulse {
+    animation: none;
+  }
+}
