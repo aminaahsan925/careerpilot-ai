@@ -189,7 +189,7 @@ function AuthPage() {
           <span className="text-[13px] font-semibold tracking-[0.16em] text-cp-lime">AI</span>
         </Link>
 
-        <Lens magnify={1.6} className="relative">
+        <Lens className="relative">
           <div>
             <p className="font-mono text-[11px] font-medium uppercase tracking-[0.22em] text-cp-lime">
               Your career, deliberately built

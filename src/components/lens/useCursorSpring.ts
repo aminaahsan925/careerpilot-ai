@@ -15,6 +15,11 @@ import { useMotionValue, useSpring, type MotionValue } from "motion/react";
  * - Pointer events cover mouse, pen, and touch drag with one listener
  *   set. Nothing here calls preventDefault, so touch scrolling still
  *   works; the lens follows a drag and stays where the finger lifts.
+ * - Spring (cursor-feel pass, 20 Nov 2026): stiffness 420, damping 26,
+ *   mass 0.55. Fast with a lively snap and a hint of overshoot, not a
+ *   lazy lag. This is the shared cursor instrument: Lens, Flashlight
+ *   and SpotlightCard all move on the same spring, so the page feels
+ *   like one thing following your hand.
  */
 export interface CursorSpring {
   x: MotionValue<number>;
@@ -26,9 +31,9 @@ export function useCursorSpring(
   ref: RefObject<HTMLElement | null>,
   options?: { stiffness?: number; damping?: number; mass?: number },
 ): CursorSpring {
-  const stiffness = options?.stiffness ?? 260;
+  const stiffness = options?.stiffness ?? 420;
   const damping = options?.damping ?? 26;
-  const mass = options?.mass ?? 0.7;
+  const mass = options?.mass ?? 0.55;
   const springConfig = useMemo(
     () => ({ stiffness, damping, mass }),
     [stiffness, damping, mass],

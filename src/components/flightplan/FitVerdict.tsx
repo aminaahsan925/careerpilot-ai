@@ -60,9 +60,9 @@ function Verdict({
       </div>
 
       <p className="cp-eyebrow mt-6 text-cp-lime">Where you actually stand</p>
-      {/* The verdict number sits under the lens: static text only, no
+      {/* The verdict number sits under the light: static text only, no
           interactive elements inside, per the engine's contract. */}
-      <Lens magnify={1.5}>
+      <Lens>
         <p className="mt-3 font-display text-[clamp(1.5rem,3vw,2rem)] font-semibold leading-tight text-cp-paper">
           {coverage.covered} of {coverage.total} non-negotiables proven
         </p>

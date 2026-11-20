@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 /* Replaces the Direction 3 LoopHeader (friendly loop + Pilot). No    */
 /* loop motif, no mascot, no encouraging copy: a disciplined dark     */
 /* header with the goal in display type, the real streak as a big     */
-/* number under the lens, and real overall progress. Progress comes   */
+/* number under the light, and real overall progress. Progress comes  */
 /* only from real user state; a failed streak read shows as          */
 /* unavailable, never as a fake zero.                                 */
 /* ------------------------------------------------------------------ */
@@ -58,7 +58,7 @@ export function RoadmapHeader({
       />
 
       <div className="relative flex flex-wrap items-start gap-x-8 gap-y-6">
-        {/* The streak, as a number under the lens. */}
+        {/* The streak, as a number under the light. */}
         <div className="shrink-0">
           <p className="cp-eyebrow">Streak</p>
           {streakError ? (

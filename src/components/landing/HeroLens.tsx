@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Lens } from "@/components/lens/Lens";
 import { Flashlight } from "@/components/lens/Flashlight";
 import { MagneticButton } from "@/components/lens/MagneticButton";
+import { usePrefersReducedMotion } from "@/components/lens/usePrefersReducedMotion";
 import { KineticText } from "@/components/lens/KineticText";
 import {
   HeroOrbit,
@@ -14,9 +15,9 @@ import {
  * Round 3 hero (Direction 2, Cursor as Flashlight / Lens).
  *
  * Near-black ground, giant grotesk capitals, a tilted lime slab, and the
- * lens refracting the headline as the screenshot moment. Below it, a
+ * light disc falling on the headline as the screenshot moment. Below it, a
  * flashlight reveal (the audit detail is a genuinely different layer)
- * and a greyscale data strip that gains colour under the lens.
+ * and a greyscale data strip that gains colour under the light.
  *
  * Copy rules: no invented claims, no fake scores or percentages, no
  * photography (there is none in this product). Every fact in the data
@@ -53,6 +54,9 @@ export function HeroLens() {
   // Touch devices have no cursor: the micro-label says tap and drag
   // instead. Defaults to the cursor wording until the pointer is known.
   const [coarsePointer, setCoarsePointer] = useState(false);
+  // Reduced motion turns the light off entirely, so the hints say so
+  // instead of instructing an effect that is not there.
+  const reduced = usePrefersReducedMotion();
   useEffect(() => {
     const mq = window.matchMedia("(pointer: coarse)");
     const update = () => setCoarsePointer(mq.matches);
@@ -105,7 +109,7 @@ export function HeroLens() {
           <span>CareerPilot AI</span>
           <span className="hidden md:inline">Resume / Roadmap / Market / Recruiter</span>
           <span style={{ color: "var(--cp-lime, #e1f10d)" }}>
-            {coarsePointer ? "Tap and drag to look closer" : "Move your cursor to look closer"}
+            {reduced ? "Everything visible" : coarsePointer ? "Tap and drag to light it up" : "Move your cursor to light it up"}
           </span>
         </div>
 
@@ -114,8 +118,8 @@ export function HeroLens() {
             the space the headline does not reach. */}
         <HeroOrbit data={data} heroRef={heroRef} />
 
-        {/* Headline under the lens: the screenshot moment. */}
-        <Lens magnify={1.7} className="mt-12 md:mt-16">
+        {/* Headline under the light: the screenshot moment. */}
+        <Lens className="mt-12 md:mt-16">
           <h1
             style={{
               fontFamily: DISPLAY_FONT,
@@ -151,7 +155,7 @@ export function HeroLens() {
         </Lens>
 
         {/* CTAs sit outside the lens: interactive elements must never be
-            duplicated by the magnified copy. Destinations are the existing
+            duplicated by the light copy. Destinations are the existing
             ones: dashboard for the roadmap, resume for the analysis. */}
         <div className="mt-10 flex flex-wrap items-center gap-4">
           <MagneticButton
@@ -272,7 +276,7 @@ export function HeroLens() {
           </Flashlight>
         </div>
 
-        {/* Greyscale data strip: colour appears only under the lens. */}
+        {/* Greyscale data strip: colour appears only under the light. */}
         <div
           className="mt-20 pt-14 md:mt-24"
           style={{ borderTop: "1px solid rgba(198, 197, 191, 0.16)" }}
@@ -288,7 +292,7 @@ export function HeroLens() {
           >
             03 / What it checks
           </p>
-          <Lens magnify={1.8} className="mt-6">
+          <Lens className="mt-6">
             <div className="flex flex-wrap gap-3">
               {DATA_STRIP.map((fact) => (
                 <span
@@ -318,7 +322,7 @@ export function HeroLens() {
               color: "var(--cp-stone, #c6c5bf)",
             }}
           >
-            Tip: drag the lens across the strip. On touch, tap and drag.
+            {reduced ? "All five checks, in full colour." : "Tip: drag the light across the strip. On touch, tap and drag."}
           </p>
         </div>
       </div>

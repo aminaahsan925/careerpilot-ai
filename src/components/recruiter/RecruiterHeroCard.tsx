@@ -1,6 +1,7 @@
 import { motion } from "motion/react";
 import { Check, Search, Sparkles, UserCheck } from "lucide-react";
 import { Lens } from "@/components/lens/Lens";
+import { usePrefersReducedMotion } from "@/components/lens/usePrefersReducedMotion";
 import { SpotlightCard } from "@/components/lens/SpotlightCard";
 import type { RecruiterVerdict } from "@/data/recruiter";
 
@@ -36,6 +37,7 @@ export function RecruiterHeroCard({
   score = null,
   verdictBand = null,
 }: RecruiterHeroCardProps) {
+  const reduced = usePrefersReducedMotion();
   const bandLabel = verdictBand ? BAND_LABEL[verdictBand] : "No verdict yet";
   const bandTone = verdictBand ? BAND_TONE[verdictBand] : "text-cp-stone";
   const bandCopy = verdictBand
@@ -110,7 +112,7 @@ export function RecruiterHeroCard({
             {bandCopy}
           </p>
 
-          {/* Evidence score under the lens: static text, magnified. */}
+          {/* Evidence score under the light disc: static text. */}
           <div className="mt-6 border-t border-border pt-5">
             <Lens>
               <div className="flex items-end justify-between gap-4">
@@ -133,8 +135,8 @@ export function RecruiterHeroCard({
               </div>
             </Lens>
             <p className="mt-2 text-[11px] leading-relaxed text-cp-paper/50">
-              Evidence rubric only; not a hiring probability. Move the lens over the
-              score to inspect it.
+              Evidence rubric only; not a hiring probability.{" "}
+              {reduced ? "The score is shown in full." : "Move the light over the score to inspect it."}
             </p>
           </div>
 

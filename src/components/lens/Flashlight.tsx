@@ -10,6 +10,11 @@ import "./lens.css";
  * revealed only inside a radial light following the spring-smoothed
  * cursor.
  *
+ * - The light's edge is feathered, not a hard circle: the lit layer is
+ *   masked with a radial gradient that fades over the outer ~28% of the
+ *   pool, so text near the edge fades out instead of clipping mid-word,
+ *   and the pool reads as light falling on the page. A bright wash
+ *   inside the pool's centre and a stronger halo sell the beam.
  * - Mouse and pen: the light follows the pointer and fades on leave.
  * - Touch: a tap pins the light at that point; drag moves it. A
  *   "Reveal the hidden detail" toggle is always visible on touch devices
@@ -26,7 +31,7 @@ import "./lens.css";
  *   light reveals provenance rather than the content itself.
  * - `hideToggle` renders no reveal toggle. Use it only when the
  *   flashlight sits inside a Lens, whose children must be static (no
- *   interactive elements, nothing duplicated by the magnified copy).
+ *   interactive elements, nothing duplicated by the light copy).
  *   Touch users still get the light by tapping; the lit detail must
  *   stay supplementary (provenance, never the only copy of a fact).
  */
@@ -45,17 +50,17 @@ export function Flashlight({ children, lit, className, dimChildren, hideToggle }
   const reduced = usePrefersReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
   const { x, y, active } = useCursorSpring(ref);
-  const [radius, setRadius] = useState(190);
+  const [radius, setRadius] = useState(240);
   const [revealed, setRevealed] = useState(false);
   const litId = useId();
 
-  // Light radius follows the container width: 26% of it, clamped.
+  // Light radius follows the container width: 30% of it, clamped.
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const update = () => {
       const w = el.getBoundingClientRect().width;
-      setRadius(Math.round(Math.min(200, Math.max(140, w * 0.26))));
+      setRadius(Math.round(Math.min(280, Math.max(170, w * 0.3))));
     };
     update();
     const ro = new ResizeObserver(update);
@@ -63,7 +68,20 @@ export function Flashlight({ children, lit, className, dimChildren, hideToggle }
     return () => ro.disconnect();
   }, []);
 
-  const clip = useMotionTemplate`circle(${radius}px at ${x}px ${y}px)`;
+  // Feathered mask: fully lit to 85% of the radius, fading to nothing
+  // at the edge, so text fades instead of clipping mid-word and the
+  // pool blends into the dimmed base the way a real beam falls off.
+  // The feather is narrower than the lens's (70%) because the lit
+  // layer carries different text: a wide blend zone lets the two
+  // layers cross and read as a jumble at the pool's edge.
+  const mask = useMotionTemplate`radial-gradient(circle ${radius}px at ${x}px ${y}px, black 85%, transparent 100%)`;
+  // Fully-lit mask for the toggle-revealed state. Kept as a motion
+  // template (not the string "none") so maskImage is always a
+  // MotionValue and motion's style handling stays consistent.
+  const maskFull = useMotionTemplate`linear-gradient(black, black)`;
+  // Bright wash at the pool's centre, so the light feels like it is
+  // falling on the page rather than just un-dimming it.
+  const wash = useMotionTemplate`radial-gradient(circle ${Math.round(radius * 0.62)}px at ${x}px ${y}px, rgba(225, 241, 13, 0.08), transparent 70%)`;
 
   if (reduced) {
     return (
@@ -99,7 +117,7 @@ export function Flashlight({ children, lit, className, dimChildren, hideToggle }
             dim
               ? {
                   height: "100%",
-                  filter: "brightness(0.38) saturate(0.55)",
+                  filter: "brightness(0.32) saturate(0.5)",
                   transition: "filter 0.3s ease",
                 }
               : { height: "100%" }
@@ -110,7 +128,9 @@ export function Flashlight({ children, lit, className, dimChildren, hideToggle }
 
         {/* Lit layer: a different layer, revealed inside the light.
             Opaque backing so the dimmed base does not show through and
-            double with the lit text. */}
+            double with the lit text. The feathered mask (not a hard
+            clip-path) fades the layer out toward the pool's edge, so
+            text never cuts mid-word. */}
         <motion.div
           id={hideToggle ? undefined : litId}
           aria-hidden={!litVisible}
@@ -122,13 +142,25 @@ export function Flashlight({ children, lit, className, dimChildren, hideToggle }
             flexDirection: "column",
             justifyContent: "center",
             background: "var(--cp-panel, #0e0e0c)",
-            clipPath: revealed ? "inset(0 0 0 0)" : clip,
+            maskImage: revealed ? maskFull : mask,
+            WebkitMaskImage: revealed ? maskFull : mask,
             pointerEvents: revealed ? "auto" : "none",
           }}
           animate={{ opacity: litVisible ? 1 : 0 }}
           transition={{ duration: 0.25, ease: "easeOut" }}
         >
           {lit}
+          {/* Bright wash at the pool's centre. Inside the masked layer,
+              so it stays within the light. */}
+          <motion.div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: wash,
+              pointerEvents: "none",
+            }}
+          />
         </motion.div>
 
         {/* Soft halo around the light, so the edge reads as a beam. */}
@@ -138,13 +170,13 @@ export function Flashlight({ children, lit, className, dimChildren, hideToggle }
             position: "absolute",
             left: 0,
             top: 0,
-            width: radius * 2 + 80,
-            height: radius * 2 + 80,
+            width: radius * 2 + 160,
+            height: radius * 2 + 160,
             borderRadius: "9999px",
             translate: "-50% -50%",
             pointerEvents: "none",
             background:
-              "radial-gradient(closest-side, rgba(225, 241, 13, 0.1), transparent 70%)",
+              "radial-gradient(closest-side, rgba(225, 241, 13, 0.22), rgba(225, 241, 13, 0.07) 55%, transparent 75%)",
             x,
             y,
           }}

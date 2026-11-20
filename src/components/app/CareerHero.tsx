@@ -74,7 +74,7 @@ export function CareerHero({ className, compact }: CareerHeroProps) {
       </motion.div>
 
       <div className="relative z-20 max-w-full px-7 py-8 sm:max-w-[72%] sm:px-10 sm:py-10">
-        <p className="cp-eyebrow">Your career, under the lens</p>
+        <p className="cp-eyebrow">Your career, under the light</p>
         <h2 className="font-display editorial-title mt-3 text-[clamp(2.6rem,6vw,4.6rem)] text-cp-paper">
           <motion.span
             custom={0}

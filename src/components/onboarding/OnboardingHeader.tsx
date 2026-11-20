@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
  *   on every step change (the h1 remounts per step via its key). Under
  *   reduced motion the title renders plainly, fully visible.
  * - Lens over the progress moment: the big step counter sits under a
- *   real glass lens, so moving the cursor over it magnifies the numerals.
+ *   light disc, so moving the cursor over it lights the numerals.
  *   The counter is static text, which is all a Lens may duplicate.
  * The progress segments below glow lime on the current step.
  */
@@ -61,13 +61,13 @@ export function OnboardingHeader({
           <p className="mt-3 max-w-[52ch] text-[13.5px] leading-relaxed text-cp-stone">{hint}</p>
         </div>
 
-        <Lens magnify={1.35} className="shrink-0">
+        <Lens className="shrink-0">
           <div className="min-w-[190px] text-right">
             <p className="font-display text-[clamp(2.6rem,6vw,4rem)] font-extrabold leading-none text-cp-paper">
               {stepLabel}
               <span className="text-cp-lime">/{totalLabel}</span>
             </p>
-            <p className="cp-eyebrow mt-2">Look closer</p>
+            <p className="cp-eyebrow mt-2">Under the light</p>
           </div>
         </Lens>
       </div>

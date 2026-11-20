@@ -149,6 +149,7 @@ function PricingPage() {
               <div className="mt-7">
                 <MagneticCTA
                   href="/diagnosis"
+                  maxPull={20}
                   className="inline-flex rounded-lg bg-cp-lime px-5 py-3 text-[13.5px] font-bold text-cp-ink transition-colors hover:bg-cp-lime/90"
                 >
                   Start free →

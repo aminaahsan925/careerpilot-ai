@@ -3,8 +3,8 @@
  *
  * Signature moments, presentation only: a flashlight over the "What
  * CareerPilot knows" summary reveals the evidence behind each claim
- * (where the fact came from, what it is or is not); a real glass lens
- * magnifies the name in the identity header; every section card carries
+ * (where the fact came from, what it is or is not); a light disc
+ * lights the name in the identity header; every section card carries
  * a spotlight border that follows the cursor; Save Changes is magnetic.
  * All data, editing, photo upload and logout logic is unchanged.
  */
@@ -398,7 +398,7 @@ export function ProfilePage() {
   return (
     <AppLayout title="Profile" subtitle="Manage your profile and knowledge">
       <div className="mx-auto w-full max-w-[720px] space-y-8">
-        {/* Identity header: the name sits under a real glass lens. The
+        {/* Identity header: the name sits under a light disc. The
             photo and camera button stay outside the lens (interactive). */}
         <motion.section
           initial={{ opacity: 0, y: 12 }}
@@ -428,7 +428,7 @@ export function ProfilePage() {
               </button>
               <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
             </div>
-            <Lens magnify={1.3} className="min-w-[220px] flex-1">
+            <Lens className="min-w-[220px] flex-1">
               <div className="min-w-0">
                 <p className="cp-eyebrow">Your profile</p>
                 <h2 className="mt-2 font-display text-[clamp(1.6rem,4vw,2.2rem)] font-extrabold uppercase leading-[0.95] tracking-[-0.02em] text-cp-paper">

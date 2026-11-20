@@ -494,9 +494,9 @@ function McqCheckpoint({
           </div>
           <h4 className="mt-3 font-display text-lg font-bold">Checkpoint complete</h4>
           {/* The score is the real count of correct answers, under a Lens
-              (static text, so the magnified copy stays clean). */}
+              (static text, so the light copy stays clean). */}
           <div data-r3c="mcq-score-lens">
-            <Lens magnify={1.15}>
+            <Lens>
               <p className="mt-2 font-display text-[52px] font-extrabold leading-none tracking-tight text-cp-lime">
                 {score}
                 <span className="font-mono text-[18px] font-medium text-cp-stone">
@@ -663,12 +663,12 @@ export function InterviewPrepPage() {
                 </div>
               </div>
               {/* Prep progress, under a Lens: the count and the bar are
-                  static text, so the magnified copy stays clean. */}
+                  static text, so the light copy stays clean. */}
               <div
                 className="w-full rounded-2xl border border-white/10 bg-white/[0.04] p-4 sm:w-auto sm:min-w-[230px]"
                 data-r3c="hero-progress"
               >
-                <Lens magnify={1.15}>
+                <Lens>
                   <div className="flex items-center justify-between gap-4">
                     <span className="cp-eyebrow">Prep progress</span>
                     <span className="font-mono text-[11px] font-bold text-cp-lime">

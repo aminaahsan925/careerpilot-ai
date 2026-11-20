@@ -40,6 +40,8 @@ interface MagneticCTAProps {
   type?: "button" | "submit" | undefined;
   fullWidth?: boolean | undefined;
   wrapperClassName?: string | undefined;
+  /** Max magnetic lean in pixels. Default 14; raise only where neighbours have room. */
+  maxPull?: number | undefined;
 }
 
 export function MagneticCTA({
@@ -52,6 +54,7 @@ export function MagneticCTA({
   type = "button",
   fullWidth,
   wrapperClassName,
+  maxPull,
 }: MagneticCTAProps) {
   // Disabled: the exact original button, disabled. No magnetism, no
   // behaviour change; the label (spinner or text) comes from the caller
@@ -73,6 +76,7 @@ export function MagneticCTA({
     <MagneticButton
       {...(href !== undefined ? { href } : {})}
       {...(onClick !== undefined ? { onClick } : {})}
+      {...(maxPull !== undefined ? { maxPull } : {})}
       className={cn("inline-flex items-center justify-center whitespace-nowrap", className)}
     >
       {children}

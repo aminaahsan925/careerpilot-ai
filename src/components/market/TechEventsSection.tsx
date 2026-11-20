@@ -129,10 +129,10 @@ function EventCardBody({
   // chip drifts against it. Both stay small so nothing ever overlaps
   // the text next to them.
   const badgeShift = pointer && !reduced
-    ? { transform: `translate(${(pointer.x - 50) * 0.12}px, ${(pointer.y - 50) * 0.08}px)` }
+    ? { transform: `translate(${(pointer.x - 50) * 0.24}px, ${(pointer.y - 50) * 0.16}px)` }
     : undefined;
   const prizeShift = pointer && !reduced
-    ? { transform: `translate(${(pointer.x - 50) * -0.08}px, ${(pointer.y - 50) * -0.06}px)` }
+    ? { transform: `translate(${(pointer.x - 50) * -0.16}px, ${(pointer.y - 50) * -0.12}px)` }
     : undefined;
 
   return (

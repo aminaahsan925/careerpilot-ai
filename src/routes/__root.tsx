@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-router";
 import { MotionConfig } from "motion/react";
 import { Toaster } from "@/components/ui/sonner";
+import { CursorGlow } from "@/components/lens/CursorGlow";
 import appCss from "../styles.css?url";
 import { useEffect, type ReactNode } from "react";
 
@@ -137,6 +138,9 @@ function RootComponent() {
       {/* reducedMotion="user": every Motion entrance animation in the app
           honours the OS prefers-reduced-motion setting. */}
       <MotionConfig reducedMotion="user">
+        {/* Ambient cursor glow: one fixed layer, follows the cursor on
+            every page. Renders nothing on touch or reduced motion. */}
+        <CursorGlow />
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
         <Toaster position="bottom-right" />

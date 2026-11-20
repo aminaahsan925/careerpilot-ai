@@ -1,55 +1,66 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { motion, useMotionTemplate } from "motion/react";
 import { useCursorSpring } from "./useCursorSpring";
 import { usePrefersReducedMotion } from "./usePrefersReducedMotion";
 import "./lens.css";
 
 /**
- * A cursor-following glass lens that genuinely magnifies live content.
+ * A cursor light disc (Round 3, Direction 2, Cursor as Flashlight /
+ * Lens). It reads as LIGHT falling on the page, never as a magnifying
+ * glass (Amina, 20 Nov 22:58 PKT: the old lens "looks like a
+ * magnifying glass").
  *
- * How it works (not a flat CSS trick):
+ * How it works:
  * - The children render once as the base layer, then again as a live
- *   duplicate scaled by `magnify`, with its transform origin pinned to
- *   the spring-smoothed cursor. The point under the cursor stays fixed,
- *   so the duplicate reads as true magnification of what is beneath.
- * - The duplicate is clipped to a circle at the cursor (clip-path driven
- *   by motion values), so only the lens disc shows the zoomed copy.
- * - The rim carries the refraction feel: an SVG feTurbulence plus
- *   feDisplacementMap filter wobbles the glass ring, and the ring itself
- *   has backdrop blur/saturate, an inset highlight, and a chromatic
- *   edge (lime one way, ember the other).
- * - The lens radius tracks the container width (110 to 160px), so the
- *   disc stays usable on phones as well as desktops.
+ *   duplicate at exactly 1x, revealed through a feathered mask (fully
+ *   lit to 70% of the radius, fading to nothing at the edge), so the
+ *   disc melts into the page like a pool of light. There is no hard
+ *   circular border, no glass ring, no bubble rim, no specular arc,
+ *   and NO enlargement: the duplicate sits pixel-identical over the
+ *   base, which is what keeps the feather blend seamless. An earlier
+ *   1.05x version ghosted visibly in the feather zone (the copy's
+ *   glyphs sat 5-10px off the base's), so the scale was removed.
+ * - The disc reads as light through its lifted ground (the duplicate
+ *   layer sits on a backing one step lighter than the page), a bright
+ *   wash at its centre, and a soft halo around it. The disc also
+ *   carries the colour reveal: elements marked
+ *   `.cp-colour-under-lens` render monochrome in the base layer and
+ *   in full colour inside the disc (used by the hero data strip).
+ * - The light radius tracks the container width (130 to 200px), so the
+ *   pool stays usable on phones as well as desktops.
+ *
+ * The flashlight is the primary cursor effect (light revealing a
+ * genuinely different hidden layer); the lens is the same light over
+ * the same content, brightening it and showing its colour. The two
+ * share the spring, the feather and the halo, so they feel like one
+ * instrument.
  *
  * Limits, stated honestly:
- * - Children are rendered twice (base plus magnified copy), so they must
+ * - Children are rendered twice (base plus light copy), so they must
  *   be static: no interactive elements, no ids, nothing with local
- *   state. The magnified copy is aria-hidden.
- * - With prefers-reduced-motion the lens layers are not rendered at all
- *   and the children show plainly. With no cursor the lens stays hidden
- *   until a tap or drag; the base content is always fully visible.
+ *   state. The light copy is aria-hidden.
+ * - With prefers-reduced-motion the light layers are not rendered at
+ *   all and the children show plainly. With no cursor the disc stays
+ *   hidden until a tap or drag; the base content is always visible.
  */
 interface LensProps {
   children: ReactNode;
   className?: string;
-  /** Zoom factor of the magnified copy. Default 1.6. */
-  magnify?: number;
 }
 
-export function Lens({ children, className, magnify = 1.6 }: LensProps) {
+export function Lens({ children, className }: LensProps) {
   const reduced = usePrefersReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
   const { x, y, active } = useCursorSpring(ref);
-  const [radius, setRadius] = useState(150);
-  const filterId = useId();
+  const [radius, setRadius] = useState(170);
 
-  // Lens radius follows the container width: 22% of it, clamped.
+  // Light radius follows the container width: 26% of it, clamped.
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const update = () => {
       const w = el.getBoundingClientRect().width;
-      setRadius(Math.round(Math.min(160, Math.max(110, w * 0.22))));
+      setRadius(Math.round(Math.min(200, Math.max(130, w * 0.26))));
     };
     update();
     const ro = new ResizeObserver(update);
@@ -57,8 +68,12 @@ export function Lens({ children, className, magnify = 1.6 }: LensProps) {
     return () => ro.disconnect();
   }, []);
 
-  const clip = useMotionTemplate`circle(${radius}px at ${x}px ${y}px)`;
-  const origin = useMotionTemplate`${x}px ${y}px`;
+  // Feathered mask: fully lit out to 70% of the radius, fading to
+  // nothing at the edge. No hard circle anywhere.
+  const mask = useMotionTemplate`radial-gradient(circle ${radius}px at ${x}px ${y}px, black 70%, transparent 100%)`;
+  // Bright wash inside the disc: strong enough to read as light in a
+  // still frame, fading out with the feathered edge.
+  const wash = useMotionTemplate`radial-gradient(circle ${radius}px at ${x}px ${y}px, rgba(225, 241, 13, 0.16), rgba(225, 241, 13, 0.05) 60%, transparent 80%)`;
 
   if (reduced) {
     return (
@@ -68,110 +83,57 @@ export function Lens({ children, className, magnify = 1.6 }: LensProps) {
     );
   }
 
-  const diameter = radius * 2;
-
   return (
     <div ref={ref} className={className} style={{ position: "relative" }}>
       <div className="cp-lens-base">{children}</div>
 
-      {/* Live magnified duplicate, clipped to the lens disc. */}
+      {/* Live light copy, revealed through the feathered mask. The
+          opaque backing keeps the base from doubling with the copy
+          inside the disc; at the feathered edge it melts into the
+          base, which is the light falloff. */}
       <motion.div
         aria-hidden="true"
         className="cp-lens-zoom-wrap"
-        style={{ clipPath: clip }}
+        style={{ maskImage: mask, WebkitMaskImage: mask }}
         animate={{ opacity: active ? 1 : 0 }}
         transition={{ duration: 0.25, ease: "easeOut" }}
       >
-        <motion.div
-          className="cp-lens-zoom"
-          style={{ transformOrigin: origin, scale: magnify }}
-        >
+        <div className="cp-lens-zoom">
           {children}
-        </motion.div>
+        </div>
+        {/* Bright wash at the disc's centre. Inside the masked layer,
+            so it stays within the light. */}
+        <motion.div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: wash,
+            pointerEvents: "none",
+          }}
+        />
       </motion.div>
 
-      {/* Glass ring, centred on the spring-smoothed cursor. */}
+      {/* Soft halo around the disc, so the edge reads as light. */}
       <motion.div
         aria-hidden="true"
-        className="cp-lens-ring"
         style={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+          width: radius * 2 + 200,
+          height: radius * 2 + 200,
+          borderRadius: "9999px",
+          translate: "-50% -50%",
+          pointerEvents: "none",
+          background:
+            "radial-gradient(closest-side, rgba(225, 241, 13, 0.22), rgba(225, 241, 13, 0.06) 55%, transparent 75%)",
           x,
           y,
-          width: diameter,
-          height: diameter,
-          translate: "-50% -50%",
         }}
         animate={{ opacity: active ? 1 : 0 }}
         transition={{ duration: 0.25, ease: "easeOut" }}
-      >
-        {/* Glass band: blur/saturate and highlight, masked to the rim so
-            the magnified interior stays sharp. */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            borderRadius: "9999px",
-            border: "1px solid var(--cp-lime, #e1f10d)",
-            opacity: 0.55,
-            boxShadow:
-              "inset 0 0 0 1px rgba(244, 241, 234, 0.18), inset 0 6px 18px rgba(244, 241, 234, 0.14), inset 0 -8px 20px rgba(0, 0, 0, 0.35), -1px 0 0 rgba(225, 241, 13, 0.35), 1px 0 0 rgba(255, 122, 69, 0.35)",
-            backdropFilter: "blur(2px) saturate(1.6)",
-            WebkitBackdropFilter: "blur(2px) saturate(1.6)",
-            maskImage:
-              "radial-gradient(closest-side, transparent calc(100% - 16px), black calc(100% - 13px))",
-            WebkitMaskImage:
-              "radial-gradient(closest-side, transparent calc(100% - 16px), black calc(100% - 13px))",
-          }}
-        />
-        {/* Refraction rim: the same circle, wobbled by the displacement
-            filter so the edge bends like liquid glass. */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            borderRadius: "9999px",
-            border: "1.5px solid rgba(225, 241, 13, 0.4)",
-            filter: `url(#${filterId})`,
-            opacity: 0.85,
-          }}
-        />
-        {/* Specular highlight arc at the top of the lens. */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            borderRadius: "9999px",
-            background:
-              "radial-gradient(ellipse 42% 24% at 30% 20%, rgba(244, 241, 234, 0.3), transparent 70%)",
-            maskImage:
-              "radial-gradient(closest-side, transparent calc(100% - 34px), black calc(100% - 30px))",
-            WebkitMaskImage:
-              "radial-gradient(closest-side, transparent calc(100% - 34px), black calc(100% - 30px))",
-          }}
-        />
-      </motion.div>
-
-      {/* Displacement filter for the refraction rim. Unique per instance. */}
-      <svg width="0" height="0" aria-hidden="true" style={{ position: "absolute" }}>
-        <defs>
-          <filter id={filterId} x="-20%" y="-20%" width="140%" height="140%">
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency="0.012 0.02"
-              numOctaves="2"
-              seed="7"
-              result="noise"
-            />
-            <feDisplacementMap
-              in="SourceGraphic"
-              in2="noise"
-              scale="14"
-              xChannelSelector="R"
-              yChannelSelector="G"
-            />
-          </filter>
-        </defs>
-      </svg>
+      />
     </div>
   );
 }

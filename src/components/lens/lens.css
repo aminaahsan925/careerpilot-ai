@@ -5,7 +5,7 @@
  * fallbacks match the token contract exactly.
  */
 
-/* --- Lens: base and magnified layers ----------------------------------- */
+/* --- Lens: base and light layers --------------------------------------- */
 
 .cp-lens-base {
   position: relative;
@@ -20,10 +20,13 @@
   inset: 0;
   overflow: hidden;
   pointer-events: none;
-  /* Opaque backing: inside the disc only the magnified copy shows. Without
-     this the base layer shows through and the two copies double up. A
-     caller on a different surface can override --cp-lens-bg. */
-  background: var(--cp-lens-bg, var(--cp-ink, #040403));
+  /* Opaque backing, lifted one step above the page ground: inside the
+     disc only the light copy shows, and the lifted ground is what
+     makes the disc read as a pool of light rather than a magnifier.
+     Without this the base layer shows through and the two copies
+     double up. A caller on a different surface can override
+     --cp-lens-bg. */
+  background: var(--cp-lens-bg, #16140a);
 }
 
 .cp-lens-zoom {
@@ -35,7 +38,7 @@
 /*
  * Monochrome to colour under the lens. Elements marked
  * .cp-colour-under-lens render grey in the base layer and in full colour
- * inside the magnified lens copy, so colour appears only where the lens
+ * inside the light copy, so colour appears only where the light
  * sits. Used by the hero data strip (HeroLens.tsx).
  */
 .cp-lens-base .cp-colour-under-lens {
@@ -44,14 +47,6 @@
 
 .cp-lens-zoom .cp-colour-under-lens {
   filter: none;
-}
-
-.cp-lens-ring {
-  position: absolute;
-  left: 0;
-  top: 0;
-  pointer-events: none;
-  z-index: 5;
 }
 
 /* --- Flashlight: reveal toggle ------------------------------------------

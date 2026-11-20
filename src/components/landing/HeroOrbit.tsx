@@ -27,7 +27,7 @@ import "./hero-orbit.css";
  * detected skills, counted against their stored postings, plus three
  * drifting glass chips (resume band, top gap, stored postings). It
  * moves on its own at idle (slow orbit, gentle drift), reacts to the
- * cursor (parallax at four depths, the lens magnifies it, the
+ * cursor (parallax at four depths, the light disc falls on it, the
  * flashlight lights its detail), and uses real data only: skill
  * counts are title mentions in stored postings, exactly like the
  * Market Mirror. With no data it shows the honest empty state and
@@ -35,7 +35,7 @@ import "./hero-orbit.css";
  *
  * Motion systems, all reused from the lens engine, none rebuilt:
  * - Lens: the composition has its own Lens instance (the hero already
- *   has two), so the glass lens magnifies nodes and chips.
+ *   has two), so the light disc falls on nodes and chips.
  * - Flashlight: dimChildren={false}, so the composition stays fully
  *   visible at rest and the light only adds the detail layer (counts
  *   with denominators, sources, the ATS score with its disclaimer).
@@ -45,7 +45,9 @@ import "./hero-orbit.css";
  *   provenance, never the only copy of a fact.
  * - Parallax: pointer position over the whole hero section, layers
  *   shifting at different depths (MarketLens pattern: pointer state
- *   plus a CSS transition, no extra spring).
+ *   plus a CSS transition, no extra spring). Depths, cursor-feel pass
+ *   (20 Nov 2026): stars 8, ring and nodes 16, hub 12, chips 26, so
+ *   the layers visibly separate as the cursor moves.
  * - prefers-reduced-motion: the component branches to a static
  *   full-detail scene (no Lens, no Flashlight); the CSS also kills
  *   the keyframes.
@@ -58,7 +60,7 @@ import "./hero-orbit.css";
  * The box carries z-10: the headline's Lens box is full-width, so
  * without it the headline (not the composition) receives the pointer
  * over the top of the composition, the composition's lens never
- * activates, and the headline lens shows a black disc magnifying the
+ * activates, and the headline light shows a soft pool over the
  * empty right end of its row. With z-10 the composition is the hit
  * target over its own box; the headline text itself ends well left of
  * the box, so nothing the user reads is ever covered.
@@ -354,7 +356,7 @@ function OrbitScene({
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0"
-        style={{ ...parallaxStyle(pointer, 4), transition: PARALLAX_TRANSITION }}
+        style={{ ...parallaxStyle(pointer, 8), transition: PARALLAX_TRANSITION }}
       >
         {STARS.map((star, index) => (
           <span
@@ -376,7 +378,7 @@ function OrbitScene({
           them above the chips without lifting the orbit path too. */}
       <div
         className="absolute inset-0"
-        style={{ ...parallaxStyle(pointer, 8), transition: PARALLAX_TRANSITION }}
+        style={{ ...parallaxStyle(pointer, 16), transition: PARALLAX_TRANSITION }}
       >
         <div
           className="absolute"
@@ -414,7 +416,7 @@ function OrbitScene({
       <div
         className="absolute inset-0"
         style={{
-          ...parallaxStyle(pointer, 8),
+          ...parallaxStyle(pointer, 16),
           transition: PARALLAX_TRANSITION,
           zIndex: nodesAboveChips ? 2 : undefined,
         }}
@@ -499,7 +501,7 @@ function OrbitScene({
           left: "calc(50% - 80px)",
           top: "calc(50% - 46px)",
           width: 160,
-          ...parallaxStyle(pointer, 6),
+          ...parallaxStyle(pointer, 12),
           transition: PARALLAX_TRANSITION,
         }}
       >
@@ -548,7 +550,7 @@ function OrbitScene({
       {/* Near layer: the three drifting glass chips. */}
       <div
         className="absolute inset-0"
-        style={{ ...parallaxStyle(pointer, 14), transition: PARALLAX_TRANSITION }}
+        style={{ ...parallaxStyle(pointer, 26), transition: PARALLAX_TRANSITION }}
       >
         <Chip
           label="Resume"
@@ -616,7 +618,7 @@ export function HeroOrbit({
       role="group"
       aria-label="Live market signals: your skills in orbit"
     >
-      <Lens magnify={1.7} className="h-full w-full">
+      <Lens className="h-full w-full">
         <Flashlight
           className="h-full w-full"
           dimChildren={false}

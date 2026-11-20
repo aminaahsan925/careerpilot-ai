@@ -2,7 +2,7 @@
  * Onboarding (Know Me flow), Round 3 (Cursor as Flashlight / Lens).
  *
  * Signature moments, presentation only: a kinetic step reveal (the step
- * title's words rise in on every step change), a real glass lens over the
+ * title's words rise in on every step change), a light disc over the
  * big step counter, spotlight borders on the step card, and a magnetic
  * Continue button. The form logic, validation, progressive save and
  * final save are unchanged; motion never blocks input or navigation.
@@ -1187,6 +1187,7 @@ export function OnboardingPage() {
             canContinue && !save.isPending ? (
               <MagneticButton
                 onClick={goNext}
+                maxPull={20}
                 className="flex items-center gap-2 rounded-xl bg-cp-lime px-5 py-2.5 text-[13.5px] font-semibold text-cp-ink shadow-[0_0_24px_rgba(225,241,13,0.25)]"
               >
                 Continue <ArrowRight className="h-4 w-4" />
@@ -1219,6 +1220,7 @@ export function OnboardingPage() {
           ) : (
             <MagneticButton
               onClick={finish}
+              maxPull={20}
               className="flex items-center gap-2 rounded-xl bg-cp-lime px-5 py-2.5 text-[13.5px] font-semibold text-cp-ink shadow-[0_0_24px_rgba(225,241,13,0.25)]"
             >
               Continue <Check className="h-4 w-4" />

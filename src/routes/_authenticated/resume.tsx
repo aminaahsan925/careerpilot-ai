@@ -128,7 +128,7 @@ function ResumeReveal({
             <div>
               <p className="cp-eyebrow">ATS checklist score</p>
               <div className="mt-3 flex items-baseline gap-2">
-                <Lens magnify={1.15}>
+                <Lens>
                   <span className="font-display text-[72px] font-extrabold leading-none tracking-tight text-cp-lime sm:text-[88px]">
                     {analysis.ats_score}
                   </span>

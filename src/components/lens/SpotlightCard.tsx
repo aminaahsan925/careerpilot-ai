@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { motion, useMotionTemplate } from "motion/react";
 import { useCursorSpring } from "./useCursorSpring";
 import { usePrefersReducedMotion } from "./usePrefersReducedMotion";
@@ -10,6 +10,11 @@ import { usePrefersReducedMotion } from "./usePrefersReducedMotion";
  *
  * - The border glow uses the mask-composite ring trick, so the light
  *   sits on the border itself, not as a washed-out overlay.
+ * - The card also tilts toward the cursor (max 3 degrees, the BelowHero
+ *   TiltCard pattern: the transform is written straight to the DOM so
+ *   pointer moves never re-render, and it eases back to flat on leave).
+ *   Fine pointers with full motion only; touch and reduced-motion users
+ *   get a still card.
  * - Keyboard focus inside the card shows the glow at its centre, so the
  *   effect is not cursor-only. Touch shows it at the tap point.
  * - With prefers-reduced-motion the card renders plainly with no glow
@@ -21,14 +26,27 @@ interface SpotlightCardProps {
   className?: string;
 }
 
+const MAX_TILT = 3;
+
 export function SpotlightCard({ children, className }: SpotlightCardProps) {
   const reduced = usePrefersReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
   const { x, y, active } = useCursorSpring(ref);
   const [focused, setFocused] = useState(false);
+  const tiltEnabled = useRef(false);
 
-  const glow = useMotionTemplate`radial-gradient(240px circle at ${x}px ${y}px, rgba(225, 241, 13, 0.14), transparent 70%)`;
-  const borderGlow = useMotionTemplate`radial-gradient(200px circle at ${x}px ${y}px, rgba(225, 241, 13, 0.85), transparent 70%)`;
+  useEffect(() => {
+    // Gated on NOT-coarse rather than on fine: real browsers always
+    // report fine or coarse, so this is identical there, but
+    // environments that report neither (headless shells) get the tilt
+    // instead of silently losing it.
+    tiltEnabled.current =
+      !window.matchMedia("(pointer: coarse)").matches &&
+      !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }, []);
+
+  const glow = useMotionTemplate`radial-gradient(320px circle at ${x}px ${y}px, rgba(225, 241, 13, 0.22), transparent 70%)`;
+  const borderGlow = useMotionTemplate`radial-gradient(280px circle at ${x}px ${y}px, rgba(225, 241, 13, 1), transparent 70%)`;
 
   if (reduced) {
     return (
@@ -44,9 +62,24 @@ export function SpotlightCard({ children, className }: SpotlightCardProps) {
     <div
       ref={ref}
       className={className}
-      style={{ position: "relative" }}
+      style={{ position: "relative", transformStyle: "preserve-3d" }}
       onFocus={() => setFocused(true)}
       onBlur={() => setFocused(false)}
+      onPointerMove={(event) => {
+        const el = ref.current;
+        if (!el || !tiltEnabled.current) return;
+        const rect = el.getBoundingClientRect();
+        const px = (event.clientX - rect.left) / rect.width - 0.5;
+        const py = (event.clientY - rect.top) / rect.height - 0.5;
+        el.style.transition = "transform 0.08s linear";
+        el.style.transform = `perspective(900px) rotateX(${(-py * MAX_TILT * 2).toFixed(2)}deg) rotateY(${(px * MAX_TILT * 2).toFixed(2)}deg)`;
+      }}
+      onPointerLeave={() => {
+        const el = ref.current;
+        if (!el || !tiltEnabled.current) return;
+        el.style.transition = "transform 0.45s ease";
+        el.style.transform = "perspective(900px) rotateX(0deg) rotateY(0deg)";
+      }}
     >
       {/* Soft glow behind the content. */}
       <motion.div

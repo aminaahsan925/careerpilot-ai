@@ -588,3 +588,113 @@ SSR opacity-0 states (drivers poll for settled animations).
 - **Interview prep's mock interview** (the recruiter's mock-interview
   step) was already in the Round 3 language from R3; the standalone
   Interview Prep page is the one rebuilt here.
+
+---
+
+## Cursor-feel pass (R3d) — 20 Nov 2026, ~23:00-23:45 PKT
+
+Amina's feedback, 22:51 PKT: "the cursor movement is good but not too
+good". Then 22:58 PKT, on the lens: "its looking like a megnifing
+glass". The second message changed the lens direction: the lens must
+read as LIGHT and GLASS, never as a magnifier. Everything below is
+presentation only (no data logic, no migrations, no billing, no new
+dependencies).
+
+### What changed
+
+**Lens: soft light disc, no magnification.** The enlarged duplicate
+underneath was what made it a magnifier, so it is gone: the disc now
+reveals the light layer at scale exactly 1.0 (a 1.05x try ghosted
+visibly in proof and was removed), and the `magnify` prop was removed
+from all 14 call sites. No ring, no filter, no specular highlight.
+Feathered mask (black 70% to transparent), warm backing `#16140a`,
+wash 0.16, halo 0.22 at radius*2+200. Radius 26% of container, clamped
+130-200px. The disc now reads as a pool of light falling on the page.
+
+**Flashlight: primary cursor effect, brighter and wider.** Radius 30%
+of container, clamped 170-280px, feathered mask black 85% to
+transparent (raised from 72% after proof showed lit line starts fading
+at the pool edge), brighter halo, dim 0.32. The reveal moment now
+reads as light falling on hidden detail.
+
+**Magnetic: stronger pull + 3D tilt.** Pull 0.55, field 150px, new
+`maxPull` prop (default 14px; raised where space allows: footer CTA
+26, MarketLens refresh 22, pricing Start free 20, onboarding /
+flightplan error / future-tech 20; tight sites stay 14). Tilt toward
+the cursor up to 7 degrees. Label travel lowered 1.0 to 0.6 after
+proof showed the label clipping at 26px pull. Fixed a rest-rect bug:
+the button's rest rect was captured mid-spring, leaving a 7.46px
+path-dependent Y offset; it is now 0.16px.
+
+**Spotlight cards tilt.** Cards lean up to 3 degrees toward the
+cursor; glow 320px at 0.22, border glow 280px at 1.0. Tilt gate
+changed from `(pointer: fine)` to NOT-`(pointer: coarse)` in
+SpotlightCard and the BelowHero TiltCard: the headless shell reports
+neither pointer type, so tilt never fired there; identical behaviour
+in real browsers.
+
+**Parallax: deeper.** Hero orbit: stars 8, ring/nodes 16, hub 12,
+chips 26. MarketLens and TechEvents depths doubled.
+
+**Ambient cursor glow (new).** `CursorGlow` in `src/components/lens/`,
+mounted in `__root.tsx`: a soft lime glow, 0.14 alpha, 520px,
+transform-only, following the cursor across page backgrounds so the
+cursor feels present even over empty dark space.
+
+**Springs, one instrument.** `useCursorSpring`: 420 stiffness /
+26 damping / 0.55 mass. MagneticButton spring: 340 / 22 / 0.45.
+Fast, smooth, slightly springy, never floaty or jittery.
+requestAnimationFrame + transform/opacity only.
+
+**Copy: light language, and honest under reduced motion.** The
+user-facing "look closer" / "lens" hints were rewritten to light
+language (HeroLens, FlightPlanHero, company, future-tech, CareerHero,
+RecruiterHeroCard, OnboardingHeader). The hero eyebrow and strip tip
+and the company / future-tech / recruiter hints now branch on
+`prefers-reduced-motion` ("Everything visible", "The number is shown
+in full") instead of instructing an effect that is off.
+
+### Verification
+
+- `npx tsc --noEmit`: 0 errors.
+- `npm run build`: exit 0.
+- `npm test`: 159/159 passing (baseline held).
+- Rendered proof: 7 driver runs, final set 15 frames in
+  `~/workspace/careerpilot-r3d-proof/` (driver `drive.mjs`, probes
+  `probe.mjs` / `probe2.mjs` / `probe3.mjs`): hero light disc, light
+  strip, orbit left/right, magnetic CTA at full lean (measured
+  translate(14, 0.17) rotateY 7 degrees), flashlight pool, ambient
+  glow, flight-plan light + flashlight (lit lines now read in full
+  inside the pool), spotlight tilt, preview magnetic at full pull
+  (measured translate(26, 0.03)), pricing spotlight, auth light,
+  reduced motion, mobile 390px tap.
+- Reduced motion: all effects off, every reveal fully visible and
+  usable, hints honest. Touch: tap and drag lights the disc (390px
+  frame).
+- Temp proof route `src/routes/preview-r3d.tsx` deleted after the
+  runs; `routeTree.gen.ts` regenerated; zero `preview-r3d` traces
+  remain in `src/`.
+
+### Caveats
+
+- Proof screenshots show fallback fonts (headless shell has no web
+  fonts); the live site renders the real type.
+- Orbit flashlight detail fragments at the pool edge in stills; the
+  pool is round and the rows are long, so the lowest row's first
+  word sits in the feather. Moving the light down reads it in full.
+  This is the flashlight's nature, not a defect.
+- Parallax is a motion effect and reads subtly in still frames; the
+  depths are measured in code (see above), not visible in any one
+  frame.
+- The hero flashlight's lit serif line is wider than the pool, so a
+  centred still shows its middle bright and its ends dim; sweeping
+  the light left/right reads the whole line.
+- The pricing Pay button rises toward a cursor placed above it and
+  closes to ~2px from the bullet above; it never overlaps.
+- Run 2 briefly served a stale module (disc invisible in one frame);
+  resolved by a dev-server restart and re-proven.
+- Driver lesson: a fresh headless page scrolls unreliably in the
+  first seconds after navigation (scroll reset to 0 mid-run); the
+  full driver works because it scrolls after ~15s of settled
+  interaction. Do not re-shoot single frames with a fresh page and
+  an immediate scroll.

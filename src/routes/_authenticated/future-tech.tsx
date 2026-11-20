@@ -50,6 +50,7 @@ import type { TechTrend } from "@/data/tech-trends";
 import { Stagger, StaggerItem, ShimmerSkeleton, PulseBadge, TrendArrow } from "@/lib/animation";
 import { cn } from "@/lib/utils";
 import { Lens } from "@/components/lens/Lens";
+import { usePrefersReducedMotion } from "@/components/lens/usePrefersReducedMotion";
 import { KineticText } from "@/components/lens/KineticText";
 import { MagneticButton } from "@/components/lens/MagneticButton";
 import { SpotlightCard } from "@/components/lens/SpotlightCard";
@@ -304,6 +305,7 @@ export function HeroSection({
   isLoading: boolean;
 }) {
   const pulseLabel = source === "sample" ? "Sample" : fromCache ? "Cached" : "Live";
+  const reduced = usePrefersReducedMotion();
 
   return (
     <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-cp-panel">
@@ -364,7 +366,7 @@ export function HeroSection({
         </div>
 
         {/* Signal panel: real pulse counts under a lens. Static content
-            only, so the Lens can magnify it. While research loads it
+            only, so the light disc can fall on it. While research loads it
             says so and shows no numbers. */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -373,7 +375,7 @@ export function HeroSection({
           className="relative mx-auto w-full max-w-[320px] shrink-0 sm:mx-0 sm:max-w-[290px] lg:max-w-[320px]"
         >
           <div className="absolute inset-0 rounded-3xl bg-cp-lime/10 blur-2xl" />
-          <Lens magnify={1.4} className="relative overflow-hidden rounded-3xl border border-cp-lime/25 bg-cp-ink p-5">
+          <Lens className="relative overflow-hidden rounded-3xl border border-cp-lime/25 bg-cp-ink p-5">
             <div className="flex items-center justify-between border-b border-white/10 pb-3.5">
               <div className="flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
@@ -432,7 +434,7 @@ export function HeroSection({
                   </div>
                 )}
                 <p className="mt-3.5 font-mono text-[10.5px] text-cp-stone/70">
-                  Put the lens over a number to look closer.
+                  {reduced ? "The numbers are shown in full." : "Put the light over a number to see it lit."}
                 </p>
               </>
             )}
@@ -1212,6 +1214,7 @@ function StepHowToLearn({
 
       <MagneticButton
         onClick={onStartLearning}
+        maxPull={20}
         className="flex items-center gap-1.5 rounded-xl bg-cp-lime px-5 py-2.5 text-[13px] font-semibold text-cp-ink transition hover:-translate-y-0.5"
       >
         Start Learning

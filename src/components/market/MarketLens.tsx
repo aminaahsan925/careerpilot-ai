@@ -542,6 +542,7 @@ export function MarketLens({
           </p>
           <div className="mt-5 flex justify-center">
             <MagneticButton
+              maxPull={22}
               onClick={() => {
                 if (!refreshPending) onRefresh();
               }}
@@ -577,7 +578,7 @@ export function MarketLens({
               className="pointer-events-none absolute inset-0 transition-transform duration-300 ease-out"
               style={
                 pointer && !reducedMotion
-                  ? { transform: `translate(${(pointer.x - 50) * -0.08}px, ${(pointer.y - 50) * -0.06}px)` }
+                  ? { transform: `translate(${(pointer.x - 50) * -0.16}px, ${(pointer.y - 50) * -0.12}px)` }
                   : undefined
               }
             >
@@ -600,12 +601,12 @@ export function MarketLens({
             {pointer && lightOn && !reducedMotion && (
               <div
                 aria-hidden="true"
-                className="pointer-events-none absolute h-[320px] w-[320px] -translate-x-1/2 -translate-y-1/2 rounded-full transition-[left,top] duration-150 ease-out"
+                className="pointer-events-none absolute h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full transition-[left,top] duration-150 ease-out"
                 style={{
                   left: `${pointer.x}%`,
                   top: `${pointer.y}%`,
                   background:
-                    "radial-gradient(circle, color-mix(in srgb, var(--cp-lime) 15%, transparent) 0%, color-mix(in srgb, var(--cp-lime) 6%, transparent) 42%, transparent 70%)",
+                    "radial-gradient(circle, color-mix(in srgb, var(--cp-lime) 24%, transparent) 0%, color-mix(in srgb, var(--cp-lime) 10%, transparent) 42%, transparent 72%)",
                 }}
               />
             )}
@@ -615,7 +616,7 @@ export function MarketLens({
               className="absolute inset-0 transition-transform duration-300 ease-out"
               style={
                 pointer && !reducedMotion
-                  ? { transform: `translate(${(pointer.x - 50) * 0.1}px, ${(pointer.y - 50) * 0.08}px)` }
+                  ? { transform: `translate(${(pointer.x - 50) * 0.22}px, ${(pointer.y - 50) * 0.16}px)` }
                   : undefined
               }
             >

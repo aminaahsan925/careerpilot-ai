@@ -8,7 +8,7 @@
  *   hiring areas, research date and source). An unresearched company
  *   reveals "not researched yet" instead, never invented hiring data.
  * - The alignment coverage number sits under a Lens, like the resume
- *   score, so the match detail magnifies under the cursor.
+ *   score, so the match detail lights up under the cursor.
  *
  * Presentation only: every number, list and state below comes from the
  * CompanyDashboard the data layer returns. Nothing is invented here.
@@ -45,6 +45,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/lib/animation";
 import { Flashlight } from "@/components/lens/Flashlight";
 import { Lens } from "@/components/lens/Lens";
+import { usePrefersReducedMotion } from "@/components/lens/usePrefersReducedMotion";
 import { MagneticButton } from "@/components/lens/MagneticButton";
 import { SpotlightCard } from "@/components/lens/SpotlightCard";
 
@@ -682,6 +683,7 @@ export function AlignmentSection({
   dashboard: CompanyDashboard;
 }) {
   const alignment = dashboard.alignment;
+  const reduced = usePrefersReducedMotion();
   return (
     <SpotlightCard className="space-y-4 rounded-3xl border border-white/10 bg-cp-panel p-6 sm:p-8">
       <h3 className="flex items-center gap-2 font-display text-lg font-bold text-cp-paper">
@@ -697,7 +699,7 @@ export function AlignmentSection({
         <>
           <div className="flex items-center gap-5">
             <div data-proof="coverage-number" className="shrink-0">
-              <Lens magnify={1.15}>
+              <Lens>
                 <div className="font-display text-[64px] font-extrabold leading-none tracking-tight text-cp-lime sm:text-[72px]">
                   {alignment.coveragePct}
                   <span className="text-lg text-cp-stone">%</span>
@@ -706,8 +708,8 @@ export function AlignmentSection({
             </div>
             <p className="max-w-xs text-xs leading-relaxed text-cp-stone">
               Evidence-weighted coverage of this company&apos;s requirements,
-              scored deterministically from your evidence ledger. Put the lens
-              over the number to look closer.
+              scored deterministically from your evidence ledger.
+              {reduced ? "The number is shown in full." : "Put the light over the number to see it lit."}
             </p>
           </div>
           <div className="h-1.5 overflow-hidden rounded-full bg-white/10">

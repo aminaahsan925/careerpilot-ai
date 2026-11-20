@@ -7,5 +7,6 @@ export { Flashlight } from "./Flashlight";
 export { SpotlightCard } from "./SpotlightCard";
 export { MagneticButton } from "./MagneticButton";
 export { KineticText } from "./KineticText";
+export { CursorGlow } from "./CursorGlow";
 export { useCursorSpring, type CursorSpring } from "./useCursorSpring";
 export { usePrefersReducedMotion } from "./usePrefersReducedMotion";

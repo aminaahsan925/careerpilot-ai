@@ -44,8 +44,12 @@ function TiltCard({
   const enabled = useRef(false);
 
   useEffect(() => {
+    // Gated on NOT-coarse rather than on fine: real browsers always
+    // report fine or coarse, so this is identical there, but
+    // environments that report neither (headless shells) get the tilt
+    // instead of silently losing it.
     enabled.current =
-      window.matchMedia("(pointer: fine)").matches &&
+      !window.matchMedia("(pointer: coarse)").matches &&
       !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   }, []);
 
@@ -289,6 +293,7 @@ function FooterCta() {
         <div className="mt-10 flex justify-center">
           <MagneticButton
             href="/register"
+            maxPull={26}
             className="rounded-full bg-cp-lime px-8 py-4 font-display text-base font-bold text-cp-ink"
           >
             Start with your resume

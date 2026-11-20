@@ -116,20 +116,20 @@ export function FlightPlanHero({
           </p>
         </div>
 
-        {/* ── Right: the evidence, under the lens ── */}
+        {/* ── Right: the evidence, under the light ── */}
         <div className="relative flex flex-col justify-center gap-6 border-t border-white/10 bg-cp-ink/60 p-8 sm:p-10 lg:border-l lg:border-t-0">
           <div>
-            <p className="cp-eyebrow text-cp-lime">Non-negotiables, under the lens</p>
+            <p className="cp-eyebrow text-cp-lime">Non-negotiables, under the light</p>
             <p className="mt-2 text-[12px] leading-relaxed text-cp-stone">
               {reduced
                 ? "Your coverage, in full."
-                : "Move your cursor over the number to look closer. On touch, tap and drag."}
+                : "Move your cursor over the number to light it up. On touch, tap and drag."}
             </p>
           </div>
 
-          {/* The lens magnifies the live fraction: static text only, no
+          {/* The light disc falls on the live fraction: static text only, no
               interactive elements inside, per the engine's contract. */}
-          <Lens magnify={1.6}>
+          <Lens>
             <div>
               <p className="font-display text-[clamp(4rem,9vw,6.5rem)] font-extrabold leading-none tracking-tight">
                 <span className="text-cp-paper">{mustHave.covered}</span>

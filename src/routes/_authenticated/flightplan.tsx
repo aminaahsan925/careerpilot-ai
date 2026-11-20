@@ -97,6 +97,7 @@ function ErrorState({ error }: { error: unknown }) {
           ) : (
             <MagneticButton
               href={needsTarget ? "/onboarding" : "/dashboard"}
+              maxPull={20}
               className="inline-block rounded-xl bg-cp-lime px-5 py-2.5 text-[13px] font-semibold text-cp-ink"
             >
               {needsTarget ? "Set your target role" : "Back to Dashboard"}

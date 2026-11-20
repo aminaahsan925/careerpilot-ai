@@ -333,7 +333,7 @@ export function FlightPlanView({
 
   return (
     <div className="space-y-6 pb-12">
-      {/* HERO: the statement, the number under the lens */}
+      {/* HERO: the statement, the number under the light */}
       <FlightPlanHero
         roleName={report.role.displayName}
         headline={report.role.headline}

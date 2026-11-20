@@ -4,7 +4,7 @@
  *
  * Signature moments:
  * - A Lens over the radar banner: the title, the framing line and the
- *   target-role box magnify under the cursor. The tabs stay outside
+ *   target-role box lights up under the cursor. The tabs stay outside
  *   the lens (they are interactive; lens children must be static).
  * - A Flashlight inside each region card: the student opportunity is
  *   dimmed at rest and the light reveals it as a serif pull-quote plus
@@ -230,8 +230,8 @@ export function FutureTechRadar({
         <div className="pointer-events-none absolute -right-16 -top-16 h-80 w-80 rounded-full bg-cp-lime/10 blur-[90px]" />
 
         {/* Lens over the banner: title, framing line and target-role box
-            magnify under the cursor. Tabs stay outside (interactive). */}
-        <Lens magnify={1.3} className="relative z-10">
+            lights up under the cursor. Tabs stay outside (interactive). */}
+        <Lens className="relative z-10">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-2xl space-y-3">
               <div className="inline-flex items-center gap-2 rounded-full border border-cp-lime/40 bg-cp-lime/10 px-3.5 py-1 font-mono text-[11px] font-medium text-cp-lime">
