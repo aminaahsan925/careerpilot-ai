@@ -346,3 +346,245 @@ headline lens untouched.
   and (when signed in) the stored-jobs cache plus the resume hooks. The
   stored-jobs query shares its key with the Market Mirror, so it is
   cached, not duplicated.
+
+---
+
+## Addendum: Round 3c — every feature (20 Nov 2026, evening)
+
+Amina approved the right-side hero animation ("ok done", 21:42 PKT) and
+asked for the same treatment on every feature: "work on every feature
+also". The R3 caveat (d) said the out-of-scope routes only inherited the
+dark ground via remapped tokens and were NOT rebuilt to the full Round 3
+language. This pass rebuilds all of them. Local only; nothing pushed,
+nothing deployed, no `.env` reads. Five local commits on top of
+`967d0dc` (plus this docs commit).
+
+### Route inventory (22 routes, all covered now)
+
+Already in the full Round 3 language from R3/R3b (8): landing `/`,
+resume, market, jobmirror's Market Mirror parts, recruiter, roadmap,
+dashboard, diagnosis. Rebuilt in this pass (13): flightplan, mentor,
+onboarding, profile, company, events, future-tech, interview prep
+(`/jobmirror`, see below), auth, login, register, pricing, privacy,
+terms. Notes: login/register are 7-line redirect-only wrappers with no
+UI of their own (auth.tsx is the real screen); privacy/terms got a light
+restyle only (dark ground, lime rules, grotesk headings, text verbatim);
+no settings route or component exists anywhere in the repo (verified by
+grep), so there was nothing to rebuild for settings.
+
+### What was rebuilt, per feature
+
+**Flight plan + mentor** (`3b07356`, worker 1). Flight plan: lens (1.6x)
+over the giant coverage fraction + flashlight over the evidence rows
+behind the number; a second flashlight over the SkillMirror coverage
+bars revealing what counts as proof per tier; lens over the Fit Verdict
+headline; magnetic "Improve my CV"; travelling flight-path dot; the
+stock illustration is removed. Mentor: flashlight over Suggested
+Questions revealing the one-line evidence fact behind each suggestion
+(from real data, honest "not set yet" fallbacks); magnetic send button
+(form gap widened to 16px so the 14px lean never overlaps the input);
+magnetic CTAs in Recommended Actions. Both route files slimmed to
+containers; presentational bodies split into `FlightPlanView` /
+`MentorView` (all hooks/logic kept, presentation only).
+
+**Onboarding + profile** (`2c3c64c`, worker 2 + coordinator fixes).
+Onboarding: kinetic step-title reveal (words rise in on every step
+change), a real glass lens over the big `01/09` step counter, spotlight
+step card, magnetic Continue (plain disabled button with the same look
+while disabled/saving). Profile: flashlight over "What CareerPilot
+knows" revealing the evidence behind each claim; lens over the name;
+spotlight section cards; magnetic Save Changes; lime skill bars and
+range sliders. Coordinator fix (see below): the profile lit lines are
+centred and label-free.
+
+**Company + events + future-tech** (`c60f150`, worker 3). Company:
+flashlight over the company card revealing the researched hiring bar
+(top must-have skills with real share-of-postings %, hiring areas,
+source + research date); the not-researched state uses the same
+flashlight and reveals "Not researched yet" with the honest explanation,
+never invented data; lens (1.15x) over the alignment coverage %.
+Events: every event card is a SpotlightCard with cursor-tracked border
+glow, plus cursor parallax (date badge drifts with the pointer, prize
+chip drifts against it). Future-tech: lens (1.4x) over the hero pulse
+panel built from real pulse counts, lens (1.3x) over the 2030 radar
+banner, flashlight inside each region card revealing the student
+opportunity as a serif pull-quote, kinetic headings. The old hero's
+fabricated figures ("+94% Demand", "LIVE TECH VELOCITY RADAR",
+"Q3 2026") were deleted as invented data.
+
+**Auth + pricing + legal + magnetic CTAs** (`9858320`, worker 4).
+Auth: full rebuild, near-black ground, dot grid + slow-drifting lime
+glow + a quiet Lens over the static left-panel headline ("BUILD YOUR
+FUTURE / ON PURPOSE." with tilted lime slab); the form card is a
+SpotlightCard (pointer-events-none, so it can never block typing);
+magnetic submit via `requestSubmit()` (same native validation, same
+`onSubmit`, Enter still submits natively; while loading, the original
+disabled submit button with spinner renders). Pricing: full rebuild,
+prices exact (Rs 0 and Rs 499/month, all plan copy and Safepay/checkout
+logic untouched); magnetic primary CTAs. Privacy/Terms: light restyle,
+text verbatim. Magnetic CTAs (R3 follow-up item e): 7 in recruiter
+(Submit answer, Run Recruiter Audit, Add to Roadmap x2, Go to step 1,
+Continue to Mock Interview, Continue to Verdict) and 7 in dashboard
+(CardEmpty CTA, Try again, Run diagnosis, Explore Tech Events, See the
+truth, Add projects now, Upload/Re-analyze Resume), via a shared
+`MagneticCTA` helper that renders the original disabled shadcn Button
+whenever `disabled` is true (MagneticButton has no disabled prop), so
+disabled/pending behaviour is identical by construction. Deliberately
+NOT swapped: the icon-only chat-send and mentor-send buttons (14px pull
+would overlap the adjacent input at 8px gap) and all outline/text/back
+buttons. Hero micro-label is now touch-aware ("Tap and drag to look
+closer" on coarse pointers; R3 caveat fixed).
+
+**Interview prep** (`961873d`, worker 5). Found by the coordinator after
+the first four workers finished: the `/jobmirror` route renders
+`InterviewPrepPage`, and `jobmirror.tsx` had ZERO lens-engine imports —
+it was assumed done in R3 but was not (R3's Market Mirror work touched
+`market.tsx`, not this page). Rebuilt: the "Under the light" flashlight
+over the first unpracticed prompt in the current view, revealing what
+it tests, the strong answer shape and the hiring signal, all from the
+real question data (lit column deliberately narrow, 230px mobile /
+260px desktop, so lines fit inside the pool); lens over the real
+practiced count in the hero and over the MCQ score; spotlight cards
+throughout; magnetic Mark practiced / Log practice / Try again / Ask AI
+Mentor; kinetic question-bank heading. KineticText scoping is
+deliberate: headings that mount already in view (hero, MCQ, Answer lab)
+stay plain text, because KineticText measures on scroll and a heading
+that mounts mid-view renders stuck mid-morph, dim and overlapping the
+copy below (proven in frames). The invented readiness number stays
+gone; the prep count is the real practiced count.
+
+### Coordinator fixes (found in proof, fixed and re-proven)
+
+1. **Profile flashlight clipped every line (worker 2's build).** The
+   lit evidence lines sat after a 118px label column, so at the natural
+   centre cursor position the light pool's left edge cut every line
+   mid-word ("...rent role in onboarding"); on phones the stacked
+   label-above-evidence rows ran taller than the base, so the lit layer
+   misaligned with the claims entirely. Fixed in
+   `ProfileEvidence.tsx`: the lit lines are now centred, label-free,
+   single-line rows at the same pitch as the base (same `space-y-3`,
+   `pb-3`, 13.5px, `leading-snug`, so heights match exactly on
+   desktop). The label is not needed in the lit layer: on desktop each
+   line aligns with its claim row, and the sentences are
+   self-explanatory. The now-unused `.cp-profile-evidence` rule
+   (line-height 1.5, which would have drifted the rows) is deleted.
+   Re-proven with a fresh CDP driver
+   (`~/workspace/careerpilot-r3c-proof/coordinator/`, port 3128):
+   `profile-fix-flashlight-centre.png` shows all six lines reading
+   fully inside the pool; `-top` shows lines 1-4 fully; mobile
+   `profile-fix-390-flashlight.png` shows lines 2-6 fully, line 1
+   readable by dragging the light up slightly (pool-boundary
+   behaviour, same class as the R3 caveats). The temporary
+   `/preview-r3c-profile-fix` route is deleted; `routeTree.gen.ts`
+   regenerated with zero trace.
+2. **Dead sample-data props stripped from live code.** The proof-only
+   props (`dataOverride` in HeroLens, `preview` in onboarding and
+   profile, plus the `OnboardingPreview` / `ProfilePreview` types and
+   their now-unused type imports) are removed from the live components.
+   They were inert (no live caller passed them), but a sample-data
+   injection path should not ship in a live route. Verified by grep:
+   zero traces. Future proof rounds can re-add temp props the same
+   way; the R3b `dataOverride` precedent of keeping them is retired.
+
+### Verification (coordinator, on the final tree)
+
+- `npx tsc --noEmit`: **0 errors**
+- `npm run build`: **exit 0**
+- `npm test`: **159/159 passing, 10 files** (baseline held)
+- Greps: zero `preview-r3c` traces in `src/` (all temp routes deleted,
+  `routeTree.gen.ts` unmodified vs HEAD); zero `dataOverride` /
+  `OnboardingPreview` / `ProfilePreview` traces; zero mascot/koi/loop/
+  Baloo traces except the one pre-existing historical comment in
+  `RoadmapHeader.tsx`; zero em dashes in user-facing copy in the
+  rebuilt routes (the remaining hits are code comments, e.g. onboarding
+  `// Step 0 — About You`).
+- No commit history rewritten; commits go on top of `967d0dc`.
+  Nothing pushed or deployed.
+
+### Rendered proof (`~/workspace/careerpilot-r3c-proof/`, 119 frames)
+
+CDP drivers with real mouse moves, real touch taps and real-time waits,
+across the motion timeline — not just page load. Every worker read its
+own frames; the coordinator read key frames from every group plus the
+profile-fix re-proof.
+
+- `w1-flightplan-mentor/` (33 frames): hero lens over "12", hero +
+  skills flashlights, verdict lens + magnetic, mentor flashlight +
+  sent state, mobile 390 (tap-pinned lens/light), reduced-motion
+  frames, live-route auth redirects.
+- `w2-onboarding-profile/` (21 frames): onboarding steps 0/4/8 (rest,
+  lens, spotlight, magnetic, chip selection, review), profile rest /
+  lens / flashlight / spotlight / editing / magnetic, reduced-motion
+  and mobile frames for both. (The profile flashlight frame here shows
+  the pre-fix clipping; the fixed frames are in `coordinator/`.)
+- `w3-company-events-futuretech/` (22 frames): company rest /
+  flashlight / lens / not-researched states, events rest / spotlight /
+  parallax, future-tech rest / lens / region flashlight / kinetic,
+  reduced-motion and mobile frames.
+- `w4-auth-pricing-magnetic/` (18 frames): auth login/register/lens/
+  spotlight/reduced/mobile, pricing rest/magnetic/bottom/mobile,
+  privacy/terms, recruiter + dashboard magnetic previews (SAMPLE
+  labelled), hero touch label on mobile.
+- `w5-interview-prep/` (20 frames): rest, hero lens, flashlight at
+  centre/top/bottom + toggle-revealed, spotlight card, question open,
+  technical tab, MCQ states incl. complete (real 2/8) + score lens,
+  Answer Lab, magnetic (lean measured at exactly -14.0px), reduced
+  motion, mobile 390 incl. tap-pinned light.
+- `coordinator/` (5 frames): profile flashlight fix re-proof (rest,
+  centre, top, bottom, mobile) + driver `drive.mjs`.
+
+Defects found in proof and fixed (workers' own): mentor suggestion rows
+looked hollow (whys shortened to one-line evidence facts); magnetic
+send overlapped the input at full lean (form gap widened to 16px); chat
+card grew instead of scrolling internally (missing `min-h-0`); profile
+evidence lit layer clipped rows in v1 (rebuilt row-aligned, then the
+coordinator's centring fix above); kinetic headings overlapping
+paragraphs (32px clearance added); flashlight lit layers clipping
+mid-word (lit content narrowed to fit inside the pool: 340px company,
+240px region, 260px interview); company lens proof coordinates;
+onboarding preview search-param coercion; cold-dev hydration catching
+SSR opacity-0 states (drivers poll for settled animations).
+
+### Caveats and what could not be done as briefed
+
+- **Proof fonts are fallbacks** (same as R3/R3b): the offline browser
+  cannot load Fontshare/Google Fonts.
+- **Pool-boundary clipping is inherent to the engine** (same class as
+  the R3/R3b caveats): text straddling the light-pool or lens-disc edge
+  clips momentarily while the cursor moves. Where it hit a whole panel
+  at rest (profile) it is fixed; where it hits only at the circle's
+  narrow top/bottom (interview flashlight blocks at centre cursor,
+  auth lens highlight line, mentor suggestion evidence) the full text
+  reads with a small cursor move or the toggle. Making all three
+  interview blocks fit simultaneously would need a pool ~2x wider,
+  which is engine-owned.
+- **Lens ring overhang:** on the interview hero count and MCQ score
+  lenses, the glass ring is wider than the lens content box, so the
+  ring overhangs onto the surrounding panel (magnified content itself
+  is correct and crisp). Same engine behaviour as the R3 headline
+  lens.
+- **SavedPostings is not rendered anywhere on the live flight-plan
+  page** — restyled in place and proved via the preview route only;
+  wiring it in would add a data query, which is out of scope for a
+  presentation pass.
+- **Magnetic Save touches Cancel at full lean** on profile (12px gap
+  vs the engine's 14px clamp); it never overlaps.
+- **KineticText mid-morph** words read dim/shifted in still frames —
+  the designed scroll behaviour, not a defect. The kinetic title's
+  mid-rise instant is not frozen in any frame (0.35s rise vs ~200ms
+  CDP capture latency); the entrance is documented across frames
+  instead.
+- **Kept deliberately:** three inert `data-proof` attributes in live
+  code (`coverage-number` in company.tsx, `event-card-0` in
+  TechEventsSection, `region-opportunity-0` in FutureTechRadar) —
+  harmless, useful for future proof runs.
+- **Driver lessons worth keeping:** single-jump CDP mouse teleports
+  proved unreliable for element-level listeners in this shell — use
+  stepped pointer paths + a pre-shot active check. `scrollIntoView`
+  consistently fails in this headless setup; absolute
+  `window.scrollTo` works. `Emulation.setDeviceMetricsOverride
+  (mobile:true)` alone does NOT make `(pointer: coarse)` match; enable
+  touch emulation for the mobile pass.
+- **Interview prep's mock interview** (the recruiter's mock-interview
+  step) was already in the Round 3 language from R3; the standalone
+  Interview Prep page is the one rebuilt here.
