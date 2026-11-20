@@ -72,6 +72,28 @@ bold sans. Revert Direction 2 (commit 0b9bad2) first. Local only, no GitHub
 push, no deploy, no .env reads. Honesty rules from the rebuild still apply: no
 invented data, no fake probabilities, banded verdicts.
 
+## Outcome: APPROVED
+
+Built + verified 20 Nov ~17:51 PKT (local commit 4cda30d; Direction 2 reverted
+via git revert f051bbe; proof at ~/workspace/careerpilot-d3-proof/).
+**Amina APPROVED it 20 Nov 17:55 PKT: "YES ITS GOOD".** Next: migrations first
+(MIGRATION-GUIDE-2026-11-20.md), then deploy, both on her word + GitHub
+permission in the moment. Known polish items from Merlin's review (not yet
+done): the koi pond looks empty in the middle (fish cluster at the top), and on
+mobile Pilot sits below the fold in the hero.
+
+## Follow-up: too childish — grown-up refinement
+
+20 Nov 20:06 PKT Amina: "its like too for kids". She delegated the fix ("idk
+what to change"). Refinement pass (local only, do NOT push without her
+permission in the moment): keep Pilot, the koi pond and the loop — keep the
+direction, mature the execution. Sleeker Pilot (less blob, more composed, less
+googly; smaller hero presence), calmer palette (cream + chocolate base, one
+strong accent, drop the toy-bright rainbow), less bubbly display type (a
+geometric sans with character, still friendly), less tilt/collage chaos (more
+structure, keep a little play). Also fold in the two known polish items: more
+life in the pond middle, Pilot visible above the fold on mobile.
+
 ## Set aside
 
 - Direction 1, Soft Indigo AI SaaS: set aside — proven and friendly, but the
@@ -83,3 +105,38 @@ invented data, no fake probabilities, banded verdicts.
 - The hybrid (one direction per screen, recommended by all four researchers):
   set aside — Amina picked a single direction, so the build is Direction 2
   throughout; do not mix in Direction 1 or 3 surfaces unless she asks.
+
+## Round 3: Direction 3 FULLY REJECTED, Flashlight / Lens picked
+
+20 Nov 20:22 PKT (voice call) Amina FULLY REJECTED Direction 3, both the
+original and the matured version: "the people who are rejected will use my
+kids app who will learn ABC from here". The mascot direction is DEAD — do not
+revive Pilot, the koi pond, the loop, or the toy-bright style in any form.
+The grown-up refinement stash was dropped; HEAD stays 4cda30d (pushed).
+
+Her bar (20:24 PKT): "screenshot-worthy" — modern, aesthetic, impressive
+enough that people screenshot it and stop and say wow; must NOT look generic
+and must NOT look AI-generated. Motion-first: things move when the cursor
+moves (parallax, tilt, magnetic elements).
+
+Round 3 exploration (UI-EXPLORATION-R3-*-2026-11-20.md, Pinterest + Dribbble,
+motion-first, screenshot-bar filtered): 3 fresh directions — Living Orb,
+Flashlight / Lens, Scroll as a Journey — plus the researchers' Mix. Note:
+her Pinterest @ahsystemsss showed 0 saved pins, so the research is
+search-based, not from her saves.
+
+ROUND 3 PICK 20 Nov 20:36 PKT: Direction 2, Cursor as Flashlight / Lens.
+Near-black #040403, neon lime #E1F10D / #9BF80D (ember #FF7A45 alternate),
+warm stone #C6C5BF. Oversized grotesk capitals; elegant serif for reveal
+moments. The cursor is a tool: a glass lens magnifies and refracts what sits
+under it, a flashlight lights hidden detail, spotlight borders follow the
+cursor across cards, kinetic text morphs on scroll, magnetic primary CTA.
+Product fit: reveal is what CareerPilot does — lens over a resume reveals
+the AI score and what is missing, over the Market Mirror it reveals
+in-demand skills, over a recruiter verdict it reveals why a candidate passed
+or failed a real hiring bar. Keep lens/flashlight to hero + key reveals,
+body text untouched (readability risk). The lens needs real engineering
+(WebGL/canvas + GSAP); a flat CSS imitation fails the screenshot test.
+
+Set aside (round 3): Living Orb, Scroll as a Journey, and the Mix. Do not
+build the Mix unless she asks.
