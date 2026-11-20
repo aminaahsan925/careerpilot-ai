@@ -5,9 +5,30 @@
  * and technical requirements for top technology employers in Pakistan & Global Tech.
  */
 
+import type { AtsBoard } from "@/lib/jobs/ats-providers";
+
 export type CompanyHiringTruth = {
   id: string;
   name: string;
+  /**
+   * Provenance (Wave 2 seed review). These profiles have NO research on
+   * file: no cited sources, no research date. They ship as unverified
+   * seed data — `sources: []`, `researchedOn: null`, `verified: false`
+   * — and the UI badges them "unverified seed data — research date
+   * unknown". A profile becomes verified only through a real research
+   * run (Tavily careers-page research or a live ATS board), which sets
+   * these fields from its own result. Never fill them in by hand.
+   */
+  sources?: string[];
+  researchedOn?: string | null;
+  verified?: boolean;
+  /**
+   * The company's public ATS job board, when verifiable (careers page
+   * links the board, or the board API answers for the token). Null =
+   * no verifiable board; the company uses Tavily research instead.
+   * Never guess a token.
+   */
+  atsBoard?: AtsBoard | null;
   shortName: string;
   category:
     | "Enterprise IT"
@@ -22,7 +43,14 @@ export type CompanyHiringTruth = {
   entryRoles: string[];
   primaryStack: string[];
   hiringBar: {
-    screeningFilterRate: string;
+    /**
+     * @deprecated Unsourced statistic — dropped from all 8 seeds in the
+     * Wave 2 source review (no cited source for any screening-rate
+     * percentage). Kept optional only so older consumers compile; the
+     * recruiter prompt must stop interpolating it. Never set a value
+     * without a cited source.
+     */
+    screeningFilterRate?: string;
     evaluationStages: string[];
     nonNegotiables: {
       skill: string;
@@ -54,6 +82,10 @@ export const FEATURED_COMPANIES: CompanyHiringTruth[] = [
   {
     id: "systems-limited",
     name: "Systems Limited",
+    sources: [],
+    researchedOn: null,
+    verified: false,
+    atsBoard: null,
     shortName: "Systems",
     category: "Enterprise IT",
     location: "Lahore / Karachi / Islamabad / Global",
@@ -77,7 +109,6 @@ export const FEATURED_COMPANIES: CompanyHiringTruth[] = [
       "Docker",
     ],
     hiringBar: {
-      screeningFilterRate: "78% rejected before 1st round",
       evaluationStages: [
         "1. Automated ATS Resume Keyword & Project Footprint Filter",
         "2. Online Coding Assessment (DSA, OOP, SQL queries, logical reasoning)",
@@ -132,7 +163,7 @@ export const FEATURED_COMPANIES: CompanyHiringTruth[] = [
         rank: 2,
         title: "Failing the Algorithmic & Coding Screening Round",
         whyCompanyRejects:
-          "Over 70% of graduates fail the automated online test because they only practiced UI/web without practicing LeetCode / HackerRank problems.",
+          "Many graduates fail the automated online test because they only practiced UI/web without practicing LeetCode / HackerRank problems.",
         whatCandidateDidWrong:
           "Memorized syntax but cannot solve medium-difficulty problems on Arrays, HashMaps, String manipulation, and recursion under a timer.",
         fixAction:
@@ -207,6 +238,10 @@ export const FEATURED_COMPANIES: CompanyHiringTruth[] = [
   {
     id: "netsol",
     name: "NetSol Technologies",
+    sources: [],
+    researchedOn: null,
+    verified: false,
+    atsBoard: null,
     shortName: "NetSol",
     category: "Fintech & Products",
     location: "Lahore / Global",
@@ -226,7 +261,6 @@ export const FEATURED_COMPANIES: CompanyHiringTruth[] = [
       "Microservices",
     ],
     hiringBar: {
-      screeningFilterRate: "75% rejected at technical test",
       evaluationStages: [
         "1. Resume screening for CS fundamentals and strong academic/project background",
         "2. In-depth technical test on C#/Java, Data Structures, and SQL",
@@ -319,6 +353,10 @@ export const FEATURED_COMPANIES: CompanyHiringTruth[] = [
   {
     id: "arbisoft",
     name: "Arbisoft",
+    sources: [],
+    researchedOn: null,
+    verified: false,
+    atsBoard: null,
     shortName: "Arbisoft",
     category: "Services & Consulting",
     location: "Lahore / Remote",
@@ -333,7 +371,6 @@ export const FEATURED_COMPANIES: CompanyHiringTruth[] = [
     ],
     primaryStack: ["Python / Django", "React / TypeScript", "AWS", "PostgreSQL", "Docker"],
     hiringBar: {
-      screeningFilterRate: "85% filtered through online test & screening",
       evaluationStages: [
         "1. Competitive Online Coding & Algorithmic Assessment",
         "2. Take-home problem or Live Coding Round",
@@ -418,6 +455,10 @@ export const FEATURED_COMPANIES: CompanyHiringTruth[] = [
   {
     id: "10pearls",
     name: "10Pearls",
+    sources: [],
+    researchedOn: null,
+    verified: false,
+    atsBoard: null,
     shortName: "10Pearls",
     category: "Services & Consulting",
     location: "Karachi / Lahore / Islamabad / US",
@@ -437,7 +478,6 @@ export const FEATURED_COMPANIES: CompanyHiringTruth[] = [
       "MongoDB / PostgreSQL",
     ],
     hiringBar: {
-      screeningFilterRate: "76% rejected at screening",
       evaluationStages: [
         "1. Resume review for modern stack alignment and live product demos",
         "2. Technical assessment covering Full Stack / Mobile fundamentals",
@@ -518,6 +558,10 @@ export const FEATURED_COMPANIES: CompanyHiringTruth[] = [
   {
     id: "devsinc",
     name: "Devsinc",
+    sources: [],
+    researchedOn: null,
+    verified: false,
+    atsBoard: null,
     shortName: "Devsinc",
     category: "Services & Consulting",
     location: "Lahore / Islamabad / Remote",
@@ -538,7 +582,6 @@ export const FEATURED_COMPANIES: CompanyHiringTruth[] = [
       "PostgreSQL / AWS",
     ],
     hiringBar: {
-      screeningFilterRate: "72% rejected at initial filter",
       evaluationStages: [
         "1. Resume review and portfolio check",
         "2. Live coding test & technical interview",
@@ -603,6 +646,10 @@ export const FEATURED_COMPANIES: CompanyHiringTruth[] = [
   {
     id: "folio3",
     name: "Folio3",
+    sources: [],
+    researchedOn: null,
+    verified: false,
+    atsBoard: null,
     shortName: "Folio3",
     category: "Enterprise IT",
     location: "Karachi / Lahore / Islamabad / US",
@@ -623,7 +670,6 @@ export const FEATURED_COMPANIES: CompanyHiringTruth[] = [
       "MySQL / MongoDB",
     ],
     hiringBar: {
-      screeningFilterRate: "74% rejected",
       evaluationStages: [
         "1. Initial Resume & Portfolio Screening",
         "2. Technical Aptitude Test",
@@ -684,6 +730,10 @@ export const FEATURED_COMPANIES: CompanyHiringTruth[] = [
   {
     id: "motive",
     name: "Motive (KeepTruckin)",
+    sources: [],
+    researchedOn: null,
+    verified: false,
+    atsBoard: { provider: "greenhouse", token: "gomotive" },
     shortName: "Motive",
     category: "High-Scale Tech",
     location: "Islamabad / Lahore / US",
@@ -706,7 +756,6 @@ export const FEATURED_COMPANIES: CompanyHiringTruth[] = [
       "Docker / Kubernetes",
     ],
     hiringBar: {
-      screeningFilterRate: "88% rejected (High Bar)",
       evaluationStages: [
         "1. High Bar Resume Screening",
         "2. Algorithmic Coding Assessment (LeetCode Medium)",
@@ -772,6 +821,10 @@ export const FEATURED_COMPANIES: CompanyHiringTruth[] = [
   {
     id: "global-tech",
     name: "Global Tech / US Remote Startups",
+    sources: [],
+    researchedOn: null,
+    verified: false,
+    atsBoard: null,
     shortName: "Global / Remote",
     category: "Global Tech",
     location: "Remote / US / Europe",
@@ -789,7 +842,6 @@ export const FEATURED_COMPANIES: CompanyHiringTruth[] = [
       "Docker",
     ],
     hiringBar: {
-      screeningFilterRate: "92% rejected",
       evaluationStages: [
         "1. Async Video / GitHub & Resume Deep Scan",
         "2. Paid Take-Home Assignment or Live Coding",

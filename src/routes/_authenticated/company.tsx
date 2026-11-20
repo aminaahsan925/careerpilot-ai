@@ -12,10 +12,17 @@ import {
   Briefcase,
   Link2,
   Sparkles,
+  Globe,
+  RefreshCw,
+  CircleHelp,
 } from "lucide-react";
 
 import { FEATURED_COMPANIES } from "@/data/company-truth";
-import { useCompanyDashboard, type CompanyDashboard } from "@/data/company";
+import {
+  useCompanyDashboard,
+  useRefreshCompanyResearch,
+  type CompanyDashboard,
+} from "@/data/company";
 import { cn } from "@/lib/utils";
 import { AppLayout } from "@/components/app/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -49,16 +56,26 @@ function UnverifiedBadge() {
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
       <TriangleAlert className="h-3 w-3" strokeWidth={2} />
-      Unverified — static dataset, no cited source
+      Unverified seed data — research date unknown
     </span>
   );
 }
 
-function VerifiedBadge({ retrievedAt }: { retrievedAt: string }) {
+function NotResearchedBadge() {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+      <CircleHelp className="h-3 w-3" strokeWidth={2} />
+      Not researched yet
+    </span>
+  );
+}
+
+function VerifiedBadge({ retrievedAt }: { retrievedAt: string | null }) {
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
       <ShieldCheck className="h-3 w-3" strokeWidth={2} />
-      Researched · {new Date(retrievedAt).toLocaleDateString()}
+      Researched
+      {retrievedAt && <> · {new Date(retrievedAt).toLocaleDateString()}</>}
     </span>
   );
 }
@@ -67,7 +84,9 @@ function ProvenanceLine({ dashboard }: { dashboard: CompanyDashboard }) {
   const p = dashboard.provenance;
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {p.verification === "verified" ? (
+      {p.origin === "unavailable" ? (
+        <NotResearchedBadge />
+      ) : p.verification === "verified" ? (
         <VerifiedBadge retrievedAt={p.retrievedAt} />
       ) : (
         <UnverifiedBadge />
@@ -81,6 +100,25 @@ function ProvenanceLine({ dashboard }: { dashboard: CompanyDashboard }) {
         </span>
       )}
     </div>
+  );
+}
+
+/** "Research this company" action — forces a fresh live research run. */
+function ResearchButton({
+  onResearch,
+  isResearching,
+}: {
+  onResearch: () => void;
+  isResearching: boolean;
+}) {
+  return (
+    <Button onClick={onResearch} disabled={isResearching}>
+      <RefreshCw
+        className={`h-4 w-4 ${isResearching ? "animate-spin" : ""}`}
+        strokeWidth={2}
+      />
+      {isResearching ? "Researching…" : "Research this company"}
+    </Button>
   );
 }
 
@@ -151,7 +189,15 @@ function CompanyPicker({
 /* Dashboard sections                                                   */
 /* ------------------------------------------------------------------ */
 
-function OverviewSection({ dashboard }: { dashboard: CompanyDashboard }) {
+function OverviewSection({
+  dashboard,
+  onResearch,
+  isResearching,
+}: {
+  dashboard: CompanyDashboard;
+  onResearch: () => void;
+  isResearching: boolean;
+}) {
   const c = dashboard.company;
   return (
     <div className="card-surface space-y-4 p-6 sm:p-8">
@@ -193,6 +239,157 @@ function OverviewSection({ dashboard }: { dashboard: CompanyDashboard }) {
           Source review: {dashboard.provenance.sourceReviewNote}
         </p>
       )}
+      {dashboard.status === "seed" && (
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+          <p className="flex-1 text-xs leading-relaxed text-muted-foreground">
+            This profile comes from the static dataset — no sources and no
+            research date on file. Run live research to replace it with
+            verified hiring data.
+          </p>
+          <ResearchButton
+            onResearch={onResearch}
+            isResearching={isResearching}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Live ATS postings for companies with a verified job board. */
+function LivePostingsSection({ dashboard }: { dashboard: CompanyDashboard }) {
+  const live = dashboard.livePostings;
+  if (!live.board) return null;
+  const providerLabel =
+    live.board.provider === "greenhouse"
+      ? "Greenhouse"
+      : live.board.provider === "lever"
+        ? "Lever"
+        : "Ashby";
+  return (
+    <div className="card-surface space-y-3 p-6 sm:p-8">
+      <h3 className="flex items-center gap-2 font-display text-lg font-bold text-foreground">
+        <Globe className="h-5 w-5 text-terracotta" strokeWidth={1.7} />
+        Live postings
+        {live.available && (
+          <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700">
+            {live.postings.length} open now
+          </span>
+        )}
+      </h3>
+      {!live.available ? (
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          Live postings unavailable right now.
+          {live.error && (
+            <span className="text-muted-foreground"> {live.error}</span>
+          )}
+        </p>
+      ) : live.postings.length === 0 ? (
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          This company has no open roles on its {providerLabel} board right
+          now — checked{" "}
+          {live.retrievedAt
+            ? new Date(live.retrievedAt).toLocaleDateString()
+            : "just now"}
+          .
+        </p>
+      ) : (
+        <>
+          <ul className="space-y-2">
+            {live.postings.slice(0, 10).map((p) => (
+              <li
+                key={p.externalId ?? p.url ?? p.title}
+                className="flex items-center justify-between gap-3 rounded-xl border border-border bg-background px-4 py-2.5"
+              >
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-medium text-foreground">
+                    {p.title}
+                  </span>
+                  <span className="block text-[11px] text-muted-foreground">
+                    {[p.city, p.country].filter(Boolean).join(", ") ||
+                      "Location not listed"}
+                    {p.remoteType !== "unknown" && ` · ${p.remoteType}`}
+                  </span>
+                </span>
+                {p.url && (
+                  <a
+                    href={p.url}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-terracotta underline decoration-dotted underline-offset-2 hover:text-foreground"
+                  >
+                    Apply
+                    <ExternalLink className="h-3 w-3" strokeWidth={1.7} />
+                  </a>
+                )}
+              </li>
+            ))}
+          </ul>
+          <p className="text-[11px] text-muted-foreground">
+            Source: {providerLabel} job board
+            {live.retrievedAt &&
+              ` · checked ${new Date(live.retrievedAt).toLocaleString()}`}
+            {live.boardUrl && (
+              <>
+                {" · "}
+                <a
+                  href={live.boardUrl}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="underline decoration-dotted underline-offset-2 hover:text-terracotta"
+                >
+                  view all {live.postings.length} on {providerLabel}
+                </a>
+              </>
+            )}
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** Typed "not researched yet" state — a real UI state, not an error. */
+function NotResearchedSection({
+  dashboard,
+  onResearch,
+  isResearching,
+}: {
+  dashboard: CompanyDashboard;
+  onResearch: () => void;
+  isResearching: boolean;
+}) {
+  const c = dashboard.company;
+  return (
+    <div className="card-surface space-y-4 p-6 sm:p-8">
+      <div className="flex items-start gap-4">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-secondary text-muted-foreground">
+          <CircleHelp className="h-6 w-6" strokeWidth={1.7} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h2 className="font-display text-2xl font-bold text-foreground">
+            {c.displayName}
+          </h2>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+            No researched hiring profile exists for this company yet — and
+            CareerPilot does not invent one. Research runs live from the
+            company's public careers surface
+            {c.atsBoard
+              ? " (its public job board)"
+              : " (its careers pages)"}
+            , and the result is shared across all users.
+          </p>
+        </div>
+      </div>
+      <ProvenanceLine dashboard={dashboard} />
+      {dashboard.researchError && (
+        <p className="text-[11px] leading-5 text-muted-foreground">
+          Last research attempt: {dashboard.researchError}
+        </p>
+      )}
+      <div>
+        <ResearchButton onResearch={onResearch} isResearching={isResearching} />
+      </div>
     </div>
   );
 }
@@ -419,7 +616,9 @@ function JobLinksSection({ dashboard }: { dashboard: CompanyDashboard }) {
               />
             </a>
             <span className="shrink-0 text-[11px] text-muted-foreground">
-              retrieved {new Date(j.retrievedAt).toLocaleDateString()}
+              {j.retrievedAt
+                ? `retrieved ${new Date(j.retrievedAt).toLocaleDateString()}`
+                : ""}
             </span>
           </li>
         ))}
@@ -449,6 +648,8 @@ function CompanyPage() {
     isLoading,
     error,
   } = useCompanyDashboard(companyName);
+  const refreshMutation = useRefreshCompanyResearch(companyName);
+  const handleResearch = () => refreshMutation.mutate();
 
   return (
     <AppLayout title={LAYOUT_TITLE} subtitle={LAYOUT_SUBTITLE}>
@@ -474,7 +675,18 @@ function CompanyPage() {
           </div>
         )}
 
-        {dashboard && (
+        {dashboard && dashboard.status === "not_researched" && (
+          <div className="space-y-6">
+            <NotResearchedSection
+              dashboard={dashboard}
+              onResearch={handleResearch}
+              isResearching={refreshMutation.isPending}
+            />
+            <LivePostingsSection dashboard={dashboard} />
+          </div>
+        )}
+
+        {dashboard && dashboard.status !== "not_researched" && (
           <>
             <div className="card-surface p-2 sm:p-3">
               <div className="flex flex-wrap gap-2">
@@ -498,7 +710,12 @@ function CompanyPage() {
 
             {activeTab === "overview" && (
               <div className="space-y-6">
-                <OverviewSection dashboard={dashboard} />
+                <OverviewSection
+                  dashboard={dashboard}
+                  onResearch={handleResearch}
+                  isResearching={refreshMutation.isPending}
+                />
+                <LivePostingsSection dashboard={dashboard} />
                 <HiringAreasSection dashboard={dashboard} />
               </div>
             )}

@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { getCompanyDashboard } from "@/lib/company.functions";
+import { getCompanyDashboard, refreshCompanyResearch } from "@/lib/company.functions";
 import { friendlyError } from "./user";
 
 export type CompanyDashboard = Awaited<ReturnType<typeof getCompanyDashboard>>;
@@ -45,5 +45,31 @@ export function useCompanyDashboard(companyName: string | null) {
     },
     enabled: name.length > 0,
     staleTime: 30 * 60_000, // 30 minutes — company data changes slowly
+  });
+}
+
+/**
+ * "Research this company" action: forces a fresh live research run
+ * (ATS board, then Tavily careers-page research) and refreshes the
+ * dashboard. Used from the not-researched state and from unverified
+ * seed dashboards.
+ */
+export function useRefreshCompanyResearch(companyName: string | null) {
+  const queryClient = useQueryClient();
+  const name = (companyName ?? "").trim();
+  return useMutation({
+    mutationFn: async () => {
+      const result = await refreshCompanyResearch({ data: { companyName: name } });
+      return result;
+    },
+    onSuccess: (result) => {
+      queryClient.setQueryData(companyDashboardQueryKey(name), result);
+    },
+    onError: (error) => {
+      console.error("[CareerPilot][client][refreshCompanyResearch] failed", error);
+      throw new Error(
+        friendlyError(error, "Research couldn't run right now. Please try again."),
+      );
+    },
   });
 }

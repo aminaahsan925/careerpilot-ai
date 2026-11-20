@@ -196,6 +196,41 @@ describe("seed source review", () => {
     const company = FEATURED_COMPANIES[0]!;
     expect(seedCompany(company).careersUrl).toBeNull();
   });
+
+  it("ships every seed as unverified with no research date or sources", () => {
+    for (const company of FEATURED_COMPANIES) {
+      expect(company.verified).toBe(false);
+      expect(company.researchedOn).toBeNull();
+      expect(company.sources).toEqual([]);
+      const bundle = seedCompanyBundle(company);
+      expect(bundle.company.verification).toBe("unverified");
+      expect(bundle.company.sources).toEqual([]);
+      expect(bundle.company.researchedOn).toBeNull();
+    }
+  });
+
+  it("carries an ATS board only where one was verified live", () => {
+    const motive = FEATURED_COMPANIES.find((c) => c.id === "motive")!;
+    expect(motive.atsBoard).toEqual({
+      provider: "greenhouse",
+      token: "gomotive",
+    });
+    expect(seedCompany(motive).atsBoard).toEqual({
+      provider: "greenhouse",
+      token: "gomotive",
+    });
+    for (const company of FEATURED_COMPANIES) {
+      if (company.id === "motive") continue;
+      expect(company.atsBoard).toBeNull();
+      expect(seedCompany(company).atsBoard).toBeNull();
+    }
+  });
+
+  it("has no screeningFilterRate value left in any seed entry", () => {
+    for (const company of FEATURED_COMPANIES) {
+      expect(company.hiringBar.screeningFilterRate).toBeUndefined();
+    }
+  });
 });
 
 /* ------------------------------------------------------------------ */

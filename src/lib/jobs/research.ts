@@ -16,6 +16,11 @@ import { normalizeSkill } from "../evidence/skill-aliases";
 import type { RequirementInput } from "../evidence/matching";
 import { aggregateSkillFrequency, type MarketAggregation } from "./coverage";
 import {
+  createAtsProvider,
+  resolveAtsBoard,
+  AtsProviderError,
+} from "./ats-providers";
+import {
   dedupHashJob,
   TavilyJobProvider,
   type JobLocationFilter,
@@ -72,7 +77,7 @@ export async function refreshJobMarket(
   }
 
   // Persist postings (best-effort) so aggregation reads stored jobs.
-  const storedIds = await storePostings(supabase, userId, postings);
+  const storedIds = await storePostings(supabase, userId, postings, "tavily");
 
   // Extract structured requirements for the top postings (best-effort each).
   const jobsForAggregation: { requirements: RequirementInput[] }[] = [];
@@ -92,6 +97,61 @@ export async function refreshJobMarket(
 
   return {
     providerName: "tavily",
+    postings,
+    aggregation: aggregateSkillFrequency(jobsForAggregation),
+    researchedOn: new Date().toISOString().slice(0, 10),
+  };
+}
+
+/**
+ * Run one live research pass over a company's OWN job board (ATS), when
+ * it has a verified board. Returns null when the company has no
+ * verified board (the caller then uses Tavily research) or when the
+ * board cannot be read. A live board with zero postings returns a
+ * real empty result — the company genuinely has no open roles.
+ */
+export async function refreshCompanyBoardJobs(
+  supabase: AnyClient,
+  userId: string,
+  companyName: string,
+): Promise<LiveJobMarket | null> {
+  const board = resolveAtsBoard(companyName);
+  if (!board) return null;
+
+  let postings: NormalizedJobPosting[];
+  try {
+    const provider = createAtsProvider(board, companyName);
+    postings = await provider.fetchBoardPostings(MAX_STORED_JOBS);
+  } catch (error) {
+    console.warn(
+      "[JobMarket] ATS board fetch failed, falling back to dataset:",
+      error instanceof AtsProviderError
+        ? error.message
+        : error instanceof Error
+          ? error.message
+          : String(error),
+    );
+    return null;
+  }
+
+  const storedIds = await storePostings(supabase, userId, postings, board.provider);
+
+  const jobsForAggregation: { requirements: RequirementInput[] }[] = [];
+  for (const posting of postings.slice(0, MAX_EXTRACTION_JOBS)) {
+    const requirements = await extractPostingRequirements(
+      supabase,
+      userId,
+      posting,
+      storedIds.get(posting.url ?? ""),
+    );
+    jobsForAggregation.push({ requirements });
+  }
+  for (let i = MAX_EXTRACTION_JOBS; i < postings.length; i++) {
+    jobsForAggregation.push({ requirements: [] });
+  }
+
+  return {
+    providerName: board.provider,
     postings,
     aggregation: aggregateSkillFrequency(jobsForAggregation),
     researchedOn: new Date().toISOString().slice(0, 10),
@@ -143,11 +203,14 @@ export async function aggregateStoredJobs(
 /* Storage                                                              */
 /* ------------------------------------------------------------------ */
 
-async function tavilySourceId(supabase: AnyClient): Promise<string | null> {
+async function sourceIdByName(
+  supabase: AnyClient,
+  name: string,
+): Promise<string | null> {
   const { data } = await supabase
     .from("job_sources")
     .select("id")
-    .eq("name", "tavily")
+    .eq("name", name)
     .maybeSingle();
   return (data as { id: string } | null)?.id ?? null;
 }
@@ -160,11 +223,12 @@ async function storePostings(
   supabase: AnyClient,
   userId: string,
   postings: NormalizedJobPosting[],
+  sourceName: string,
 ): Promise<Map<string, string>> {
   const byUrl = new Map<string, string>();
   if (postings.length === 0) return byUrl;
 
-  const sourceId = await tavilySourceId(supabase).catch(() => null);
+  const sourceId = await sourceIdByName(supabase, sourceName).catch(() => null);
   const rows = postings.map((p) => ({
     user_id: userId,
     source_id: sourceId,

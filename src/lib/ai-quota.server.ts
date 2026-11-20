@@ -1,75 +1,104 @@
 /**
- * Phase 1 cost control: per-user daily AI call quotas.
+ * AI call quotas — delegates to the single plan-based rule.
  *
- * Every AI call in the app flows through `groqChat()` in ./ai.server.ts.
- * `guardedChat()` is a drop-in replacement that consumes one unit of the
- * caller's daily quota (via the `consume_ai_quota` Postgres RPC, which is
- * atomic so concurrent requests can't race past the limit) before spending
- * the call. Over-quota users get a clear QuotaExceededError instead of a
- * silent burn of your API budget.
+ * Every AI call in the product is governed by ONE quota: the plan-based
+ * limits in ./billing.server.ts (free 10/day, Proof 100/day), enforced
+ * by `consumeAiCall` via the atomic `consume_ai_quota` RPC. This module
+ * used to enforce its own flat 25/day env-default limit; that second
+ * rule was deleted in the Wave 2 reconciliation (2026-11-20) because
+ * two quota helpers with different limits meant the same user could be
+ * both over and under quota depending on which feature they used.
  *
- * The free-tier budget defaults to 25 AI calls/user/day and can be raised
- * with the AI_DAILY_CALL_LIMIT env var. Paid tiers (Phase 4) will pass a
- * per-plan limit here.
+ * `guardedChat()` keeps its export shape: it is a drop-in replacement
+ * for groqChat() that consumes one unit of the caller's plan-based
+ * daily quota before spending the call. Over-quota users get a clear
+ * QuotaExceededError; an unavailable quota system fails closed (the AI
+ * call does not run).
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { groqChat, type ChatMsg } from "./ai.server";
+import {
+  consumeAiCall,
+  PROOF_DAILY_AI_CALLS,
+  QuotaError,
+  QuotaUnavailableError,
+  type PlanId,
+} from "./billing.server";
+import type { Database } from "@/integrations/supabase/types";
 
-export const AI_DAILY_CALL_LIMIT = Math.max(
-  1,
-  Number(process.env["AI_DAILY_CALL_LIMIT"] ?? 25) || 25,
-);
+type Client = SupabaseClient<Database>;
 
 export class QuotaExceededError extends Error {
   readonly calls: number;
   readonly limit: number;
-  constructor(calls: number, limit: number) {
+  readonly plan: PlanId;
+  constructor(calls: number, limit: number, plan: PlanId = "free") {
     super(
-      `You've used all ${limit} free AI actions for today. They reset tomorrow.`,
+      `You've used all ${limit} AI actions for today on the ${plan} plan. They reset tomorrow.`,
     );
     this.name = "QuotaExceededError";
     this.calls = calls;
     this.limit = limit;
+    this.plan = plan;
   }
 }
 
-type QuotaCheck = { allowed: boolean; calls: number; limit: number };
+export type QuotaCheck = {
+  allowed: boolean;
+  calls: number;
+  limit: number;
+  plan: PlanId;
+};
 
 /**
- * Atomically consume one AI call from the user's daily quota and log which
- * endpoint spent it. Throws QuotaExceededError when the user is over quota,
- * or a plain Error if the quota RPC itself is unavailable (fail closed —
- * never silently burn budget).
+ * Atomically consume one AI call from the user's PLAN-BASED daily quota
+ * (billing.server.ts: free 10/day, Proof 100/day) and log which
+ * endpoint spent it.
+ *
+ * Throws QuotaExceededError when the user is over quota, or
+ * QuotaUnavailableError if the quota system itself cannot answer
+ * (fail closed — never silently burn budget).
+ *
+ * The `limit` parameter is DEPRECATED and ignored: the plan governs
+ * the limit now. It is kept only so existing callers keep compiling.
  */
 export async function consumeAiQuota(
   supabase: SupabaseClient<any>,
   userId: string,
   endpoint: string,
-  limit: number = AI_DAILY_CALL_LIMIT,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  limit?: number,
 ): Promise<QuotaCheck> {
-  // NOTE: the generated Database types don't include the new RPC yet, hence
-  // the loose client type. Regenerate with `supabase gen types` to tighten.
-  const { data, error } = await supabase.rpc("consume_ai_quota", {
-    p_user_id: userId,
-    p_daily_limit: limit,
-    p_endpoint: endpoint,
-  });
-  if (error) {
-    console.error("[AI quota] consume_ai_quota RPC failed:", error.message);
-    throw new Error(
-      "AI quota check is unavailable right now. Please try again in a moment.",
+  try {
+    const result = await consumeAiCall(
+      supabase as unknown as Client,
+      userId,
+      endpoint,
     );
+    return {
+      allowed: true,
+      calls: result.calls,
+      limit: result.limit,
+      plan: result.plan,
+    };
+  } catch (error) {
+    if (error instanceof QuotaError) {
+      // consumeAiCall's QuotaError does not carry the plan; the limit
+      // it enforced identifies it (Proof limit vs free limit).
+      const plan: PlanId =
+        error.limit >= PROOF_DAILY_AI_CALLS ? "proof" : "free";
+      throw new QuotaExceededError(error.calls, error.limit, plan);
+    }
+    if (error instanceof QuotaUnavailableError) throw error;
+    throw error;
   }
-  const row = data as QuotaCheck;
-  if (!row.allowed) throw new QuotaExceededError(row.calls, row.limit);
-  return row;
 }
 
 /**
- * Drop-in replacement for groqChat() that enforces the per-user daily quota
- * first. `endpoint` is a short label recorded in ai_call_logs (e.g.
- * "mentor-chat", "resume-analysis").
+ * Drop-in replacement for groqChat() that enforces the plan-based
+ * per-user daily quota first. `endpoint` is a short label recorded in
+ * ai_call_logs (e.g. "mentor-chat", "resume-analysis").
  */
 export async function guardedChat(
   supabase: SupabaseClient<any>,

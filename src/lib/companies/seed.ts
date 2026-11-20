@@ -5,9 +5,12 @@
  * `company_snapshots` / `company_requirements` seed rows, applying the
  * Phase 4 provenance rule:
  *
- *   - `screeningFilterRate`-style statistics (e.g. "78% rejected before
- *     1st round") have NO cited source in the dataset → they are DROPPED
- *     from the seed. They never reach the database or the UI.
+ *   - `screeningFilterRate`-style statistics (percentage rejection rates
+ *     with NO cited source in the dataset) are DROPPED from the seed.
+ *     They never reach the database or the UI. The values were also
+ *     removed from `company-truth.ts` itself in the Wave 2 source
+ *     review, so the field survives only as an optional, deprecated,
+ *     never-set type member.
  *   - Every other seeded claim is stored with `verification: "unverified"`
  *     and a source label naming the static dataset, so the UI can badge
  *     it instead of presenting it as researched fact.
@@ -19,6 +22,7 @@
  * service-role seeder (server) imports these. Unit-tested.
  */
 import type { CompanyHiringTruth } from "@/data/company-truth";
+import type { AtsBoard } from "../jobs/ats-providers";
 import { companyIdentity } from "./normalization";
 
 /** Source label stamped on every seeded row. */
@@ -43,6 +47,11 @@ export type SeedCompany = {
   careersUrl: string | null;
   sourceLabel: string;
   verification: SeedVerification;
+  /** Provenance carried from the seed entry: no sources, no research date. */
+  sources: string[];
+  researchedOn: string | null;
+  /** Verified ATS board when one exists, else null (Tavily research path). */
+  atsBoard: AtsBoard | null;
 };
 
 /**
@@ -107,6 +116,9 @@ export function seedCompany(truth: CompanyHiringTruth): SeedCompany {
     careersUrl: null, // Unknown from the static dataset — research fills this in.
     sourceLabel: SEED_SOURCE_LABEL,
     verification: "unverified",
+    sources: [...(truth.sources ?? [])],
+    researchedOn: truth.researchedOn ?? null,
+    atsBoard: truth.atsBoard ?? null,
   };
 }
 

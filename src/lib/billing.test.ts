@@ -110,20 +110,30 @@ describe("consume_ai_quota RPC matches its callers", () => {
     expect(sql).toMatch(/'limit'/);
   });
 
-  it("billing.server.ts and ai-quota.server.ts pass the same arg names", () => {
+  it("billing.server.ts calls the RPC with the documented arg names", () => {
     const billing = readFileSync(resolve(here, "billing.server.ts"), "utf-8");
-    const quota = readFileSync(resolve(here, "ai-quota.server.ts"), "utf-8");
-    for (const [name, src] of [
-      ["billing.server.ts", billing],
-      ["ai-quota.server.ts", quota],
-    ] as const) {
-      expect(src, `${name} must call the consume_ai_quota RPC`).toContain(
-        '"consume_ai_quota"',
-      );
-      for (const arg of ["p_user_id", "p_daily_limit", "p_endpoint"]) {
-        expect(src, `${name} must pass ${arg}`).toContain(arg);
-      }
+    expect(billing, "billing.server.ts must call the consume_ai_quota RPC").toContain(
+      '"consume_ai_quota"',
+    );
+    for (const arg of ["p_user_id", "p_daily_limit", "p_endpoint"]) {
+      expect(billing, `billing.server.ts must pass ${arg}`).toContain(arg);
     }
+  });
+
+  it("ai-quota.server.ts delegates to the single plan-based rule", () => {
+    // Wave 2 reconciliation (2026-11-20): the ported ai-quota helper used
+    // to call the RPC itself with its own flat 25/day limit. Two quota
+    // rules meant one user could be both over and under quota. It now
+    // delegates to billing.server.ts's consumeAiCall, so ONE plan-based
+    // rule (free 10/day, Proof 100/day) governs every AI call.
+    const quota = readFileSync(resolve(here, "ai-quota.server.ts"), "utf-8");
+    expect(quota, "ai-quota.server.ts must delegate to consumeAiCall").toContain(
+      "consumeAiCall",
+    );
+    expect(quota, "ai-quota.server.ts must import consumeAiCall from billing.server").toMatch(
+      /from "\.\/billing\.server"/,
+    );
+    expect(quota, "the flat 25/day rule must be gone").not.toContain("AI_DAILY_CALL_LIMIT");
   });
 
   it("ai_usage and ai_call_logs back the RPC", () => {

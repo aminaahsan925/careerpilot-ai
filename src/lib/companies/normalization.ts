@@ -8,8 +8,13 @@
  * Pure module: no server imports, no side effects, unit-tested.
  */
 
-/** Dataset version for company research — bump when the snapshot format changes. */
-export const COMPANY_DATASET_VERSION = "v1";
+/**
+ * Dataset version for company research — bump when the snapshot format changes.
+ * v2 (2026-11-20): seed snapshots no longer stamp a fake retrieved date
+ * (retrievedAt is null for seeds) and snapshots record whether they came
+ * from a live ATS board. Bumping invalidates v1 cache entries.
+ */
+export const COMPANY_DATASET_VERSION = "v2";
 
 /** Legal-entity suffixes that should not distinguish two company records. */
 const ENTITY_SUFFIXES =
