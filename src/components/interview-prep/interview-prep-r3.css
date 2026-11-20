@@ -1,0 +1,53 @@
+/* Interview Prep (Round 3, Direction 2, Cursor as Flashlight / Lens).
+ * Quiet layer only: a thin lime beam sweeping the hero's top edge and a
+ * soft radial glow behind the headline. The signature moment (a
+ * flashlight over one question revealing what it tests, the strong
+ * answer shape, and the hiring signal, all from the real question data)
+ * lives in the shared lens engine; the lens over the prep count and the
+ * spotlight borders on the cards do too. All keyframes are gated by
+ * prefers-reduced-motion, and the global styles.css rule kills
+ * animations under reduced motion as well.
+ */
+
+/* A thin lime beam sweeping the hero's top edge, same rhythm family as
+ * the mentor's thinking beam. Pure decoration: it never covers text. */
+.cp-interview-beam {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--cp-lime, #e1f10d),
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: cp-interview-beam 3.4s linear infinite;
+}
+
+@keyframes cp-interview-beam {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* Soft lime glow behind the hero headline. Static, no animation. */
+.cp-interview-hero-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    560px 220px at 16% 0%,
+    rgb(225 241 13 / 0.09),
+    transparent 70%
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cp-interview-beam {
+    animation: none;
+  }
+}
