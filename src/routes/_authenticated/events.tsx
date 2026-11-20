@@ -8,7 +8,7 @@ import { useCurrentUser } from "@/data/user";
 export const Route = createFileRoute("/_authenticated/events")({
   head: () => ({
     meta: [
-      { title: "Tech Events & Hackathons — CareerPilot AI" },
+      { title: "Tech Events & Hackathons | CareerPilot AI" },
       {
         name: "description",
         content:
@@ -27,7 +27,7 @@ function TechEventsPage() {
       title={
         <span className="flex items-center gap-2">
           Tech Events & Hackathons{" "}
-          <Sparkles className="h-5 w-5 text-terracotta" />
+          <Sparkles className="h-5 w-5 text-cp-lime" />
         </span>
       }
       subtitle="Discover hackathons, workshops, and hiring conferences in your city. Pin them as milestone targets in your career roadmap."
@@ -35,8 +35,8 @@ function TechEventsPage() {
       <div className="space-y-6 pb-12">
         {isLoading ? (
           <div className="space-y-4">
-            <div className="h-44 animate-pulse rounded-3xl bg-secondary/80" />
-            <div className="h-40 animate-pulse rounded-3xl bg-secondary/80" />
+            <div className="h-44 animate-pulse rounded-3xl bg-white/5" />
+            <div className="h-40 animate-pulse rounded-3xl bg-white/5" />
           </div>
         ) : (
           <TechEventsSection

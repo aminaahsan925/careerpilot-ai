@@ -1,9 +1,22 @@
+/**
+ * Tech Events & Hackathons, Round 3 (Cursor as Flashlight / Lens).
+ *
+ * Signature moment: every event card is a SpotlightCard whose border
+ * glow follows the cursor, and the date badge and prize chip drift at
+ * different depths under the pointer (the MarketLens parallax pattern:
+ * pointer state plus a CSS transition, no second engine). Content stays
+ * fully readable at rest; with reduced motion there is no parallax and
+ * no glow tracking.
+ *
+ * Presentation only: the live fetch, filters, pinning and reminders are
+ * unchanged. Sample events stay labelled as samples, never presented as
+ * live listings.
+ */
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Award,
   Bell,
-  Building2,
   Calendar,
   Check,
   ExternalLink,
@@ -13,9 +26,7 @@ import {
   Plus,
   RefreshCw,
   Search,
-  Sparkles,
   Users,
-  WifiOff,
   Wrench,
   Zap,
 } from 'lucide-react';
@@ -36,6 +47,8 @@ import {
   sendEventReminderNotification,
 } from '@/lib/push-notifications';
 import { cn } from '@/lib/utils';
+import { SpotlightCard } from '@/components/lens/SpotlightCard';
+import { usePrefersReducedMotion } from '@/components/lens/usePrefersReducedMotion';
 
 interface TechEventsSectionProps {
   userCity?: string | undefined;
@@ -44,10 +57,10 @@ interface TechEventsSectionProps {
 
 const EVENT_TYPE_FILTERS = [
   { id: 'all', label: 'All', icon: Globe2 },
-  { id: 'hackathon', label: 'Hackathons', icon: Flame, badge: '🔥' },
-  { id: 'workshop', label: 'Workshops', icon: Wrench, badge: '🛠️' },
-  { id: 'conference', label: 'Conferences', icon: Users, badge: '🎙️' },
-  { id: 'meetup', label: 'Meetups', icon: Zap, badge: '🤝' },
+  { id: 'hackathon', label: 'Hackathons', icon: Flame },
+  { id: 'workshop', label: 'Workshops', icon: Wrench },
+  { id: 'conference', label: 'Conferences', icon: Users },
+  { id: 'meetup', label: 'Meetups', icon: Zap },
 ];
 
 function preparationTipsFor(event: TechEvent): string[] {
@@ -74,6 +87,220 @@ function preparationTipsFor(event: TechEvent): string[] {
   ];
 }
 
+/**
+ * One event card's body: the parallax layers live here (the date badge
+ * drifts with the pointer, the prize chip drifts against it), inside
+ * the SpotlightCard that owns the border glow. Pointer state follows
+ * the MarketLens pattern; reduced motion gets no parallax at all.
+ */
+function EventCardBody({
+  event,
+  isPinned,
+  onTogglePin,
+  onRemindMe,
+}: {
+  event: TechEvent;
+  isPinned: boolean;
+  onTogglePin: (event: TechEvent) => void;
+  onRemindMe: (event: TechEvent) => void;
+}) {
+  const reduced = usePrefersReducedMotion();
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const [pointer, setPointer] = useState<{ x: number; y: number } | null>(null);
+
+  const daysLeft = getDaysUntil(event.eventDate);
+  const dateObj = new Date(event.eventDate);
+  const monthStr = isNaN(dateObj.getTime())
+    ? '2026'
+    : dateObj.toLocaleString('default', { month: 'short' }).toUpperCase();
+  const dayNum = isNaN(dateObj.getTime()) ? '28' : dateObj.getDate();
+
+  function updatePointer(clientX: number, clientY: number) {
+    const el = bodyRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    setPointer({
+      x: Math.min(100, Math.max(0, ((clientX - rect.left) / rect.width) * 100)),
+      y: Math.min(100, Math.max(0, ((clientY - rect.top) / rect.height) * 100)),
+    });
+  }
+
+  // Parallax depths: the date badge rides with the pointer, the prize
+  // chip drifts against it. Both stay small so nothing ever overlaps
+  // the text next to them.
+  const badgeShift = pointer && !reduced
+    ? { transform: `translate(${(pointer.x - 50) * 0.12}px, ${(pointer.y - 50) * 0.08}px)` }
+    : undefined;
+  const prizeShift = pointer && !reduced
+    ? { transform: `translate(${(pointer.x - 50) * -0.08}px, ${(pointer.y - 50) * -0.06}px)` }
+    : undefined;
+
+  return (
+    <div
+      ref={bodyRef}
+      onPointerMove={(e) => {
+        if (reduced) return;
+        updatePointer(e.clientX, e.clientY);
+      }}
+      onPointerDown={(e) => {
+        if (reduced) return;
+        updatePointer(e.clientX, e.clientY);
+      }}
+      onPointerLeave={() => setPointer(null)}
+    >
+      {/* ── Row Layout ─────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-start gap-4 p-4 sm:p-5">
+
+        {/* Date badge column (parallax layer, drifts with the pointer) */}
+        <div
+          style={badgeShift}
+          className="flex flex-col items-center justify-center rounded-2xl border border-cp-lime/25 bg-cp-lime/10 px-3 py-2.5 text-cp-lime min-w-[52px] shrink-0 transition-transform duration-300 ease-out will-change-transform"
+        >
+          <span className="text-[9px] font-extrabold uppercase tracking-widest leading-tight">
+            {monthStr}
+          </span>
+          <span className="font-display text-xl font-bold leading-tight">
+            {dayNum}
+          </span>
+        </div>
+
+        {/* Main content */}
+        <div className="flex-1 min-w-0 space-y-2.5">
+          {/* Header row */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span
+              className={cn(
+                'rounded-md px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider',
+                event.eventType === 'hackathon'
+                  ? 'bg-amber-500/15 text-amber-300'
+                  : event.eventType === 'workshop'
+                    ? 'bg-blue-500/15 text-blue-300'
+                    : 'bg-white/5 text-cp-paper'
+              )}
+            >
+              {event.eventType}
+            </span>
+            {event.isSample && (
+              <span className="rounded-md bg-amber-500/15 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider text-amber-300">
+                Sample
+              </span>
+            )}
+            {daysLeft > 0 && (
+              <span className="font-mono text-[10.5px] font-medium text-cp-stone">
+                · in {daysLeft}d
+              </span>
+            )}
+            <span className="flex items-center gap-0.5 text-[10.5px] text-cp-stone">
+              <MapPin className="h-3 w-3 text-cp-lime shrink-0" />
+              {event.city}
+            </span>
+            {event.prizePool && (
+              <span
+                style={prizeShift}
+                className="flex items-center gap-1 rounded-full bg-cp-lime/10 px-2 py-0.5 text-[9.5px] font-bold text-cp-lime border border-cp-lime/25 transition-transform duration-300 ease-out will-change-transform"
+              >
+                <Award className="h-2.5 w-2.5" /> {event.prizePool}
+              </span>
+            )}
+          </div>
+
+          {/* Title */}
+          <h3 className="font-display text-[15px] font-bold text-cp-paper leading-snug group-hover:text-cp-lime transition-colors">
+            {event.title}
+          </h3>
+
+          {/* Description */}
+          <p className="text-[12px] text-cp-stone leading-relaxed line-clamp-2">
+            {event.description}
+          </p>
+
+          {/* Organizer + Venue row */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-0.5 text-[11.5px] text-cp-stone">
+            <span>
+              <span className="font-semibold text-cp-paper/70">Organizer:</span>{' '}
+              {event.organizer}
+            </span>
+            <span className="hidden sm:inline text-white/20">·</span>
+            <span>
+              <span className="font-semibold text-cp-paper/70">Venue:</span>{' '}
+              {event.venue}
+            </span>
+          </div>
+
+          {/* Tags */}
+          <div className="flex flex-wrap gap-1">
+            {event.tags.map((tag) => (
+              <span
+                key={tag}
+                className="rounded-md bg-white/5 px-1.5 py-0.5 font-mono text-[10px] font-medium text-cp-stone"
+              >
+                #{tag}
+              </span>
+            ))}
+          </div>
+
+          {/* Prep tips */}
+          <details className="rounded-2xl border border-cp-lime/15 bg-cp-lime/[0.04] px-3 py-2">
+            <summary className="cursor-pointer list-none text-[11.5px] font-semibold text-cp-lime">
+              How to prepare for this {event.eventType}
+            </summary>
+            <ul className="mt-1.5 space-y-1 pl-4 text-[11px] leading-relaxed text-cp-stone">
+              {preparationTipsFor(event).map((tip) => (
+                <li key={tip} className="list-disc">
+                  {tip}
+                </li>
+              ))}
+            </ul>
+          </details>
+        </div>
+      </div>
+
+      {/* ── Actions bar ────────────────────────────────── */}
+      <div className="flex items-center gap-2 border-t border-white/10 bg-white/[0.02] px-4 py-3 rounded-b-3xl">
+        <Button
+          variant={isPinned ? 'secondary' : 'outline'}
+          size="sm"
+          onClick={() => onTogglePin(event)}
+          className={cn(
+            'flex-1 rounded-xl text-xs font-semibold h-8 transition-all',
+            isPinned
+              ? 'border-cp-lime/40 bg-cp-lime/10 text-cp-lime hover:bg-cp-lime/20'
+              : 'border-white/10 bg-cp-ink hover:border-cp-lime/40 hover:text-cp-lime'
+          )}
+        >
+          <span className="inline-flex items-center">
+            {isPinned ? (
+              <><Check className="mr-1.5 h-3.5 w-3.5" /> Added to Roadmap</>
+            ) : (
+              <><Plus className="mr-1.5 h-3.5 w-3.5" /> Add to Roadmap</>
+            )}
+          </span>
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onRemindMe(event)}
+          className="h-8 w-8 rounded-xl border border-white/10 bg-cp-ink hover:border-cp-lime/40 hover:text-cp-lime text-cp-stone"
+          title="Notify me / Set Reminder"
+        >
+          <Bell className="h-3.5 w-3.5" />
+        </Button>
+
+        <a
+          href={event.registrationUrl || event.eventUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-xl bg-cp-lime px-3 text-xs font-semibold text-cp-ink transition-colors hover:bg-cp-lime/90"
+          aria-label={`Register for ${event.title}`}
+        >
+          Register <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+        </a>
+      </div>
+    </div>
+  );
+}
+
 export function TechEventsSection({ userCity, targetRole }: TechEventsSectionProps) {
   const initialCity = userCity?.trim() ? userCity : 'All Cities';
   const [selectedCity, setSelectedCity] = useState(initialCity);
@@ -81,7 +308,9 @@ export function TechEventsSection({ userCity, targetRole }: TechEventsSectionPro
   const [searchQuery, setSearchQuery] = useState('');
   // Sample list only, and only events still in the future. Live data is
   // fetched on mount below; the page never renders a stale list as current.
-  const [eventsList, setEventsList] = useState<TechEvent[]>(() => getUpcomingFallbackEvents());
+  const [eventsList, setEventsList] = useState<TechEvent[]>(() =>
+    getUpcomingFallbackEvents()
+  );
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasFetchedLive, setHasFetchedLive] = useState(false);
   const [liveFetchFailed, setLiveFetchFailed] = useState(false);
@@ -205,21 +434,21 @@ export function TechEventsSection({ userCity, targetRole }: TechEventsSectionPro
   return (
     <div className="space-y-6">
       {/* ── Top Header & Filter Controls ──────────────────────────── */}
-      <div className="card-surface rounded-3xl border border-border/80 bg-card p-6 sm:p-8 shadow-xs">
+      <SpotlightCard className="rounded-3xl border border-white/10 bg-cp-panel p-6 sm:p-8">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 rounded-full bg-terracotta/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-terracotta">
+              <span className="inline-flex items-center gap-1 rounded-full border border-cp-lime/30 bg-cp-lime/10 px-2.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider text-cp-lime">
                 <Flame className="h-3 w-3" /> Tech Ecosystem
               </span>
-              <span className="text-[11px] text-muted-foreground">
-                • Competitions & Meetups
+              <span className="font-mono text-[11px] text-cp-stone">
+                · Competitions &amp; Meetups
               </span>
             </div>
-            <h2 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-              Student Hackathons & Events
+            <h2 className="font-display text-2xl font-bold tracking-tight text-cp-paper sm:text-3xl">
+              Student Hackathons &amp; Events
             </h2>
-            <p className="text-xs text-muted-foreground leading-relaxed max-w-xl">
+            <p className="text-xs text-cp-stone leading-relaxed max-w-xl">
               Explore regional hackathons and conferences. Add them as targeted milestones in your
               Career Roadmap.
             </p>
@@ -231,10 +460,10 @@ export function TechEventsSection({ userCity, targetRole }: TechEventsSectionPro
               size="sm"
               disabled={isRefreshing}
               onClick={handleRefresh}
-              className="rounded-xl border-border h-9 px-4 text-xs font-semibold hover:border-terracotta/40 hover:text-terracotta transition-all"
+              className="rounded-xl border-white/10 bg-cp-ink h-9 px-4 text-xs font-semibold hover:border-cp-lime/40 hover:text-cp-lime transition-all"
             >
               <RefreshCw
-                className={cn('mr-1.5 h-3.5 w-3.5 text-terracotta', isRefreshing && 'animate-spin')}
+                className={cn('mr-1.5 h-3.5 w-3.5 text-cp-lime', isRefreshing && 'animate-spin')}
               />
               {isRefreshing ? 'Refreshing...' : 'Refresh'}
             </Button>
@@ -242,9 +471,9 @@ export function TechEventsSection({ userCity, targetRole }: TechEventsSectionPro
         </div>
 
         {/* City Filter Pills */}
-        <div className="mt-6 pt-5 border-t border-border flex flex-col gap-3.5 lg:flex-row lg:items-center lg:justify-between">
+        <div className="mt-6 pt-5 border-t border-white/10 flex flex-col gap-3.5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[10.5px] font-semibold text-muted-foreground mr-1">
+            <span className="font-mono text-[10.5px] font-medium text-cp-stone mr-1">
               City:
             </span>
             {CITIES.map((city) => (
@@ -253,10 +482,10 @@ export function TechEventsSection({ userCity, targetRole }: TechEventsSectionPro
                 type="button"
                 onClick={() => setSelectedCity(city)}
                 className={cn(
-                  'rounded-xl px-3 py-1.5 text-xs font-medium transition-all border',
+                  'rounded-full px-3 py-1.5 font-mono text-[11.5px] font-medium transition-all border',
                   selectedCity === city
-                    ? 'border-terracotta bg-terracotta text-white font-semibold shadow-xs'
-                    : 'border-border/70 bg-secondary/30 text-muted-foreground hover:bg-secondary hover:text-foreground'
+                    ? 'border-cp-lime bg-cp-lime text-cp-ink font-semibold'
+                    : 'border-white/10 bg-white/[0.02] text-cp-stone hover:bg-white/5 hover:text-cp-paper'
                 )}
               >
                 {city}
@@ -266,58 +495,61 @@ export function TechEventsSection({ userCity, targetRole }: TechEventsSectionPro
 
           {/* Search Bar */}
           <div className="relative min-w-[220px] lg:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-cp-stone" />
             <Input
               type="text"
               placeholder="Filter by name, topic, venue..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-9 rounded-xl pl-9 text-xs border-border bg-secondary/20 focus:bg-card"
+              className="h-9 rounded-xl pl-9 text-xs border-white/10 bg-cp-ink text-cp-paper placeholder:text-cp-stone/60 focus:border-cp-lime/60"
             />
           </div>
         </div>
 
         {/* Category Pills */}
         <div className="mt-3.5 flex flex-wrap gap-1.5">
-          {EVENT_TYPE_FILTERS.map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => setSelectedType(f.id)}
-              className={cn(
-                'flex items-center gap-1.5 rounded-full px-3 py-1 text-xs transition-all border',
-                selectedType === f.id
-                  ? 'border-foreground bg-foreground text-background font-semibold shadow-xs'
-                  : 'border-border/70 bg-card text-muted-foreground hover:bg-secondary hover:text-foreground'
-              )}
-            >
-              {f.badge && <span className="text-[11px]">{f.badge}</span>}
-              <span>{f.label}</span>
-              <span className="text-[10px] opacity-70">
-                (
-                {
-                  eventsList.filter((e) => {
-                    const matchCity =
-                      selectedCity === 'All Cities' ||
-                      e.city.toLowerCase().includes(selectedCity.toLowerCase());
-                    const matchType = f.id === 'all' || e.eventType === f.id;
-                    return matchCity && matchType;
-                  }).length
-                }
-                )
-              </span>
-            </button>
-          ))}
+          {EVENT_TYPE_FILTERS.map((f) => {
+            const Icon = f.icon;
+            return (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setSelectedType(f.id)}
+                className={cn(
+                  'flex items-center gap-1.5 rounded-full px-3 py-1 font-mono text-[11.5px] transition-all border',
+                  selectedType === f.id
+                    ? 'border-cp-paper bg-cp-paper text-cp-ink font-semibold'
+                    : 'border-white/10 bg-cp-ink text-cp-stone hover:bg-white/5 hover:text-cp-paper'
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                <span>{f.label}</span>
+                <span className="text-[10px] opacity-70">
+                  (
+                  {
+                    eventsList.filter((e) => {
+                      const matchCity =
+                        selectedCity === 'All Cities' ||
+                        e.city.toLowerCase().includes(selectedCity.toLowerCase());
+                      const matchType = f.id === 'all' || e.eventType === f.id;
+                      return matchCity && matchType;
+                    }).length
+                  }
+                  )
+                </span>
+              </button>
+            );
+          })}
         </div>
-      </div>
+      </SpotlightCard>
 
       {/* ── Sample-data banner: never present samples as live listings ── */}
       {(showingSamples || liveFetchFailed) && (
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-5 py-4">
-          <p className="text-[13px] font-semibold text-foreground">
-            Showing sample events — live refresh failed
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-5 py-4">
+          <p className="text-[13px] font-semibold text-cp-paper">
+            Showing sample events. Live refresh failed.
           </p>
-          <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
+          <p className="mt-1 text-[12.5px] leading-relaxed text-cp-stone">
             {showingSamples
               ? "These are unverified example events, not confirmed live listings. Check the organizer's page before planning around one."
               : "Live event research is unavailable right now. Try refreshing again shortly."}
@@ -329,172 +561,34 @@ export function TechEventsSection({ userCity, targetRole }: TechEventsSectionPro
       <div className="flex flex-col gap-4">
         <AnimatePresence mode="popLayout">
           {filteredEvents.map((event, index) => {
-            const daysLeft = getDaysUntil(event.eventDate);
             const isPinned = pinnedEventIds.includes(event.id);
-            const dateObj = new Date(event.eventDate);
-            const monthStr = isNaN(dateObj.getTime())
-              ? '2026'
-              : dateObj.toLocaleString('default', { month: 'short' }).toUpperCase();
-            const dayNum = isNaN(dateObj.getTime()) ? '28' : dateObj.getDate();
 
             return (
               <motion.div
                 key={event.id}
                 layout
+                data-proof={index === 0 ? "event-card-0" : undefined}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.2, delay: index * 0.03 }}
-                className={cn(
-                  'group rounded-2xl border transition-all hover:shadow-lift',
-                  isPinned
-                    ? 'border-terracotta/30 bg-terracotta/[0.04]'
-                    : 'border-border/60 bg-secondary/30 hover:border-terracotta/25 hover:bg-secondary/50'
-                )}
+                className="group"
               >
-                {/* ── Row Layout ─────────────────────────────────── */}
-                <div className="flex flex-col sm:flex-row sm:items-start gap-4 p-4 sm:p-5">
-
-                  {/* Date badge column */}
-                  <div className="flex flex-col items-center justify-center rounded-xl border border-terracotta/20 bg-terracotta/10 px-3 py-2.5 text-terracotta min-w-[52px] shrink-0 shadow-2xs">
-                    <span className="text-[9px] font-extrabold uppercase tracking-widest leading-tight">
-                      {monthStr}
-                    </span>
-                    <span className="font-display text-xl font-bold leading-tight">
-                      {dayNum}
-                    </span>
-                  </div>
-
-                  {/* Main content */}
-                  <div className="flex-1 min-w-0 space-y-2.5">
-                    {/* Header row */}
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span
-                        className={cn(
-                          'rounded-md px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider',
-                          event.eventType === 'hackathon'
-                            ? 'bg-amber-100 text-amber-800'
-                            : event.eventType === 'workshop'
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-secondary text-foreground'
-                        )}
-                      >
-                        {event.eventType}
-                      </span>
-                      {event.isSample && (
-                        <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider text-amber-800">
-                          Sample
-                        </span>
-                      )}
-                      {daysLeft > 0 && (
-                        <span className="text-[10.5px] font-medium text-muted-foreground">
-                          · in {daysLeft}d
-                        </span>
-                      )}
-                      <span className="flex items-center gap-0.5 text-[10.5px] text-muted-foreground">
-                        <MapPin className="h-3 w-3 text-terracotta shrink-0" />
-                        {event.city}
-                      </span>
-                      {event.prizePool && (
-                        <span className="flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[9.5px] font-bold text-emerald-800 border border-emerald-200/60">
-                          <Award className="h-2.5 w-2.5" /> {event.prizePool}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Title */}
-                    <h3 className="font-display text-[14.5px] font-bold text-foreground leading-snug group-hover:text-terracotta transition-colors">
-                      {event.title}
-                    </h3>
-
-                    {/* Description */}
-                    <p className="text-[12px] text-muted-foreground leading-relaxed line-clamp-2">
-                      {event.description}
-                    </p>
-
-                    {/* Organizer + Venue row */}
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-0.5 text-[11.5px] text-muted-foreground">
-                      <span>
-                        <span className="font-semibold text-foreground/70">Organizer:</span>{' '}
-                        {event.organizer}
-                      </span>
-                      <span className="hidden sm:inline text-border">·</span>
-                      <span>
-                        <span className="font-semibold text-foreground/70">Venue:</span>{' '}
-                        {event.venue}
-                      </span>
-                    </div>
-
-                    {/* Tags */}
-                    <div className="flex flex-wrap gap-1">
-                      {event.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="rounded-md bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
-                        >
-                          #{tag}
-                        </span>
-                      ))}
-                    </div>
-
-                    {/* Prep tips */}
-                    <details className="rounded-xl border border-terracotta/15 bg-terracotta/[0.04] px-3 py-2">
-                      <summary className="cursor-pointer list-none text-[11.5px] font-semibold text-terracotta">
-                        How to prepare for this {event.eventType}
-                      </summary>
-                      <ul className="mt-1.5 space-y-1 pl-4 text-[11px] leading-relaxed text-muted-foreground">
-                        {preparationTipsFor(event).map((tip) => (
-                          <li key={tip} className="list-disc">
-                            {tip}
-                          </li>
-                        ))}
-                      </ul>
-                    </details>
-                  </div>
-                </div>
-
-                {/* ── Actions bar ────────────────────────────────── */}
-                <div className="flex items-center gap-2 border-t border-border/40 bg-secondary/20 px-4 py-3 rounded-b-2xl">
-                  <Button
-                    variant={isPinned ? 'secondary' : 'outline'}
-                    size="sm"
-                    onClick={() => handleTogglePin(event)}
-                    className={cn(
-                      'flex-1 rounded-xl text-xs font-semibold h-8 transition-all',
-                      isPinned
-                        ? 'border-terracotta/40 bg-terracotta/10 text-terracotta hover:bg-terracotta/20'
-                        : 'border-border/60 bg-card hover:border-terracotta/40 hover:text-terracotta'
-                    )}
-                  >
-                    <span className="inline-flex items-center">
-                      {isPinned ? (
-                        <><Check className="mr-1.5 h-3.5 w-3.5" /> Added to Roadmap</>
-                      ) : (
-                        <><Plus className="mr-1.5 h-3.5 w-3.5" /> Add to Roadmap</>
-                      )}
-                    </span>
-                  </Button>
-
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleRemindMe(event)}
-                    className="h-8 w-8 rounded-xl border border-border/60 bg-card hover:border-terracotta/40 hover:text-terracotta text-muted-foreground"
-                    title="Notify me / Set Reminder"
-                  >
-                    <Bell className="h-3.5 w-3.5" />
-                  </Button>
-
-                  <a
-                    href={event.registrationUrl || event.eventUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-xl bg-terracotta px-3 text-xs font-semibold text-white transition-colors hover:bg-terracotta/90"
-                    aria-label={`Register for ${event.title}`}
-                  >
-                    Register <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-                  </a>
-                </div>
+                <SpotlightCard
+                  className={cn(
+                    'overflow-hidden rounded-3xl border transition-all',
+                    isPinned
+                      ? 'border-cp-lime/30 bg-cp-lime/[0.04]'
+                      : 'border-white/10 bg-cp-panel hover:border-cp-lime/25'
+                  )}
+                >
+                  <EventCardBody
+                    event={event}
+                    isPinned={isPinned}
+                    onTogglePin={handleTogglePin}
+                    onRemindMe={handleRemindMe}
+                  />
+                </SpotlightCard>
               </motion.div>
             );
           })}
@@ -502,16 +596,16 @@ export function TechEventsSection({ userCity, targetRole }: TechEventsSectionPro
       </div>
 
       {filteredEvents.length === 0 && (
-        <div className="card-surface p-12 text-center rounded-3xl border-border">
-          <Globe2 className="mx-auto h-8 w-8 text-muted-foreground/40" />
-          <h3 className="mt-3 font-display text-base font-bold text-foreground">
+        <div className="rounded-3xl border border-white/10 bg-cp-panel p-12 text-center">
+          <Calendar className="mx-auto h-8 w-8 text-cp-stone/40" />
+          <h3 className="mt-3 font-display text-base font-bold text-cp-paper">
             {isRefreshing
               ? "Searching live events…"
               : hasFetchedLive && eventsList.length === 0
                 ? `No upcoming events found for ${selectedCity}`
                 : `No events found for ${selectedCity}`}
           </h3>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="mt-1 text-xs text-cp-stone">
             {isRefreshing
               ? "Checking the live web for hackathons, workshops, and conferences."
               : hasFetchedLive && eventsList.length === 0
